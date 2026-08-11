@@ -2,7 +2,6 @@
 package "CAIMEOX/symbit/sympy/tensor"
 
 import {
-  "CAIMEOX/symbit/sympy",
   "CAIMEOX/symbit/symtensor/array",
   "CAIMEOX/symbit/symtensor/indexed",
 }
@@ -47,7 +46,5 @@ pub fn tensor_str(@CAIMEOX/symbit/symtensor/tensor.TensorExpr) -> String raise
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-

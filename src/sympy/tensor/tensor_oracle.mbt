@@ -2,457 +2,717 @@
 /// Oracle helpers for SymPy tensor.
 
 ///|
-pub type OracleArg = @sympy.OracleArg
-
-///|
-fn sympy_call(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum? raise {
-  @sympy.sympy_call(path, args, kwargs~)
+fn call_required(
+  builder : @recipe.Builder,
+  callable : @recipe.ValueRef,
+  args : Array[@recipe.RecipeArg],
+  kwargs? : Map[String, @recipe.RecipeArg] = {},
+  message? : String = "sympy-call-none",
+) -> @recipe.ValueRef raise {
+  builder.require_non_none(builder.call(callable, args, kwargs~), message~)
 }
 
 ///|
-fn sympy_call_must(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum raise {
-  match sympy_call(path, args, kwargs~) {
-    Some(obj) => obj
-    None => fail("sympy-call-none:\{path}")
+fn sympify_value(
+  builder : @recipe.Builder,
+  sympy : @recipe.ValueRef,
+  expression : String,
+) -> @recipe.ValueRef raise {
+  let sympify = builder.getattr(sympy, "sympify")
+  call_required(
+    builder,
+    sympify,
+    [Str(expression)],
+    message="sympy-call-none:sympy.sympify",
+  )
+}
+
+///|
+fn request_rendered(
+  builder : @recipe.Builder,
+  sympy : @recipe.ValueRef,
+  value : @recipe.ValueRef,
+  renderer : String,
+) -> String raise {
+  if renderer == "str" {
+    return builder.request_str(value)
   }
-}
-
-///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
-}
-
-///|
-fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
-  @sympy.expr_to_sympy(expr)
-}
-
-///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
-}
-
-///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
-}
-
-///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let s = obj.to_string()
-  py_gil_release(state)
-  s
-}
-
-///|
-fn py_str_enum(obj : @py.PyObjectEnum) -> String {
-  py_str_obj(objenum_to_obj(obj))
-}
-
-///|
-fn sympy_sympify_str(expr_str : String) -> @py.PyObjectEnum raise {
-  sympy_call_must("sympy.sympify", [Str(expr_str)])
+  let callable = builder.getattr(sympy, renderer)
+  let rendered = call_required(
+    builder,
+    callable,
+    [Ref(value)],
+    message="sympy-call-none:sympy.\{renderer}",
+  )
+  builder.request_str(rendered)
 }
 
 ///|
 pub fn sympy_str(expr_str : String) -> String raise {
-  let expr = sympy_sympify_str(expr_str)
-  py_str_enum(expr)
+  let builder = @recipe.Builder::new()
+  let sympy = builder.import_module("sympy")
+  let value = sympify_value(builder, sympy, expr_str)
+  builder.request_str(value)
 }
 
 ///|
 pub fn sympy_srepr(expr_str : String) -> String raise {
-  let expr = sympy_sympify_str(expr_str)
-  let srepr = sympy_call_must("sympy.srepr", [PyObj(objenum_to_obj(expr))])
-  py_str_enum(srepr)
+  let builder = @recipe.Builder::new()
+  let sympy = builder.import_module("sympy")
+  let value = sympify_value(builder, sympy, expr_str)
+  request_rendered(builder, sympy, value, "srepr")
 }
 
 ///|
 pub fn expr_str_eq(a : String, b : String) -> Bool raise {
-  sympy_srepr(a) == sympy_srepr(b)
+  let builder = @recipe.Builder::new()
+  let sympy = builder.import_module("sympy")
+  let srepr = builder.getattr(sympy, "srepr")
+  let lhs = call_required(
+    builder,
+    srepr,
+    [Ref(sympify_value(builder, sympy, a))],
+    message="sympy-call-none:sympy.srepr",
+  )
+  let rhs = call_required(
+    builder,
+    srepr,
+    [Ref(sympify_value(builder, sympy, b))],
+    message="sympy-call-none:sympy.srepr",
+  )
+  let operator = builder.import_module("operator")
+  let equal = builder.getattr(operator, "eq")
+  let result = call_required(builder, equal, [Ref(lhs), Ref(rhs)])
+  builder.request_bool(result)
 }
 
 ///|
-fn idx_to_sympy(item : @symtensor_indexed.Idx) -> @py.PyObject raise {
-  let name_arg = OracleArg::Str(item.name)
+priv struct TensorRecipeEncoder {
+  builder : @recipe.Builder
+  expressions : @exprcodec.Encoder
+  sympy : @recipe.ValueRef
+  array_expressions : @recipe.ValueRef
+  tensor : @recipe.ValueRef
+  type_cache : Map[String, @recipe.ValueRef]
+  head_cache : Map[String, @recipe.ValueRef]
+}
+
+///|
+fn TensorRecipeEncoder::new(
+  builder : @recipe.Builder,
+) -> TensorRecipeEncoder raise {
+  {
+    builder,
+    expressions: @exprcodec.Encoder::new(builder),
+    sympy: builder.import_module("sympy"),
+    array_expressions: builder.import_module(
+      "sympy.tensor.array.expressions.array_expressions",
+    ),
+    tensor: builder.import_module("sympy.tensor.tensor"),
+    type_cache: Map([]),
+    head_cache: Map([]),
+  }
+}
+
+///|
+fn TensorRecipeEncoder::idx(
+  self : TensorRecipeEncoder,
+  item : @symtensor_indexed.Idx,
+) -> @recipe.ValueRef raise {
+  let callable = self.builder.getattr(self.sympy, "Idx")
   match item.upper {
-    None => objenum_to_obj(sympy_call_must("sympy.Idx", [name_arg]))
+    None =>
+      call_required(
+        self.builder,
+        callable,
+        [Str(item.name)],
+        message="sympy-call-none:sympy.Idx",
+      )
     Some(upper) => {
-      let lower = item.lower
-      if lower == @symcore.int(0) {
-        objenum_to_obj(
-          sympy_call_must("sympy.Idx", [name_arg, PyObj(expr_to_sympy(upper))]),
-        )
+      let range = if item.lower == @symcore.int(0) {
+        self.expressions.encode(upper)
       } else {
-        let range_tuple = sympy_call_must("sympy.Tuple", [
-          PyObj(expr_to_sympy(lower)),
-          PyObj(expr_to_sympy(upper)),
-        ])
-        objenum_to_obj(
-          sympy_call_must("sympy.Idx", [
-            name_arg,
-            PyObj(objenum_to_obj(range_tuple)),
-          ]),
+        let tuple = self.builder.getattr(self.sympy, "Tuple")
+        call_required(
+          self.builder,
+          tuple,
+          [
+            Ref(self.expressions.encode(item.lower)),
+            Ref(self.expressions.encode(upper)),
+          ],
+          message="sympy-call-none:sympy.Tuple",
         )
       }
+      call_required(
+        self.builder,
+        callable,
+        [Str(item.name), Ref(range)],
+        message="sympy-call-none:sympy.Idx",
+      )
     }
   }
 }
 
 ///|
-fn index_to_sympy(index : @symtensor_indexed.Index) -> @py.PyObject raise {
+fn TensorRecipeEncoder::index(
+  self : TensorRecipeEncoder,
+  index : @symtensor_indexed.Index,
+) -> @recipe.ValueRef raise {
   match index {
-    Expr(expr) => expr_to_sympy(expr)
-    Idx(item) => idx_to_sympy(item)
+    Expr(expression) => self.expressions.encode(expression)
+    Idx(item) => self.idx(item)
   }
 }
 
 ///|
-fn indexed_base_to_sympy(
+fn TensorRecipeEncoder::indexed_base(
+  self : TensorRecipeEncoder,
   base : @symtensor_indexed.IndexedBase,
-) -> @py.PyObject raise {
-  let name_arg = OracleArg::Str(base.name)
+) -> @recipe.ValueRef raise {
+  let callable = self.builder.getattr(self.sympy, "IndexedBase")
   match base.shape {
-    None => objenum_to_obj(sympy_call_must("sympy.IndexedBase", [name_arg]))
+    None =>
+      call_required(
+        self.builder,
+        callable,
+        [Str(base.name)],
+        message="sympy-call-none:sympy.IndexedBase",
+      )
     Some(shape) => {
-      let shape_items : Array[OracleArg] = Array::new()
+      let items : Array[@recipe.RecipeArg] = []
       for item in shape {
-        shape_items.push(PyObj(expr_to_sympy(item)))
+        items.push(Ref(self.expressions.encode(item)))
       }
-      let shape_tuple = sympy_call_must("sympy.Tuple", shape_items)
-      let kwargs : Map[String, OracleArg] = {
-        "shape": PyObj(objenum_to_obj(shape_tuple)),
-      }
-      objenum_to_obj(sympy_call_must("sympy.IndexedBase", [name_arg], kwargs~))
+      let tuple = self.builder.getattr(self.sympy, "Tuple")
+      let shape_value = call_required(
+        self.builder,
+        tuple,
+        items,
+        message="sympy-call-none:sympy.Tuple",
+      )
+      call_required(
+        self.builder,
+        callable,
+        [Str(base.name)],
+        kwargs={ "shape": Ref(shape_value) },
+        message="sympy-call-none:sympy.IndexedBase",
+      )
     }
   }
 }
 
 ///|
-fn indexed_to_sympy(item : @symtensor_indexed.Indexed) -> @py.PyObject raise {
-  let base_obj = indexed_base_to_sympy(item.base)
-  let args : Array[OracleArg] = Array::new()
-  args.push(PyObj(base_obj))
-  for idx in item.indices {
-    args.push(PyObj(index_to_sympy(idx)))
+fn TensorRecipeEncoder::indexed(
+  self : TensorRecipeEncoder,
+  item : @symtensor_indexed.Indexed,
+) -> @recipe.ValueRef raise {
+  let args : Array[@recipe.RecipeArg] = [Ref(self.indexed_base(item.base))]
+  for index in item.indices {
+    args.push(Ref(self.index(index)))
   }
-  objenum_to_obj(sympy_call_must("sympy.Indexed", args))
+  let callable = self.builder.getattr(self.sympy, "Indexed")
+  call_required(
+    self.builder,
+    callable,
+    args,
+    message="sympy-call-none:sympy.Indexed",
+  )
+}
+
+///|
+fn shape_size(shape : Array[Int]) -> Int {
+  let mut size = 1
+  for dimension in shape {
+    size = size * dimension
+  }
+  size
+}
+
+///|
+fn sparse_position(key : String, shape : Array[Int]) -> Int? {
+  if shape.is_empty() {
+    return if key.is_empty() { Some(0) } else { None }
+  }
+  let parts = key.split(",").to_array()
+  if parts.length() != shape.length() {
+    return None
+  }
+  let mut position = 0
+  for i in 0..<shape.length() {
+    let coordinate = @string.parse_int(parts[i]) catch { _ => return None }
+    if coordinate < 0 || coordinate >= shape[i] {
+      return None
+    }
+    position = position * shape[i] + coordinate
+  }
+  Some(position)
+}
+
+///|
+fn ndim_array_parts(
+  array : @symtensor_array.NDimArray,
+) -> (Array[Int], Array[@symcore.Expr]) {
+  match array {
+    Dense(dense) => (dense.shape, dense.data)
+    Sparse(sparse) => {
+      let data : Array[@symcore.Expr] = []
+      for _ in 0..<shape_size(sparse.shape) {
+        data.push(@symcore.int(0))
+      }
+      for key, value in sparse.data {
+        match sparse_position(key, sparse.shape) {
+          Some(position) if position < data.length() => data[position] = value
+          _ => ()
+        }
+      }
+      (sparse.shape, data)
+    }
+  }
+}
+
+///|
+fn TensorRecipeEncoder::ndim_array(
+  self : TensorRecipeEncoder,
+  array : @symtensor_array.NDimArray,
+) -> @recipe.ValueRef raise {
+  let (shape, data) = ndim_array_parts(array)
+  let (body, _) = self.ndim_array_body(data, shape, 0, 0)
+  let callable = self.builder.getattr(self.sympy, "Array")
+  call_required(
+    self.builder,
+    callable,
+    [Ref(body)],
+    message="sympy-call-none:sympy.Array",
+  )
+}
+
+///|
+/// Build the same nested value that `NDimArray::to_string` exposed to the old
+/// `sympify("Array(...)")` bridge, without converting expressions back into
+/// Python source.  Letting `sympy.Array` infer the shape is intentional: once
+/// a zero dimension is reached, the legacy representation contains no nested
+/// values from which later dimensions could be recovered.
+fn TensorRecipeEncoder::ndim_array_body(
+  self : TensorRecipeEncoder,
+  data : Array[@symcore.Expr],
+  shape : Array[Int],
+  dimension : Int,
+  offset : Int,
+) -> (@recipe.ValueRef, Int) raise {
+  if dimension == shape.length() {
+    return (self.expressions.encode(data[offset]), offset + 1)
+  }
+  let items : Array[@recipe.RecipeArg] = []
+  let mut next_offset = offset
+  for _ in 0..<shape[dimension] {
+    let (item, following_offset) = self.ndim_array_body(
+      data,
+      shape,
+      dimension + 1,
+      next_offset,
+    )
+    items.push(Ref(item))
+    next_offset = following_offset
+  }
+  (self.builder.list(items), next_offset)
+}
+
+///|
+fn TensorRecipeEncoder::array_expression(
+  self : TensorRecipeEncoder,
+  expression : @symtensor_array.ArrayExpr,
+) -> @recipe.ValueRef raise {
+  match expression {
+    Symbol(name, shape) =>
+      match shape {
+        None => {
+          let symbol = self.builder.getattr(self.sympy, "Symbol")
+          call_required(
+            self.builder,
+            symbol,
+            [Str(name)],
+            message="sympy-call-none:sympy.Symbol",
+          )
+        }
+        Some(items) => {
+          let dimensions : Array[@recipe.RecipeArg] = []
+          for item in items {
+            dimensions.push(Ref(self.expressions.encode(item)))
+          }
+          let shape_value = self.builder.tuple(dimensions)
+          let callable = self.builder.getattr(
+            self.array_expressions,
+            "ArraySymbol",
+          )
+          call_required(
+            self.builder,
+            callable,
+            [Str(name), Ref(shape_value)],
+            message="sympy-call-none:sympy.tensor.array.ArraySymbol",
+          )
+        }
+      }
+    Element(base, indices) => {
+      let values : Array[@recipe.RecipeArg] = []
+      for index in indices {
+        values.push(Ref(self.expressions.encode(index)))
+      }
+      let index_value = self.builder.tuple(values)
+      let callable = self.builder.getattr(
+        self.array_expressions,
+        "ArrayElement",
+      )
+      call_required(
+        self.builder,
+        callable,
+        [Ref(self.array_expression(base)), Ref(index_value)],
+        message="sympy-call-none:sympy.tensor.array.ArrayElement",
+      )
+    }
+    TensorProduct(items) => {
+      let args : Array[@recipe.RecipeArg] = []
+      for item in items {
+        args.push(Ref(self.array_expression(item)))
+      }
+      let callable = self.builder.getattr(
+        self.array_expressions,
+        "ArrayTensorProduct",
+      )
+      call_required(
+        self.builder,
+        callable,
+        args,
+        message="sympy-call-none:sympy.tensor.array.ArrayTensorProduct",
+      )
+    }
+    Contraction(base, axes) => {
+      let args : Array[@recipe.RecipeArg] = [Ref(self.array_expression(base))]
+      for axis in axes {
+        args.push(
+          Ref(
+            self.builder.tuple([
+              DecimalInt(axis.0.to_string()),
+              DecimalInt(axis.1.to_string()),
+            ]),
+          ),
+        )
+      }
+      let callable = self.builder.getattr(
+        self.array_expressions,
+        "ArrayContraction",
+      )
+      call_required(
+        self.builder,
+        callable,
+        args,
+        message="sympy-call-none:sympy.tensor.array.ArrayContraction",
+      )
+    }
+    Add(items) => {
+      let args : Array[@recipe.RecipeArg] = []
+      for item in items {
+        args.push(Ref(self.array_expression(item)))
+      }
+      let add = self.builder.getattr(self.sympy, "Add")
+      call_required(
+        self.builder,
+        add,
+        args,
+        message="sympy-call-none:sympy.Add",
+      )
+    }
+    Mul(items) => {
+      let args : Array[@recipe.RecipeArg] = []
+      for item in items {
+        args.push(Ref(self.array_expression(item)))
+      }
+      let mul = self.builder.getattr(self.sympy, "Mul")
+      call_required(
+        self.builder,
+        mul,
+        args,
+        message="sympy-call-none:sympy.Mul",
+      )
+    }
+  }
+}
+
+///|
+fn TensorRecipeEncoder::tensor_index_type(
+  self : TensorRecipeEncoder,
+  typ : @symtensor_tensor.TensorIndexType,
+) -> @recipe.ValueRef raise {
+  match self.type_cache.get(typ.name) {
+    Some(value) => value
+    None => {
+      let kwargs : Map[String, @recipe.RecipeArg] = Map([])
+      if typ.dummy_name != "" {
+        kwargs["dummy_name"] = Str(typ.dummy_name)
+      }
+      match typ.dim {
+        Some(dimension) =>
+          kwargs["dim"] = Ref(self.expressions.encode(dimension))
+        None => ()
+      }
+      let callable = self.builder.getattr(self.tensor, "TensorIndexType")
+      let value = call_required(
+        self.builder,
+        callable,
+        [Str(typ.name)],
+        kwargs~,
+        message="sympy-call-none:sympy.tensor.tensor.TensorIndexType",
+      )
+      self.type_cache[typ.name] = value
+      value
+    }
+  }
+}
+
+///|
+fn TensorRecipeEncoder::tensor_index(
+  self : TensorRecipeEncoder,
+  index : @symtensor_tensor.TensorIndex,
+) -> @recipe.ValueRef raise {
+  let callable = self.builder.getattr(self.tensor, "TensorIndex")
+  call_required(
+    self.builder,
+    callable,
+    [
+      Str(index.name),
+      Ref(self.tensor_index_type(index.index_type)),
+      Bool(index.is_up),
+    ],
+    message="sympy-call-none:sympy.tensor.tensor.TensorIndex",
+  )
+}
+
+///|
+fn TensorRecipeEncoder::tensor_head(
+  self : TensorRecipeEncoder,
+  head : @symtensor_tensor.TensorHead,
+) -> @recipe.ValueRef raise {
+  match self.head_cache.get(head.name) {
+    Some(value) => value
+    None => {
+      let types : Array[@recipe.RecipeArg] = []
+      for typ in head.index_types {
+        types.push(Ref(self.tensor_index_type(typ)))
+      }
+      let type_list = self.builder.list(types)
+      let callable = self.builder.getattr(self.tensor, "TensorHead")
+      let value = call_required(
+        self.builder,
+        callable,
+        [Str(head.name), Ref(type_list)],
+        message="sympy-call-none:sympy.tensor.tensor.TensorHead",
+      )
+      self.head_cache[head.name] = value
+      value
+    }
+  }
+}
+
+///|
+fn TensorRecipeEncoder::tensor_expression(
+  self : TensorRecipeEncoder,
+  expression : @symtensor_tensor.TensorExpr,
+) -> @recipe.ValueRef raise {
+  match expression {
+    Scalar(value) => self.expressions.encode(value)
+    Tensor(head, indices) => {
+      let args : Array[@recipe.RecipeArg] = []
+      for index in indices {
+        args.push(Ref(self.tensor_index(index)))
+      }
+      call_required(
+        self.builder,
+        self.tensor_head(head),
+        args,
+        message="py-call-none",
+      )
+    }
+    Add(items) => {
+      let args : Array[@recipe.RecipeArg] = []
+      for item in items {
+        args.push(Ref(self.tensor_expression(item)))
+      }
+      let add = self.builder.getattr(self.sympy, "Add")
+      call_required(
+        self.builder,
+        add,
+        args,
+        message="sympy-call-none:sympy.Add",
+      )
+    }
+    Mul(items) => {
+      let args : Array[@recipe.RecipeArg] = []
+      for item in items {
+        args.push(Ref(self.tensor_expression(item)))
+      }
+      let mul = self.builder.getattr(self.sympy, "Mul")
+      call_required(
+        self.builder,
+        mul,
+        args,
+        message="sympy-call-none:sympy.Mul",
+      )
+    }
+  }
+}
+
+///|
+fn TensorRecipeEncoder::partial_derivative(
+  self : TensorRecipeEncoder,
+  derivative : @symtensor_tensor.PartialDerivative,
+) -> @recipe.ValueRef raise {
+  let args : Array[@recipe.RecipeArg] = [
+    Ref(self.tensor_expression(derivative.expr)),
+  ]
+  for variable in derivative.variables {
+    args.push(Ref(self.tensor_expression(variable)))
+  }
+  let operators = self.builder.import_module("sympy.tensor.toperators")
+  let callable = self.builder.getattr(operators, "PartialDerivative")
+  call_required(
+    self.builder,
+    callable,
+    args,
+    message="sympy-call-none:sympy.tensor.toperators.PartialDerivative",
+  )
 }
 
 ///|
 pub fn indexed_str(item : @symtensor_indexed.Indexed) -> String raise {
-  py_str_obj(indexed_to_sympy(item))
+  let builder = @recipe.Builder::new()
+  let encoder = TensorRecipeEncoder::new(builder)
+  request_rendered(builder, encoder.sympy, encoder.indexed(item), "str")
 }
 
 ///|
 pub fn idx_latex(item : @symtensor_indexed.Idx) -> String raise {
-  py_str_enum(sympy_call_must("sympy.latex", [PyObj(idx_to_sympy(item))]))
+  let builder = @recipe.Builder::new()
+  let encoder = TensorRecipeEncoder::new(builder)
+  request_rendered(builder, encoder.sympy, encoder.idx(item), "latex")
 }
 
 ///|
 pub fn indexed_base_latex(
   base : @symtensor_indexed.IndexedBase,
 ) -> String raise {
-  py_str_enum(
-    sympy_call_must("sympy.latex", [PyObj(indexed_base_to_sympy(base))]),
-  )
+  let builder = @recipe.Builder::new()
+  let encoder = TensorRecipeEncoder::new(builder)
+  request_rendered(builder, encoder.sympy, encoder.indexed_base(base), "latex")
 }
 
 ///|
 pub fn indexed_latex(item : @symtensor_indexed.Indexed) -> String raise {
-  py_str_enum(sympy_call_must("sympy.latex", [PyObj(indexed_to_sympy(item))]))
+  let builder = @recipe.Builder::new()
+  let encoder = TensorRecipeEncoder::new(builder)
+  request_rendered(builder, encoder.sympy, encoder.indexed(item), "latex")
 }
 
 ///|
 pub fn indexed_srepr(item : @symtensor_indexed.Indexed) -> String raise {
-  let obj = indexed_to_sympy(item)
-  let srepr = sympy_call_must("sympy.srepr", [PyObj(obj)])
-  py_str_enum(srepr)
+  let builder = @recipe.Builder::new()
+  let encoder = TensorRecipeEncoder::new(builder)
+  request_rendered(builder, encoder.sympy, encoder.indexed(item), "srepr")
 }
 
 ///|
-fn array_to_sympy(arr : @symtensor_array.NDimArray) -> @py.PyObject raise {
-  let body = @symtensor_array.to_string(arr)
-  let expr = sympy_sympify_str("Array(" + body + ")")
-  objenum_to_obj(expr)
+pub fn array_str(array : @symtensor_array.NDimArray) -> String raise {
+  let builder = @recipe.Builder::new()
+  let encoder = TensorRecipeEncoder::new(builder)
+  request_rendered(builder, encoder.sympy, encoder.ndim_array(array), "str")
 }
 
 ///|
-pub fn array_str(arr : @symtensor_array.NDimArray) -> String raise {
-  py_str_obj(array_to_sympy(arr))
+pub fn array_latex(array : @symtensor_array.NDimArray) -> String raise {
+  let builder = @recipe.Builder::new()
+  let encoder = TensorRecipeEncoder::new(builder)
+  request_rendered(builder, encoder.sympy, encoder.ndim_array(array), "latex")
 }
 
 ///|
-pub fn array_latex(arr : @symtensor_array.NDimArray) -> String raise {
-  py_str_enum(sympy_call_must("sympy.latex", [PyObj(array_to_sympy(arr))]))
+pub fn array_srepr(array : @symtensor_array.NDimArray) -> String raise {
+  let builder = @recipe.Builder::new()
+  let encoder = TensorRecipeEncoder::new(builder)
+  request_rendered(builder, encoder.sympy, encoder.ndim_array(array), "srepr")
 }
 
 ///|
-pub fn array_srepr(arr : @symtensor_array.NDimArray) -> String raise {
-  let obj = array_to_sympy(arr)
-  let srepr = sympy_call_must("sympy.srepr", [PyObj(obj)])
-  py_str_enum(srepr)
-}
-
-///|
-fn array_expr_to_sympy(expr : @symtensor_array.ArrayExpr) -> @py.PyObject raise {
-  match expr {
-    Symbol(name, shape) =>
-      match shape {
-        None => objenum_to_obj(sympy_call_must("sympy.Symbol", [Str(name)]))
-        Some(items) => {
-          let shape_args : Array[OracleArg] = []
-          for item in items {
-            shape_args.push(PyObj(expr_to_sympy(item)))
-          }
-          let shape_obj = objenum_to_obj(
-            sympy_call_must("sympy.Tuple", shape_args),
-          )
-          objenum_to_obj(
-            sympy_call_must(
-              "sympy.tensor.array.expressions.array_expressions.ArraySymbol",
-              [Str(name), PyObj(shape_obj)],
-            ),
-          )
-        }
-      }
-    Element(base, indices) => {
-      let index_args : Array[OracleArg] = []
-      for item in indices {
-        index_args.push(PyObj(expr_to_sympy(item)))
-      }
-      let index_obj = objenum_to_obj(sympy_call_must("sympy.Tuple", index_args))
-      objenum_to_obj(
-        sympy_call_must(
-          "sympy.tensor.array.expressions.array_expressions.ArrayElement",
-          [PyObj(array_expr_to_sympy(base)), PyObj(index_obj)],
-        ),
-      )
-    }
-    TensorProduct(items) => {
-      let args : Array[OracleArg] = []
-      for item in items {
-        args.push(PyObj(array_expr_to_sympy(item)))
-      }
-      objenum_to_obj(
-        sympy_call_must(
-          "sympy.tensor.array.expressions.array_expressions.ArrayTensorProduct",
-          args,
-        ),
-      )
-    }
-    Contraction(base, axes) => {
-      let args : Array[OracleArg] = [PyObj(array_expr_to_sympy(base))]
-      for pair in axes {
-        let pair_obj = objenum_to_obj(
-          sympy_call_must("sympy.Tuple", [Int(pair.0), Int(pair.1)]),
-        )
-        args.push(PyObj(pair_obj))
-      }
-      objenum_to_obj(
-        sympy_call_must(
-          "sympy.tensor.array.expressions.array_expressions.ArrayContraction", args,
-        ),
-      )
-    }
-    Add(items) => {
-      let args : Array[OracleArg] = []
-      for item in items {
-        args.push(PyObj(array_expr_to_sympy(item)))
-      }
-      objenum_to_obj(sympy_call_must("sympy.Add", args))
-    }
-    Mul(items) => {
-      let args : Array[OracleArg] = []
-      for item in items {
-        args.push(PyObj(array_expr_to_sympy(item)))
-      }
-      objenum_to_obj(sympy_call_must("sympy.Mul", args))
-    }
-  }
-}
-
-///|
-pub fn array_expr_latex(expr : @symtensor_array.ArrayExpr) -> String raise {
-  py_str_enum(
-    sympy_call_must("sympy.latex", [PyObj(array_expr_to_sympy(expr))]),
+pub fn array_expr_latex(
+  expression : @symtensor_array.ArrayExpr,
+) -> String raise {
+  let builder = @recipe.Builder::new()
+  let encoder = TensorRecipeEncoder::new(builder)
+  request_rendered(
+    builder,
+    encoder.sympy,
+    encoder.array_expression(expression),
+    "latex",
   )
 }
 
 ///|
-fn call_obj(
-  obj : @py.PyObject,
-  args : Array[@py.PyObject],
-) -> @py.PyObject raise {
-  let callable = @py.PyCallable::create(obj) catch {
-    _ => fail("py-callable-create")
-  }
-  let tup = @sympy.py_tuple_from_objects(args)
-  match @sympy.py_call_object(callable, tup, print_err=true) {
-    Some(res) => objenum_to_obj(res)
-    None => fail("py-call-none")
-  }
-}
-
-///|
-fn tensor_index_type_to_sympy(
-  typ : @symtensor_tensor.TensorIndexType,
-  cache : Map[String, @py.PyObject],
-) -> @py.PyObject raise {
-  if cache.contains(typ.name) {
-    return cache[typ.name]
-  }
-  let args : Array[OracleArg] = [Str(typ.name)]
-  let kwargs : Map[String, OracleArg] = Map([])
-  if typ.dummy_name != "" {
-    kwargs["dummy_name"] = Str(typ.dummy_name)
-  }
-  match typ.dim {
-    Some(d) => kwargs["dim"] = PyObj(expr_to_sympy(d))
-    None => ()
-  }
-  let obj = objenum_to_obj(
-    sympy_call_must("sympy.tensor.tensor.TensorIndexType", args, kwargs~),
-  )
-  cache[typ.name] = obj
-  obj
-}
-
-///|
-fn tensor_index_to_sympy(
-  index : @symtensor_tensor.TensorIndex,
-  type_cache : Map[String, @py.PyObject],
-) -> @py.PyObject raise {
-  let typ_obj = tensor_index_type_to_sympy(index.index_type, type_cache)
-  let args : Array[OracleArg] = [
-    Str(index.name),
-    PyObj(typ_obj),
-    Bool(index.is_up),
-  ]
-  objenum_to_obj(sympy_call_must("sympy.tensor.tensor.TensorIndex", args))
-}
-
-///|
-fn tensor_head_to_sympy(
-  head : @symtensor_tensor.TensorHead,
-  type_cache : Map[String, @py.PyObject],
-  head_cache : Map[String, @py.PyObject],
-) -> @py.PyObject raise {
-  if head_cache.contains(head.name) {
-    return head_cache[head.name]
-  }
-  let type_args : Array[OracleArg] = Array::new()
-  for typ in head.index_types {
-    let obj = tensor_index_type_to_sympy(typ, type_cache)
-    type_args.push(PyObj(obj))
-  }
-  let args : Array[OracleArg] = [Str(head.name), List(type_args)]
-  let obj = objenum_to_obj(
-    sympy_call_must("sympy.tensor.tensor.TensorHead", args),
-  )
-  head_cache[head.name] = obj
-  obj
-}
-
-///|
-fn tensor_expr_to_sympy(
-  expr : @symtensor_tensor.TensorExpr,
-  type_cache : Map[String, @py.PyObject],
-  head_cache : Map[String, @py.PyObject],
-) -> @py.PyObject raise {
-  match expr {
-    Scalar(e) => expr_to_sympy(e)
-    Tensor(head, indices) => {
-      let head_obj = tensor_head_to_sympy(head, type_cache, head_cache)
-      let args : Array[@py.PyObject] = Array::new()
-      for idx in indices {
-        args.push(tensor_index_to_sympy(idx, type_cache))
-      }
-      call_obj(head_obj, args)
-    }
-    Add(items) => {
-      let args : Array[OracleArg] = Array::new()
-      for item in items {
-        let obj = tensor_expr_to_sympy(item, type_cache, head_cache)
-        args.push(PyObj(obj))
-      }
-      objenum_to_obj(sympy_call_must("sympy.Add", args))
-    }
-    Mul(items) => {
-      let args : Array[OracleArg] = Array::new()
-      for item in items {
-        let obj = tensor_expr_to_sympy(item, type_cache, head_cache)
-        args.push(PyObj(obj))
-      }
-      objenum_to_obj(sympy_call_must("sympy.Mul", args))
-    }
-  }
-}
-
-///|
-pub fn tensor_str(expr : @symtensor_tensor.TensorExpr) -> String raise {
-  let type_cache : Map[String, @py.PyObject] = Map([])
-  let head_cache : Map[String, @py.PyObject] = Map([])
-  py_str_obj(tensor_expr_to_sympy(expr, type_cache, head_cache))
-}
-
-///|
-pub fn tensor_latex(expr : @symtensor_tensor.TensorExpr) -> String raise {
-  let type_cache : Map[String, @py.PyObject] = Map([])
-  let head_cache : Map[String, @py.PyObject] = Map([])
-  py_str_enum(
-    sympy_call_must("sympy.latex", [
-      PyObj(tensor_expr_to_sympy(expr, type_cache, head_cache)),
-    ]),
+pub fn tensor_str(expression : @symtensor_tensor.TensorExpr) -> String raise {
+  let builder = @recipe.Builder::new()
+  let encoder = TensorRecipeEncoder::new(builder)
+  request_rendered(
+    builder,
+    encoder.sympy,
+    encoder.tensor_expression(expression),
+    "str",
   )
 }
 
 ///|
-pub fn tensor_srepr(expr : @symtensor_tensor.TensorExpr) -> String raise {
-  let type_cache : Map[String, @py.PyObject] = Map([])
-  let head_cache : Map[String, @py.PyObject] = Map([])
-  let obj = tensor_expr_to_sympy(expr, type_cache, head_cache)
-  let srepr = sympy_call_must("sympy.srepr", [PyObj(obj)])
-  py_str_enum(srepr)
+pub fn tensor_latex(expression : @symtensor_tensor.TensorExpr) -> String raise {
+  let builder = @recipe.Builder::new()
+  let encoder = TensorRecipeEncoder::new(builder)
+  request_rendered(
+    builder,
+    encoder.sympy,
+    encoder.tensor_expression(expression),
+    "latex",
+  )
 }
 
 ///|
-fn partial_derivative_to_sympy(
-  pd : @symtensor_tensor.PartialDerivative,
-) -> @py.PyObject raise {
-  let type_cache : Map[String, @py.PyObject] = Map([])
-  let head_cache : Map[String, @py.PyObject] = Map([])
-  let args : Array[OracleArg] = Array::new()
-  args.push(PyObj(tensor_expr_to_sympy(pd.expr, type_cache, head_cache)))
-  for v in pd.variables {
-    args.push(PyObj(tensor_expr_to_sympy(v, type_cache, head_cache)))
-  }
-  objenum_to_obj(
-    sympy_call_must("sympy.tensor.toperators.PartialDerivative", args),
+pub fn tensor_srepr(expression : @symtensor_tensor.TensorExpr) -> String raise {
+  let builder = @recipe.Builder::new()
+  let encoder = TensorRecipeEncoder::new(builder)
+  request_rendered(
+    builder,
+    encoder.sympy,
+    encoder.tensor_expression(expression),
+    "srepr",
   )
 }
 
 ///|
 pub fn partial_derivative_str(
-  pd : @symtensor_tensor.PartialDerivative,
+  derivative : @symtensor_tensor.PartialDerivative,
 ) -> String raise {
-  py_str_obj(partial_derivative_to_sympy(pd))
+  let builder = @recipe.Builder::new()
+  let encoder = TensorRecipeEncoder::new(builder)
+  request_rendered(
+    builder,
+    encoder.sympy,
+    encoder.partial_derivative(derivative),
+    "str",
+  )
 }
 
 ///|
 pub fn partial_derivative_latex(
-  pd : @symtensor_tensor.PartialDerivative,
+  derivative : @symtensor_tensor.PartialDerivative,
 ) -> String raise {
-  py_str_enum(
-    sympy_call_must("sympy.latex", [PyObj(partial_derivative_to_sympy(pd))]),
+  let builder = @recipe.Builder::new()
+  let encoder = TensorRecipeEncoder::new(builder)
+  request_rendered(
+    builder,
+    encoder.sympy,
+    encoder.partial_derivative(derivative),
+    "latex",
   )
 }
