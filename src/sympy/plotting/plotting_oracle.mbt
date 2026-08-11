@@ -1,90 +1,24 @@
 ///|
-fn plotting_python_string_literal(value : String) -> String {
-  "'" +
-  value
-  .replace(old="\\", new="\\\\")
-  .replace(old="'", new="\\'")
-  .replace(old="\n", new="\\n") +
-  "'"
+fn plotting_request_lines(
+  helper_source : String,
+  helper_name : String,
+  args : Array[@recipe.RecipeArg],
+) -> Array[String] raise {
+  let builder = @recipe.Builder::new()
+  let builtins = builder.import_module("builtins")
+  let scope = builder.dict([(Str("__builtins__"), Ref(builtins))])
+  let scope = builder.exec(scope, helper_source)
+  let helper = builder.getitem(scope, Str(helper_name))
+  let result = builder.call(helper, args)
+  builder
+  .request_str(result)
+  .split("\u001f")
+  .to_array()
+  .map(StringView::to_owned)
 }
 
 ///|
-fn plotting_py_callable_from_enum(
-  obj : @py.PyObjectEnum,
-) -> @py.PyCallable raise {
-  match obj {
-    PyCallable(callable) => callable
-    PyClass(obj0) =>
-      @py.PyCallable::create(obj0) catch {
-        _ => fail("py-callable")
-      }
-    _ =>
-      @py.PyCallable::create(@sympy.objenum_to_obj(obj)) catch {
-        _ => fail("py-callable")
-      }
-  }
-}
-
-///|
-fn plotting_py_str_obj(obj : @py.PyObject) -> String {
-  let state = @sympy.py_gil_ensure()
-  let text = obj.to_string()
-  @sympy.py_gil_release(state)
-  text
-}
-
-///|
-fn plotting_exec_result_str(script : String) -> String raise {
-  let state = @sympy.py_gil_ensure()
-  let result = try {
-    let builtins = match @py.pyimport("builtins") {
-      Some(mod) => mod
-      None => fail("py-builtins-missing")
-    }
-    let exec_obj = match builtins.get_attr("exec", print_err=true) {
-      Some(obj) => obj
-      None => fail("py-exec-missing")
-    }
-    let eval_obj = match builtins.get_attr("eval", print_err=true) {
-      Some(obj) => obj
-      None => fail("py-eval-missing")
-    }
-    let globals = @py.PyDict::new()
-    globals.set("__builtins__", builtins.obj())
-    let sympy_mod = match @py.pyimport("sympy") {
-      Some(mod) => mod.obj()
-      None => fail("py-sympy-missing")
-    }
-    globals.set("sympy", sympy_mod)
-    let exec_args = @sympy.py_pack_args([
-      Str(script),
-      PyObj(globals.obj()),
-      PyObj(globals.obj()),
-    ])
-    ignore(
-      @sympy.py_call_object(plotting_py_callable_from_enum(exec_obj), exec_args),
-    )
-    let eval_args = @sympy.py_pack_args([
-      Str("__result__"),
-      PyObj(globals.obj()),
-      PyObj(globals.obj()),
-    ])
-    match
-      @sympy.py_call_object(plotting_py_callable_from_enum(eval_obj), eval_args) {
-      Some(obj) => plotting_py_str_obj(@sympy.objenum_to_obj(obj))
-      None => fail("py-eval-result-none")
-    }
-  } catch {
-    err => {
-      @sympy.py_gil_release(state)
-      raise err
-    }
-  }
-  @sympy.py_gil_release(state)
-  result
-}
-
-///|
+/// Return SymPy's textplot rows for an expression and interval.
 pub fn oracle_textplot_lines(
   expr_text : String,
   a_text : String,
@@ -92,56 +26,47 @@ pub fn oracle_textplot_lines(
   width : Int,
   height : Int,
 ) -> Array[String] raise {
-  let script = "import warnings\n" +
-    "from sympy import sympify\n" +
-    "from sympy.plotting.textplot import textplot_str\n" +
-    "with warnings.catch_warnings():\n" +
-    "    warnings.simplefilter('ignore')\n" +
-    "    __result__ = chr(31).join(textplot_str(sympify(" +
-    plotting_python_string_literal(expr_text) +
-    "), sympify(" +
-    plotting_python_string_literal(a_text) +
-    "), sympify(" +
-    plotting_python_string_literal(b_text) +
-    "), " +
-    width.to_string() +
-    ", " +
-    height.to_string() +
-    "))\n"
-  plotting_exec_result_str(script)
-  .split("\u001f")
-  .to_array()
-  .map(StringView::to_owned)
+  let helper_source = "def _symbit_textplot_lines(expr_text, a_text, b_text, width, height):\n" +
+    "    import warnings\n" +
+    "    from sympy import sympify\n" +
+    "    from sympy.plotting.textplot import textplot_str\n" +
+    "    with warnings.catch_warnings():\n" +
+    "        warnings.simplefilter('ignore')\n" +
+    "        rows = textplot_str(sympify(expr_text), sympify(a_text), sympify(b_text), width, height)\n" +
+    "    return chr(31).join(rows)\n"
+  plotting_request_lines(helper_source, "_symbit_textplot_lines", [
+    Str(expr_text),
+    Str(a_text),
+    Str(b_text),
+    DecimalInt(width.to_string()),
+    DecimalInt(height.to_string()),
+  ])
 }
 
 ///|
+/// Return the rows printed by SymPy's text plotting backend.
 pub fn oracle_plot_text_lines(
   expr_text : String,
   var_text : String,
   a_text : String,
   b_text : String,
 ) -> Array[String] raise {
-  let script = "import io\n" +
-    "import warnings\n" +
-    "from contextlib import redirect_stdout\n" +
-    "from sympy import sympify\n" +
-    "from sympy.plotting import plot\n" +
-    "__buffer__ = io.StringIO()\n" +
-    "with warnings.catch_warnings():\n" +
-    "    warnings.simplefilter('ignore')\n" +
-    "    with redirect_stdout(__buffer__):\n" +
-    "        plot(sympify(" +
-    plotting_python_string_literal(expr_text) +
-    "), (sympify(" +
-    plotting_python_string_literal(var_text) +
-    "), sympify(" +
-    plotting_python_string_literal(a_text) +
-    "), sympify(" +
-    plotting_python_string_literal(b_text) +
-    ")), backend='text')\n" +
-    "__result__ = chr(31).join(__buffer__.getvalue().rstrip('\\n').splitlines())\n"
-  plotting_exec_result_str(script)
-  .split("\u001f")
-  .to_array()
-  .map(StringView::to_owned)
+  let helper_source = "def _symbit_plot_text_lines(expr_text, var_text, a_text, b_text):\n" +
+    "    import io\n" +
+    "    import warnings\n" +
+    "    from contextlib import redirect_stdout\n" +
+    "    from sympy import sympify\n" +
+    "    from sympy.plotting import plot\n" +
+    "    buffer = io.StringIO()\n" +
+    "    with warnings.catch_warnings():\n" +
+    "        warnings.simplefilter('ignore')\n" +
+    "        with redirect_stdout(buffer):\n" +
+    "            plot(sympify(expr_text), (sympify(var_text), sympify(a_text), sympify(b_text)), backend='text')\n" +
+    "    return chr(31).join(buffer.getvalue().rstrip('\\n').splitlines())\n"
+  plotting_request_lines(helper_source, "_symbit_plot_text_lines", [
+    Str(expr_text),
+    Str(var_text),
+    Str(a_text),
+    Str(b_text),
+  ])
 }
