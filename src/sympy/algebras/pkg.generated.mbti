@@ -3,7 +3,6 @@ package "CAIMEOX/symbit/sympy/algebras"
 
 import {
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/sympy",
 }
 
 // Values
@@ -36,7 +35,5 @@ pub fn quat_to_rotation_matrix(@symcore.Expr, @symcore.Expr, @symcore.Expr, @sym
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-

@@ -1,8 +1,7 @@
 import {
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/sympy",
-  "Kaida-Amethyst/python" @py,
-  "Kaida-Amethyst/python/cpython",
+  "CAIMEOX/symbit/sympy/exprcodec",
+  "CAIMEOX/symbit/sympy/recipe",
 }
 
 import {

@@ -1,204 +1,140 @@
 ///|
-pub type OracleArg = @sympy.OracleArg
-
-///|
-fn sympy_call(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum? raise {
-  @sympy.sympy_call(path, args, kwargs~)
+fn sympy_call_required(
+  builder : @recipe.Builder,
+  callable : @recipe.ValueRef,
+  args : Array[@recipe.RecipeArg],
+  message : String,
+) -> @recipe.ValueRef raise {
+  builder.require_non_none(builder.call(callable, args), message~)
 }
 
 ///|
-fn sympy_call_must(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum raise {
-  match sympy_call(path, args, kwargs~) {
-    Some(obj) => obj
-    None => fail("sympy-call-none:\{path}")
-  }
-}
-
-///|
-fn ensure_sympy_module() -> @py.PyModule raise {
-  match @py.pyimport("sympy") {
-    Some(mod) => mod
-    None => fail("sympy-missing:sympy")
-  }
-}
-
-///|
-fn sympy_attr_obj(name : String) -> @py.PyObject raise {
-  let sympy = ensure_sympy_module()
-  match sympy.get_attr(name, print_err=false) {
-    Some(obj) => objenum_to_obj(obj)
-    None => fail("sympy-missing:sympy.\{name}")
-  }
-}
-
-///|
-fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
-  @sympy.expr_to_sympy(expr)
-}
-
-///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
-}
-
-///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
-}
-
-///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
-}
-
-///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let s = obj.to_string()
-  py_gil_release(state)
-  s
-}
-
-///|
-fn py_str_enum(obj : @py.PyObjectEnum) -> String {
-  py_str_obj(objenum_to_obj(obj))
-}
-
-///|
-fn resolve_method_callable(
-  obj : @py.PyObject,
-  name : String,
-) -> @py.PyCallable raise {
-  let state = py_gil_ensure()
-  let res = try {
-    match obj.get_attr(name, print_err=false) {
-      Some(PyCallable(callable)) => callable
-      Some(PyClass(obj0)) =>
-        @py.PyCallable::create(obj0) catch {
-          _ => fail("sympy-oracle-callable")
-        }
-      Some(other) =>
-        @py.PyCallable::create(objenum_to_obj(other)) catch {
-          _ => fail("sympy-oracle-callable")
-        }
-      None => fail("sympy-oracle-missing:\{name}")
-    }
-  } catch {
-    e => {
-      py_gil_release(state)
-      raise e
-    }
-  }
-  @cpython.py_incref(res.obj_ref())
-  py_gil_release(state)
-  res
-}
-
-///|
-fn py_call_with_args(
-  callable : @py.PyCallable,
-  args : Array[OracleArg],
-) -> @py.PyObjectEnum raise {
-  let tup = @sympy.py_pack_args(args)
-  match @sympy.py_call_object(callable, tup, print_err=true) {
-    Some(obj) => obj
-    None => fail("sympy-oracle-call-none")
-  }
-}
-
-///|
-fn py_call_noargs(callable : @py.PyCallable) -> @py.PyObjectEnum raise {
-  py_call_with_args(callable, [])
-}
-
-///|
-fn py_call_one(
-  callable : @py.PyCallable,
-  arg : @py.PyObject,
-) -> @py.PyObjectEnum raise {
-  py_call_with_args(callable, [PyObj(arg)])
-}
-
-///|
-fn py_list_to_pyobjects(value : @py.PyObjectEnum) -> Array[@py.PyObject] raise {
-  let state = py_gil_ensure()
-  let out : Array[@py.PyObject] = Array::new()
-  let res = try {
-    match value {
-      PyList(list) => {
-        let len = list.len()
-        for i in 0..<len {
-          match list.get(i) {
-            Some(item) => out.push(objenum_to_obj(item))
-            None => ()
-          }
-        }
-        out
-      }
-      PyTuple(tup) => {
-        let len = tup.len().to_int()
-        for i in 0..<len {
-          match tup.get(i) {
-            Some(item) => out.push(objenum_to_obj(item))
-            None => ()
-          }
-        }
-        out
-      }
-      _ => fail("expected list/tuple")
-    }
-  } catch {
-    e => {
-      py_gil_release(state)
-      raise e
-    }
-  }
-  py_gil_release(state)
-  res
-}
-
-///|
-fn quat_obj(
+fn quaternion_value(
+  builder : @recipe.Builder,
+  encoder : @exprcodec.Encoder,
+  sympy : @recipe.ValueRef,
   a : @symcore.Expr,
   b : @symcore.Expr,
   c : @symcore.Expr,
   d : @symcore.Expr,
-) -> @py.PyObject raise {
-  let res = sympy_call_must("sympy.Quaternion", [
-    PyObj(expr_to_sympy(a)),
-    PyObj(expr_to_sympy(b)),
-    PyObj(expr_to_sympy(c)),
-    PyObj(expr_to_sympy(d)),
-  ])
-  objenum_to_obj(res)
+) -> @recipe.ValueRef raise {
+  let quaternion = builder.getattr(sympy, "Quaternion")
+  sympy_call_required(
+    builder,
+    quaternion,
+    [
+      Ref(encoder.encode(a)),
+      Ref(encoder.encode(b)),
+      Ref(encoder.encode(c)),
+      Ref(encoder.encode(d)),
+    ],
+    "sympy-call-none:sympy.Quaternion",
+  )
 }
 
 ///|
-fn quat_components(obj : @py.PyObject) -> Array[String] raise {
-  let names = ["a", "b", "c", "d"]
-  let out : Array[String] = Array::new()
-  for name in names {
-    match obj.get_attr(name, print_err=false) {
-      Some(v) => out.push(py_str_enum(v))
-      None => fail("quat-attr-missing:\{name}")
+fn request_string_array(
+  builder : @recipe.Builder,
+  value : @recipe.ValueRef,
+) -> Array[String] raise {
+  match builder.request(value, List(Str)) {
+    Array(items) => {
+      let result : Array[String] = []
+      for item in items {
+        match item {
+          String(text) => result.push(text)
+          other =>
+            fail("expected string array item, received " + other.stringify())
+        }
+      }
+      result
     }
+    other => fail("expected string array, received " + other.stringify())
   }
-  out
+}
+
+///|
+fn quaternion_components(
+  builder : @recipe.Builder,
+  quaternion : @recipe.ValueRef,
+) -> Array[String] raise {
+  let components = builder.list([
+    Ref(builder.getattr(quaternion, "a")),
+    Ref(builder.getattr(quaternion, "b")),
+    Ref(builder.getattr(quaternion, "c")),
+    Ref(builder.getattr(quaternion, "d")),
+  ])
+  request_string_array(builder, components)
+}
+
+///|
+fn quaternion_unary_components(
+  method_name : String,
+  a : @symcore.Expr,
+  b : @symcore.Expr,
+  c : @symcore.Expr,
+  d : @symcore.Expr,
+) -> Array[String] raise {
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let quaternion = quaternion_value(builder, encoder, sympy, a, b, c, d)
+  let callable = builder.getattr(quaternion, method_name)
+  let result = sympy_call_required(
+    builder,
+    callable,
+    [],
+    "sympy-oracle-call-none",
+  )
+  quaternion_components(builder, result)
+}
+
+///|
+fn quaternion_binary_components(
+  method_name : String,
+  a1 : @symcore.Expr,
+  b1 : @symcore.Expr,
+  c1 : @symcore.Expr,
+  d1 : @symcore.Expr,
+  a2 : @symcore.Expr,
+  b2 : @symcore.Expr,
+  c2 : @symcore.Expr,
+  d2 : @symcore.Expr,
+) -> Array[String] raise {
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let lhs = quaternion_value(builder, encoder, sympy, a1, b1, c1, d1)
+  let rhs = quaternion_value(builder, encoder, sympy, a2, b2, c2, d2)
+  let callable = builder.getattr(lhs, method_name)
+  let result = sympy_call_required(
+    builder,
+    callable,
+    [Ref(rhs)],
+    "sympy-oracle-call-none",
+  )
+  quaternion_components(builder, result)
 }
 
 ///|
 pub fn expr_equal(lhs : String, rhs : String) -> Bool raise {
-  let diff = sympy_call_must("sympy.sympify", [Str("(\{lhs}) - (\{rhs})")])
-  let res = sympy_call_must("sympy.simplify", [PyObj(objenum_to_obj(diff))])
-  py_str_enum(res) == "0"
+  let builder = @recipe.Builder::new()
+  let sympy = builder.import_module("sympy")
+  let sympify = builder.getattr(sympy, "sympify")
+  let difference = sympy_call_required(
+    builder,
+    sympify,
+    [Str("(\{lhs}) - (\{rhs})")],
+    "sympy-call-none:sympy.sympify",
+  )
+  let simplify = builder.getattr(sympy, "simplify")
+  let result = sympy_call_required(
+    builder,
+    simplify,
+    [Ref(difference)],
+    "sympy-call-none:sympy.simplify",
+  )
+  builder.request_str(result) == "0"
 }
 
 ///|
@@ -212,11 +148,7 @@ pub fn quat_add(
   c2 : @symcore.Expr,
   d2 : @symcore.Expr,
 ) -> Array[String] raise {
-  let q1 = quat_obj(a1, b1, c1, d1)
-  let q2 = quat_obj(a2, b2, c2, d2)
-  let add = resolve_method_callable(q1, "add")
-  let res = py_call_one(add, q2)
-  quat_components(objenum_to_obj(res))
+  quaternion_binary_components("add", a1, b1, c1, d1, a2, b2, c2, d2)
 }
 
 ///|
@@ -230,11 +162,7 @@ pub fn quat_mul(
   c2 : @symcore.Expr,
   d2 : @symcore.Expr,
 ) -> Array[String] raise {
-  let q1 = quat_obj(a1, b1, c1, d1)
-  let q2 = quat_obj(a2, b2, c2, d2)
-  let mul = resolve_method_callable(q1, "mul")
-  let res = py_call_one(mul, q2)
-  quat_components(objenum_to_obj(res))
+  quaternion_binary_components("mul", a1, b1, c1, d1, a2, b2, c2, d2)
 }
 
 ///|
@@ -244,9 +172,18 @@ pub fn quat_conjugate(
   c : @symcore.Expr,
   d : @symcore.Expr,
 ) -> Array[String] raise {
-  let q = quat_obj(a, b, c, d)
-  let res = sympy_call_must("sympy.conjugate", [PyObj(q)])
-  quat_components(objenum_to_obj(res))
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let quaternion = quaternion_value(builder, encoder, sympy, a, b, c, d)
+  let conjugate = builder.getattr(sympy, "conjugate")
+  let result = sympy_call_required(
+    builder,
+    conjugate,
+    [Ref(quaternion)],
+    "sympy-call-none:sympy.conjugate",
+  )
+  quaternion_components(builder, result)
 }
 
 ///|
@@ -256,10 +193,13 @@ pub fn quat_norm(
   c : @symcore.Expr,
   d : @symcore.Expr,
 ) -> String raise {
-  let q = quat_obj(a, b, c, d)
-  let norm = resolve_method_callable(q, "norm")
-  let res = py_call_noargs(norm)
-  py_str_enum(res)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let quaternion = quaternion_value(builder, encoder, sympy, a, b, c, d)
+  let norm = builder.getattr(quaternion, "norm")
+  let result = sympy_call_required(builder, norm, [], "sympy-oracle-call-none")
+  builder.request_str(result)
 }
 
 ///|
@@ -269,10 +209,7 @@ pub fn quat_inverse(
   c : @symcore.Expr,
   d : @symcore.Expr,
 ) -> Array[String] raise {
-  let q = quat_obj(a, b, c, d)
-  let inv = resolve_method_callable(q, "inverse")
-  let res = py_call_noargs(inv)
-  quat_components(objenum_to_obj(res))
+  quaternion_unary_components("inverse", a, b, c, d)
 }
 
 ///|
@@ -283,11 +220,18 @@ pub fn quat_pow(
   d : @symcore.Expr,
   p : Int,
 ) -> Array[String] raise {
-  let q = quat_obj(a, b, c, d)
-  let pow = resolve_method_callable(q, "pow")
-  let p_obj = @sympy.py_pack(Int(p))
-  let res = py_call_one(pow, p_obj)
-  quat_components(objenum_to_obj(res))
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let quaternion = quaternion_value(builder, encoder, sympy, a, b, c, d)
+  let pow = builder.getattr(quaternion, "pow")
+  let result = sympy_call_required(
+    builder,
+    pow,
+    [DecimalInt(p.to_string())],
+    "sympy-oracle-call-none",
+  )
+  quaternion_components(builder, result)
 }
 
 ///|
@@ -297,10 +241,7 @@ pub fn quat_exp(
   c : @symcore.Expr,
   d : @symcore.Expr,
 ) -> Array[String] raise {
-  let q = quat_obj(a, b, c, d)
-  let exp = resolve_method_callable(q, "exp")
-  let res = py_call_noargs(exp)
-  quat_components(objenum_to_obj(res))
+  quaternion_unary_components("exp", a, b, c, d)
 }
 
 ///|
@@ -310,10 +251,7 @@ pub fn quat_log(
   c : @symcore.Expr,
   d : @symcore.Expr,
 ) -> Array[String] raise {
-  let q = quat_obj(a, b, c, d)
-  let log = resolve_method_callable(q, "log")
-  let res = py_call_noargs(log)
-  quat_components(objenum_to_obj(res))
+  quaternion_unary_components("log", a, b, c, d)
 }
 
 ///|
@@ -323,20 +261,23 @@ pub fn quat_from_axis_angle(
   z : @symcore.Expr,
   angle : @symcore.Expr,
 ) -> Array[String] raise {
-  let qcls = sympy_attr_obj("Quaternion")
-  let from_axis = resolve_method_callable(qcls, "from_axis_angle")
-  let vec = @sympy.py_pack(
-    List([
-      PyObj(expr_to_sympy(x)),
-      PyObj(expr_to_sympy(y)),
-      PyObj(expr_to_sympy(z)),
-    ]),
-  )
-  let res = py_call_with_args(from_axis, [
-    PyObj(vec),
-    PyObj(expr_to_sympy(angle)),
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let quaternion = builder.getattr(sympy, "Quaternion")
+  let from_axis_angle = builder.getattr(quaternion, "from_axis_angle")
+  let axis = builder.list([
+    Ref(encoder.encode(x)),
+    Ref(encoder.encode(y)),
+    Ref(encoder.encode(z)),
   ])
-  quat_components(objenum_to_obj(res))
+  let result = sympy_call_required(
+    builder,
+    from_axis_angle,
+    [Ref(axis), Ref(encoder.encode(angle))],
+    "sympy-oracle-call-none",
+  )
+  quaternion_components(builder, result)
 }
 
 ///|
@@ -346,34 +287,25 @@ pub fn quat_to_axis_angle(
   c : @symcore.Expr,
   d : @symcore.Expr,
 ) -> Array[String] raise {
-  let q = quat_obj(a, b, c, d)
-  let call = resolve_method_callable(q, "to_axis_angle")
-  let res = py_call_noargs(call)
-  let items = py_list_to_pyobjects(res)
-  guard items.length() == 2 else { fail("axis-angle-arity") }
-  let axis_items = py_list_to_pyobjects(@py.PyObjectEnum::create(items[0]))
-  guard axis_items.length() == 3 else { fail("axis-angle-axis") }
-  [
-    py_str_obj(axis_items[0]),
-    py_str_obj(axis_items[1]),
-    py_str_obj(axis_items[2]),
-    py_str_obj(items[1]),
-  ]
-}
-
-///|
-fn matrix_to_strings(mat : @py.PyObject) -> Array[String] raise {
-  let tolist = resolve_method_callable(mat, "tolist")
-  let list_enum = py_call_noargs(tolist)
-  let rows = py_list_to_pyobjects(list_enum)
-  let out : Array[String] = Array::new()
-  for row in rows {
-    let row_items = py_list_to_pyobjects(@py.PyObjectEnum::create(row))
-    for item in row_items {
-      out.push(py_str_obj(item))
-    }
-  }
-  out
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let quaternion = quaternion_value(builder, encoder, sympy, a, b, c, d)
+  let to_axis_angle = builder.getattr(quaternion, "to_axis_angle")
+  let result = sympy_call_required(
+    builder,
+    to_axis_angle,
+    [],
+    "sympy-oracle-call-none",
+  )
+  let axis = builder.getitem(result, DecimalInt("0"))
+  let values = builder.list([
+    Ref(builder.getitem(axis, DecimalInt("0"))),
+    Ref(builder.getitem(axis, DecimalInt("1"))),
+    Ref(builder.getitem(axis, DecimalInt("2"))),
+    Ref(builder.getitem(result, DecimalInt("1"))),
+  ])
+  request_string_array(builder, values)
 }
 
 ///|
@@ -383,8 +315,27 @@ pub fn quat_to_rotation_matrix(
   c : @symcore.Expr,
   d : @symcore.Expr,
 ) -> Array[String] raise {
-  let q = quat_obj(a, b, c, d)
-  let call = resolve_method_callable(q, "to_rotation_matrix")
-  let res = py_call_noargs(call)
-  matrix_to_strings(objenum_to_obj(res))
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let quaternion = quaternion_value(builder, encoder, sympy, a, b, c, d)
+  let to_rotation_matrix = builder.getattr(quaternion, "to_rotation_matrix")
+  let matrix = sympy_call_required(
+    builder,
+    to_rotation_matrix,
+    [],
+    "sympy-oracle-call-none",
+  )
+  let tolist = builder.getattr(matrix, "tolist")
+  let rows = sympy_call_required(builder, tolist, [], "sympy-oracle-call-none")
+  let builtins = builder.import_module("builtins")
+  let sum = builder.getattr(builtins, "sum")
+  let empty = builder.list([])
+  let flattened = sympy_call_required(
+    builder,
+    sum,
+    [Ref(rows), Ref(empty)],
+    "sympy-oracle-call-none",
+  )
+  request_string_array(builder, flattened)
 }
