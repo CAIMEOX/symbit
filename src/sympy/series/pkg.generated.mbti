@@ -3,7 +3,6 @@ package "CAIMEOX/symbit/sympy/series"
 
 import {
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/sympy",
 }
 
 // Values
@@ -50,7 +49,5 @@ pub fn sympy_simplify_str(String) -> String raise
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-
