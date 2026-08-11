@@ -1,0 +1,10 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/sympy/recipe",
+}
+
+supported_targets = "native"
+
+options(
+  targets: { "*.mbt": [ "native" ] },
+)

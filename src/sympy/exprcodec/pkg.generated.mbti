@@ -1,0 +1,29 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/exprcodec"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/sympy/recipe",
+}
+
+// Values
+pub fn encode_expr(@recipe.Builder, @symcore.Expr) -> @recipe.ValueRef raise
+
+// Errors
+pub(all) suberror ExprCodecError {
+  DummyIdConflict(Int, String, String)
+}
+
+// Types and methods
+pub struct Encoder {
+  builder : @recipe.Builder
+  sympy : @recipe.ValueRef
+  dummy_cache : Map[Int, (String, @recipe.ValueRef)]
+  wild_cache : Map[@symcore.Expr, @recipe.ValueRef]
+}
+pub fn Encoder::encode(Self, @symcore.Expr) -> @recipe.ValueRef raise
+pub fn Encoder::new(@recipe.Builder) -> Self raise
+
+// Type aliases
+
+// Traits
