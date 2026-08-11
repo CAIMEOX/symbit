@@ -3,38 +3,41 @@
 
 ///|
 pub fn dpll_satisfiable_str(expr : String) -> String raise {
-  let expr_obj = sympy_expr(expr)
-  let res = sympy_call_must("sympy.logic.algorithms.dpll.dpll_satisfiable", [
-    PyObj(objenum_to_obj(expr_obj)),
-  ])
-  py_str_enum(res)
+  let builder = @recipe.Builder::new()
+  let expression = logic_sympy_expr(builder, expr)
+  let result = logic_call(
+    builder,
+    "sympy.logic.algorithms.dpll",
+    "dpll_satisfiable",
+    [Ref(expression)],
+  )
+  builder.request_str(result)
 }
 
 ///|
 pub fn dpll2_satisfiable_str(expr : String) -> String raise {
-  let expr_obj = sympy_expr(expr)
-  let res = sympy_call_must("sympy.logic.algorithms.dpll2.dpll_satisfiable", [
-    PyObj(objenum_to_obj(expr_obj)),
-  ])
-  py_str_enum(res)
+  let builder = @recipe.Builder::new()
+  let expression = logic_sympy_expr(builder, expr)
+  let result = logic_call(
+    builder,
+    "sympy.logic.algorithms.dpll2",
+    "dpll_satisfiable",
+    [Ref(expression)],
+  )
+  builder.request_str(result)
 }
 
 ///|
 pub fn dpll2_all_models_str(expr : String) -> String raise {
-  let expr_obj = sympy_expr(expr)
-  let kwargs : Map[String, OracleArg] = { "all_models": Bool(true) }
-  let res = sympy_call_must(
-    "sympy.logic.algorithms.dpll2.dpll_satisfiable",
-    [PyObj(objenum_to_obj(expr_obj))],
-    kwargs~,
+  let builder = @recipe.Builder::new()
+  let expression = logic_sympy_expr(builder, expr)
+  let result = logic_call(
+    builder,
+    "sympy.logic.algorithms.dpll2",
+    "dpll_satisfiable",
+    [Ref(expression)],
+    kwargs={ "all_models": Bool(true) },
   )
-  let res_str = py_str_enum(res)
-  if res_str == "False" {
-    return "[False]"
-  }
-  let to_list = py_eval_callable("lambda it: list(it)")
-  let list_res = py_call_with_args(to_list, [PyObj(objenum_to_obj(res))])
-  let items = py_list_to_strings(list_res)
-  items.sort()
-  list_string(items)
+  let result = logic_sorted_list_string(builder, result)
+  builder.request_str(result)
 }

@@ -1,10 +1,6 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "CAIMEOX/symbit/sympy/logic"
 
-import {
-  "CAIMEOX/symbit/sympy",
-}
-
 // Values
 pub fn boolalg_anf_form(Array[String], Array[Int]) -> String raise
 
@@ -85,7 +81,5 @@ pub fn propkb_retract_clauses_str(Array[String], String) -> String raise
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-
