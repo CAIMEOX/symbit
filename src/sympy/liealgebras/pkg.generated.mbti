@@ -1,10 +1,6 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "CAIMEOX/symbit/sympy/liealgebras"
 
-import {
-  "CAIMEOX/symbit/sympy",
-}
-
 // Values
 pub fn cartan_matrix_list_str(String) -> String raise
 
@@ -55,7 +51,5 @@ pub fn weyl_group_matrix_form_list_str(String, String) -> String raise
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-
