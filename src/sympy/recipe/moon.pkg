@@ -1,0 +1,10 @@
+import {
+  "CAIMEOX/symbit/sympy/runtime",
+  "moonbitlang/core/json",
+}
+
+supported_targets = "native"
+
+options(
+  targets: { "*.mbt": [ "native" ] },
+)

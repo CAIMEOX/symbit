@@ -1,0 +1,84 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/recipe"
+
+import {
+  "moonbitlang/core/ref",
+}
+
+// Values
+
+// Errors
+pub(all) suberror RecipeError {
+  ForeignReference
+  BuilderClosed
+  RecursiveCodec
+  CodecTooDeep
+  UnexpectedResult(String)
+}
+
+// Types and methods
+pub struct Builder {
+  owner : @ref.Ref[Unit]
+  nodes : Array[Json]
+  mut closed : Bool
+}
+pub fn Builder::bind(Self, ValueRef, String, RecipeArg) -> ValueRef raise RecipeError
+pub fn Builder::call(Self, ValueRef, Array[RecipeArg], kwargs? : Map[String, RecipeArg]) -> ValueRef raise RecipeError
+pub fn Builder::dict(Self, Array[(RecipeArg, RecipeArg)]) -> ValueRef raise RecipeError
+pub fn Builder::eval(Self, ValueRef, String) -> ValueRef raise RecipeError
+pub fn Builder::exec(Self, ValueRef, String) -> ValueRef raise RecipeError
+pub fn Builder::frozenset(Self, Array[RecipeArg]) -> ValueRef raise RecipeError
+pub fn Builder::getattr(Self, ValueRef, String) -> ValueRef raise RecipeError
+pub fn Builder::getitem(Self, ValueRef, RecipeArg) -> ValueRef raise RecipeError
+pub fn Builder::import_module(Self, String) -> ValueRef raise RecipeError
+pub fn Builder::list(Self, Array[RecipeArg]) -> ValueRef raise RecipeError
+pub fn Builder::new() -> Self
+pub fn Builder::request(Self, ValueRef, ResultCodec) -> Json raise
+pub fn Builder::request_bool(Self, ValueRef) -> Bool raise
+pub fn Builder::request_discard(Self, ValueRef) -> Unit raise
+pub fn Builder::request_float(Self, ValueRef) -> String raise
+pub fn Builder::request_int(Self, ValueRef) -> String raise
+pub fn Builder::request_json(Self, ValueRef) -> Json raise
+pub fn Builder::request_none(Self, ValueRef) -> Unit raise
+pub fn Builder::request_repr(Self, ValueRef) -> String raise
+pub fn Builder::request_srepr(Self, ValueRef) -> String raise
+pub fn Builder::request_str(Self, ValueRef) -> String raise
+pub fn Builder::require_non_none(Self, ValueRef, message? : String) -> ValueRef raise RecipeError
+pub fn Builder::set(Self, Array[RecipeArg]) -> ValueRef raise RecipeError
+pub fn Builder::sympy_scope(Self) -> ValueRef raise RecipeError
+pub fn Builder::tuple(Self, Array[RecipeArg]) -> ValueRef raise RecipeError
+pub fn Builder::value(Self, RecipeArg) -> ValueRef raise RecipeError
+
+pub(all) enum RecipeArg {
+  Ref(ValueRef)
+  Null
+  Bool(Bool)
+  Str(String)
+  DecimalInt(String)
+  DecimalFloat(String)
+}
+
+pub(all) enum ResultCodec {
+  Discard
+  NoneValue
+  Str
+  Repr
+  Srepr
+  Bool
+  Int
+  Float
+  Json
+  Optional(ResultCodec)
+  List(ResultCodec)
+  Tuple(Array[ResultCodec])
+  DictPairs(ResultCodec, ResultCodec)
+}
+
+pub struct ValueRef {
+  id : Int
+  owner : @ref.Ref[Unit]
+}
+
+// Type aliases
+
+// Traits
