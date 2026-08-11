@@ -1,177 +1,117 @@
 ///|
-pub type OracleArg = @sympy.OracleArg
+/// Request-scoped oracle helpers for SymPy calculus.
 
 ///|
-fn sympy_call(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum? raise {
-  @sympy.sympy_call(path, args, kwargs~)
+fn required_call(
+  builder : @recipe.Builder,
+  callable : @recipe.ValueRef,
+  arguments : Array[@recipe.RecipeArg],
+  message : String,
+) -> @recipe.ValueRef raise {
+  builder.require_non_none(builder.call(callable, arguments), message~)
 }
 
 ///|
-fn sympy_call_must(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum raise {
-  match sympy_call(path, args, kwargs~) {
-    Some(obj) => obj
-    None => fail("sympy-call-none:\{path}")
-  }
-}
-
-///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
-}
-
-///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
-}
-
-///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
-}
-
-///|
-fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
-  @sympy.expr_to_sympy(expr)
-}
-
-///|
-fn sympy_number_obj(n : @symnum.BigRational) -> @py.PyObject raise {
-  @sympy.sympy_number_obj(n)
-}
-
-///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let s = obj.to_string()
-  py_gil_release(state)
-  s
-}
-
-///|
-fn py_str_enum(obj : @py.PyObjectEnum) -> String {
-  py_str_obj(objenum_to_obj(obj))
-}
-
-///|
-fn py_list_from_objects(values : Array[@py.PyObject]) -> @py.PyList {
-  let state = py_gil_ensure()
-  let list = @py.PyList::new()
-  for v in values {
-    list.append(v)
-  }
-  py_gil_release(state)
-  list
-}
-
-///|
-fn py_list_to_pyobjects(value : @py.PyObjectEnum) -> Array[@py.PyObject] raise {
-  let state = py_gil_ensure()
-  let out : Array[@py.PyObject] = Array::new()
-  let res = try {
-    match value {
-      PyList(list) => {
-        let len = list.len()
-        for i in 0..<len {
-          match list.get(i) {
-            Some(item) => out.push(objenum_to_obj(item))
-            None => ()
-          }
-        }
-        out
-      }
-      PyTuple(tup) => {
-        let len = tup.len().to_int()
-        for i in 0..<len {
-          match tup.get(i) {
-            Some(item) => out.push(objenum_to_obj(item))
-            None => ()
-          }
-        }
-        out
-      }
-      _ => fail("expected list/tuple")
-    }
-  } catch {
-    e => {
-      py_gil_release(state)
-      raise e
-    }
-  }
-  py_gil_release(state)
-  res
-}
-
-///|
-fn resolve_method_callable(
-  obj : @py.PyObject,
+fn sympy_callable(
+  builder : @recipe.Builder,
+  sympy : @recipe.ValueRef,
   name : String,
-) -> @py.PyCallable raise {
-  let state = py_gil_ensure()
-  let res = try {
-    match obj.get_attr(name, print_err=false) {
-      Some(PyCallable(callable)) => callable
-      Some(PyClass(obj0)) =>
-        @py.PyCallable::create(obj0) catch {
-          _ => fail("sympy-oracle-callable")
-        }
-      Some(other) =>
-        @py.PyCallable::create(objenum_to_obj(other)) catch {
-          _ => fail("sympy-oracle-callable")
-        }
-      None => fail("sympy-oracle-missing:\{name}")
-    }
-  } catch {
-    e => {
-      py_gil_release(state)
-      raise e
-    }
+) -> @recipe.ValueRef raise {
+  builder.getattr(sympy, name)
+}
+
+///|
+fn module_callable(
+  builder : @recipe.Builder,
+  module_name : String,
+  name : String,
+) -> @recipe.ValueRef raise {
+  let module_value = builder.import_module(module_name)
+  builder.getattr(module_value, name)
+}
+
+///|
+fn encode_expr_list(
+  builder : @recipe.Builder,
+  encoder : @exprcodec.Encoder,
+  values : Array[@symcore.Expr],
+) -> @recipe.ValueRef raise {
+  let items : Array[@recipe.RecipeArg] = []
+  for value in values {
+    items.push(Ref(encoder.encode(value)))
   }
-  @cpython.py_incref(res.obj_ref())
-  py_gil_release(state)
-  res
+  builder.list(items)
 }
 
 ///|
-fn py_call_with_args(
-  callable : @py.PyCallable,
-  args : Array[OracleArg],
-) -> @py.PyObjectEnum raise {
-  let tup = @sympy.py_pack_args(args)
-  match @sympy.py_call_object(callable, tup, print_err=true) {
-    Some(obj) => obj
-    None => fail("sympy-oracle-call-none")
+fn encode_rational(
+  encoder : @exprcodec.Encoder,
+  value : @symnum.BigRational,
+) -> @recipe.ValueRef raise {
+  encoder.encode(Number(value))
+}
+
+///|
+fn encode_rational_list(
+  builder : @recipe.Builder,
+  encoder : @exprcodec.Encoder,
+  values : Array[@symnum.BigRational],
+) -> @recipe.ValueRef raise {
+  let items : Array[@recipe.RecipeArg] = []
+  for value in values {
+    items.push(Ref(encode_rational(encoder, value)))
   }
+  builder.list(items)
 }
 
 ///|
-fn py_call_noargs(callable : @py.PyCallable) -> @py.PyObjectEnum raise {
-  py_call_with_args(callable, [])
+fn accum_bounds_value(
+  builder : @recipe.Builder,
+  encoder : @exprcodec.Encoder,
+  sympy : @recipe.ValueRef,
+  minimum : @symcore.Expr,
+  maximum : @symcore.Expr,
+) -> @recipe.ValueRef raise {
+  required_call(
+    builder,
+    sympy_callable(builder, sympy, "AccumBounds"),
+    [Ref(encoder.encode(minimum)), Ref(encoder.encode(maximum))],
+    "sympy-call-none:sympy.AccumBounds",
+  )
 }
 
 ///|
-fn accum_bounds_obj(
-  min : @symcore.Expr,
-  max : @symcore.Expr,
-) -> @py.PyObject raise {
-  let res = sympy_call_must("sympy.AccumBounds", [
-    PyObj(expr_to_sympy(min)),
-    PyObj(expr_to_sympy(max)),
-  ])
-  objenum_to_obj(res)
+fn request_string_array(
+  builder : @recipe.Builder,
+  value : @recipe.ValueRef,
+) -> Array[String] raise {
+  match builder.request(value, List(Str)) {
+    Array(items) => {
+      let result : Array[String] = []
+      for item in items {
+        match item {
+          String(text) => result.push(text)
+          other =>
+            fail("expected string array item, received " + other.stringify())
+        }
+      }
+      result
+    }
+    other => fail("expected string array, received " + other.stringify())
+  }
 }
 
 ///|
 pub fn sympy_normalize(expr_str : String) -> String raise {
-  let expr = sympy_call_must("sympy.sympify", [Str(expr_str)])
-  py_str_enum(expr)
+  let builder = @recipe.Builder::new()
+  let sympy = builder.import_module("sympy")
+  let result = required_call(
+    builder,
+    sympy_callable(builder, sympy, "sympify"),
+    [Str(expr_str)],
+    "sympy-call-none:sympy.sympify",
+  )
+  builder.request_str(result)
 }
 
 ///|
@@ -181,10 +121,18 @@ pub fn accum_add(
   b_min : @symcore.Expr,
   b_max : @symcore.Expr,
 ) -> String raise {
-  let a = accum_bounds_obj(a_min, a_max)
-  let b = accum_bounds_obj(b_min, b_max)
-  let res = sympy_call_must("sympy.Add", [PyObj(a), PyObj(b)])
-  py_str_enum(res)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let lhs = accum_bounds_value(builder, encoder, sympy, a_min, a_max)
+  let rhs = accum_bounds_value(builder, encoder, sympy, b_min, b_max)
+  let result = required_call(
+    builder,
+    sympy_callable(builder, sympy, "Add"),
+    [Ref(lhs), Ref(rhs)],
+    "sympy-call-none:sympy.Add",
+  )
+  builder.request_str(result)
 }
 
 ///|
@@ -194,11 +142,24 @@ pub fn accum_sub(
   b_min : @symcore.Expr,
   b_max : @symcore.Expr,
 ) -> String raise {
-  let a = accum_bounds_obj(a_min, a_max)
-  let b = accum_bounds_obj(b_min, b_max)
-  let neg = sympy_call_must("sympy.Mul", [Int(-1), PyObj(b)])
-  let res = sympy_call_must("sympy.Add", [PyObj(a), PyObj(objenum_to_obj(neg))])
-  py_str_enum(res)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let lhs = accum_bounds_value(builder, encoder, sympy, a_min, a_max)
+  let rhs = accum_bounds_value(builder, encoder, sympy, b_min, b_max)
+  let negative_rhs = required_call(
+    builder,
+    sympy_callable(builder, sympy, "Mul"),
+    [DecimalInt("-1"), Ref(rhs)],
+    "sympy-call-none:sympy.Mul",
+  )
+  let result = required_call(
+    builder,
+    sympy_callable(builder, sympy, "Add"),
+    [Ref(lhs), Ref(negative_rhs)],
+    "sympy-call-none:sympy.Add",
+  )
+  builder.request_str(result)
 }
 
 ///|
@@ -208,10 +169,18 @@ pub fn accum_mul(
   b_min : @symcore.Expr,
   b_max : @symcore.Expr,
 ) -> String raise {
-  let a = accum_bounds_obj(a_min, a_max)
-  let b = accum_bounds_obj(b_min, b_max)
-  let res = sympy_call_must("sympy.Mul", [PyObj(a), PyObj(b)])
-  py_str_enum(res)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let lhs = accum_bounds_value(builder, encoder, sympy, a_min, a_max)
+  let rhs = accum_bounds_value(builder, encoder, sympy, b_min, b_max)
+  let result = required_call(
+    builder,
+    sympy_callable(builder, sympy, "Mul"),
+    [Ref(lhs), Ref(rhs)],
+    "sympy-call-none:sympy.Mul",
+  )
+  builder.request_str(result)
 }
 
 ///|
@@ -221,11 +190,24 @@ pub fn accum_div(
   b_min : @symcore.Expr,
   b_max : @symcore.Expr,
 ) -> String raise {
-  let a = accum_bounds_obj(a_min, a_max)
-  let b = accum_bounds_obj(b_min, b_max)
-  let inv = sympy_call_must("sympy.Pow", [PyObj(b), Int(-1)])
-  let res = sympy_call_must("sympy.Mul", [PyObj(a), PyObj(objenum_to_obj(inv))])
-  py_str_enum(res)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let lhs = accum_bounds_value(builder, encoder, sympy, a_min, a_max)
+  let rhs = accum_bounds_value(builder, encoder, sympy, b_min, b_max)
+  let reciprocal = required_call(
+    builder,
+    sympy_callable(builder, sympy, "Pow"),
+    [Ref(rhs), DecimalInt("-1")],
+    "sympy-call-none:sympy.Pow",
+  )
+  let result = required_call(
+    builder,
+    sympy_callable(builder, sympy, "Mul"),
+    [Ref(lhs), Ref(reciprocal)],
+    "sympy-call-none:sympy.Mul",
+  )
+  builder.request_str(result)
 }
 
 ///|
@@ -234,48 +216,50 @@ pub fn accum_pow(
   a_max : @symcore.Expr,
   exp : @symcore.Expr,
 ) -> String raise {
-  let a = accum_bounds_obj(a_min, a_max)
-  let e = expr_to_sympy(exp)
-  let res = sympy_call_must("sympy.Pow", [PyObj(a), PyObj(e)])
-  py_str_enum(res)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let base = accum_bounds_value(builder, encoder, sympy, a_min, a_max)
+  let result = required_call(
+    builder,
+    sympy_callable(builder, sympy, "Pow"),
+    [Ref(base), Ref(encoder.encode(exp))],
+    "sympy-call-none:sympy.Pow",
+  )
+  builder.request_str(result)
 }
 
 ///|
 pub fn accum_abs(min : @symcore.Expr, max : @symcore.Expr) -> String raise {
-  let a = accum_bounds_obj(min, max)
-  let abs_call = resolve_method_callable(a, "__abs__")
-  let res = py_call_noargs(abs_call)
-  py_str_enum(res)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let bounds = accum_bounds_value(builder, encoder, sympy, min, max)
+  let result = required_call(
+    builder,
+    builder.getattr(bounds, "__abs__"),
+    [],
+    "sympy-oracle-call-none",
+  )
+  builder.request_str(result)
 }
 
 ///|
 pub fn accum_delta(min : @symcore.Expr, max : @symcore.Expr) -> String raise {
-  let a = accum_bounds_obj(min, max)
-  let state = py_gil_ensure()
-  let obj = match a.get_attr("delta", print_err=false) {
-    Some(v) => objenum_to_obj(v)
-    None => {
-      py_gil_release(state)
-      fail("accum-delta-missing")
-    }
-  }
-  py_gil_release(state)
-  py_str_obj(obj)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let bounds = accum_bounds_value(builder, encoder, sympy, min, max)
+  builder.request_str(builder.getattr(bounds, "delta"))
 }
 
 ///|
 pub fn accum_mid(min : @symcore.Expr, max : @symcore.Expr) -> String raise {
-  let a = accum_bounds_obj(min, max)
-  let state = py_gil_ensure()
-  let obj = match a.get_attr("mid", print_err=false) {
-    Some(v) => objenum_to_obj(v)
-    None => {
-      py_gil_release(state)
-      fail("accum-mid-missing")
-    }
-  }
-  py_gil_release(state)
-  py_str_obj(obj)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let bounds = accum_bounds_value(builder, encoder, sympy, min, max)
+  builder.request_str(builder.getattr(bounds, "mid"))
 }
 
 ///|
@@ -284,18 +268,21 @@ pub fn finite_diff_weights_str(
   x_list : Array[@symnum.BigRational],
   x0? : @symnum.BigRational = @symnum.BigRational::zero(),
 ) -> String raise {
-  let x_objs : Array[@py.PyObject] = Array::new()
-  for x in x_list {
-    x_objs.push(sympy_number_obj(x))
-  }
-  let list = py_list_from_objects(x_objs)
-  let x0_obj = sympy_number_obj(x0)
-  let res = sympy_call_must("sympy.calculus.finite_diff.finite_diff_weights", [
-    Int(order),
-    PyObj(list.obj()),
-    PyObj(x0_obj),
-  ])
-  py_str_enum(res)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let result = required_call(
+    builder,
+    module_callable(
+      builder, "sympy.calculus.finite_diff", "finite_diff_weights",
+    ),
+    [
+      DecimalInt(Show::to_string(order)),
+      Ref(encode_rational_list(builder, encoder, x_list)),
+      Ref(encode_rational(encoder, x0)),
+    ],
+    "sympy-call-none:sympy.calculus.finite_diff.finite_diff_weights",
+  )
+  builder.request_str(result)
 }
 
 ///|
@@ -305,24 +292,20 @@ pub fn apply_finite_diff_str(
   y_list : Array[@symcore.Expr],
   x0? : @symnum.BigRational = @symnum.BigRational::zero(),
 ) -> String raise {
-  let x_objs : Array[@py.PyObject] = Array::new()
-  for x in x_list {
-    x_objs.push(sympy_number_obj(x))
-  }
-  let y_objs : Array[@py.PyObject] = Array::new()
-  for y in y_list {
-    y_objs.push(expr_to_sympy(y))
-  }
-  let x_list_obj = py_list_from_objects(x_objs)
-  let y_list_obj = py_list_from_objects(y_objs)
-  let x0_obj = sympy_number_obj(x0)
-  let res = sympy_call_must("sympy.calculus.finite_diff.apply_finite_diff", [
-    Int(order),
-    PyObj(x_list_obj.obj()),
-    PyObj(y_list_obj.obj()),
-    PyObj(x0_obj),
-  ])
-  py_str_enum(res)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let result = required_call(
+    builder,
+    module_callable(builder, "sympy.calculus.finite_diff", "apply_finite_diff"),
+    [
+      DecimalInt(Show::to_string(order)),
+      Ref(encode_rational_list(builder, encoder, x_list)),
+      Ref(encode_expr_list(builder, encoder, y_list)),
+      Ref(encode_rational(encoder, x0)),
+    ],
+    "sympy-call-none:sympy.calculus.finite_diff.apply_finite_diff",
+  )
+  builder.request_str(result)
 }
 
 ///|
@@ -331,28 +314,19 @@ pub fn euler_equations_str(
   funcs : Array[@symcore.Expr],
   vars : Array[@symcore.Expr],
 ) -> Array[String] raise {
-  let l_obj = expr_to_sympy(lagrangian)
-  let f_objs : Array[@py.PyObject] = Array::new()
-  for f in funcs {
-    f_objs.push(expr_to_sympy(f))
-  }
-  let v_objs : Array[@py.PyObject] = Array::new()
-  for v in vars {
-    v_objs.push(expr_to_sympy(v))
-  }
-  let f_list = py_list_from_objects(f_objs)
-  let v_list = py_list_from_objects(v_objs)
-  let res = sympy_call_must("sympy.calculus.euler.euler_equations", [
-    PyObj(l_obj),
-    PyObj(f_list.obj()),
-    PyObj(v_list.obj()),
-  ])
-  let items = py_list_to_pyobjects(res)
-  let out : Array[String] = Array::new()
-  for item in items {
-    out.push(py_str_obj(item))
-  }
-  out
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let result = required_call(
+    builder,
+    module_callable(builder, "sympy.calculus.euler", "euler_equations"),
+    [
+      Ref(encoder.encode(lagrangian)),
+      Ref(encode_expr_list(builder, encoder, funcs)),
+      Ref(encode_expr_list(builder, encoder, vars)),
+    ],
+    "sympy-call-none:sympy.calculus.euler.euler_equations",
+  )
+  request_string_array(builder, result)
 }
 
 ///|
@@ -360,13 +334,15 @@ pub fn singularities_str(
   expr : @symcore.Expr,
   symbol : @symcore.Expr,
 ) -> String raise {
-  let e_obj = expr_to_sympy(expr)
-  let s_obj = expr_to_sympy(symbol)
-  let res = sympy_call_must("sympy.calculus.singularities.singularities", [
-    PyObj(e_obj),
-    PyObj(s_obj),
-  ])
-  py_str_enum(res)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let result = required_call(
+    builder,
+    module_callable(builder, "sympy.calculus.singularities", "singularities"),
+    [Ref(encoder.encode(expr)), Ref(encoder.encode(symbol))],
+    "sympy-call-none:sympy.calculus.singularities.singularities",
+  )
+  builder.request_str(result)
 }
 
 ///|
@@ -374,14 +350,11 @@ pub fn periodicity_str(
   expr : @symcore.Expr,
   symbol : @symcore.Expr,
 ) -> String raise {
-  let e_obj = expr_to_sympy(expr)
-  let s_obj = expr_to_sympy(symbol)
-  let res = sympy_call("sympy.calculus.util.periodicity", [
-    PyObj(e_obj),
-    PyObj(s_obj),
-  ])
-  match res {
-    Some(obj) => py_str_enum(obj)
-    None => "None"
-  }
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let result = builder.call(
+    module_callable(builder, "sympy.calculus.util", "periodicity"),
+    [Ref(encoder.encode(expr)), Ref(encoder.encode(symbol))],
+  )
+  builder.request_str(result)
 }

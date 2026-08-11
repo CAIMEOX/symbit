@@ -4,7 +4,6 @@ package "CAIMEOX/symbit/sympy/calculus"
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
-  "CAIMEOX/symbit/sympy",
 }
 
 // Values
@@ -41,7 +40,5 @@ pub fn sympy_normalize(String) -> String raise
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-
