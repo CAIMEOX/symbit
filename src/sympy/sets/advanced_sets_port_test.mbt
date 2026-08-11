@@ -1,5 +1,5 @@
 ///|
-fn sympy_set_str_adv(set : Set) -> String {
+fn sympy_set_str_adv(set : Set) -> String raise {
   set_str(set)
 }
 

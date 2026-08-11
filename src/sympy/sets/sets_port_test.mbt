@@ -1,10 +1,10 @@
 ///|
-fn set_str(set : Set) -> String {
+fn moon_set_str(set : Set) -> String {
   to_string(set)
 }
 
 ///|
-fn sympy_set_str(set : Set) -> String {
+fn sympy_set_str(set : Set) -> String raise {
   set_str(set)
 }
 
@@ -38,23 +38,23 @@ test "symsets interval parity" {
   let zero = @symcore.int(0)
   let one = @symcore.int(1)
   let closed = interval(zero, one)
-  assert_eq(set_str(closed), sympy_set_str(closed))
+  assert_eq(moon_set_str(closed), sympy_set_str(closed))
   let lopen = interval(zero, one, left_open=true)
-  assert_eq(set_str(lopen), sympy_set_str(lopen))
+  assert_eq(moon_set_str(lopen), sympy_set_str(lopen))
   let ropen = interval(zero, one, right_open=true)
-  assert_eq(set_str(ropen), sympy_set_str(ropen))
+  assert_eq(moon_set_str(ropen), sympy_set_str(ropen))
   let open = interval(zero, one, left_open=true, right_open=true)
-  assert_eq(set_str(open), sympy_set_str(open))
+  assert_eq(moon_set_str(open), sympy_set_str(open))
   let point = interval(zero, zero)
-  assert_eq(set_str(point), sympy_set_str(point))
+  assert_eq(moon_set_str(point), sympy_set_str(point))
   let empty = interval(zero, zero, left_open=true)
-  assert_eq(set_str(empty), sympy_set_str(empty))
+  assert_eq(moon_set_str(empty), sympy_set_str(empty))
 }
 
 ///|
 test "symsets finite set parity" {
   let fs = finite_set([@symcore.int(2), @symcore.int(1), @symcore.int(1)])
-  assert_eq(set_str(fs), sympy_set_str(fs))
+  assert_eq(moon_set_str(fs), sympy_set_str(fs))
 }
 
 ///|
@@ -63,12 +63,12 @@ test "symsets union parity" {
   let b = interval(@symcore.int(1), @symcore.int(2))
   let ours = union([a, b])
   let sympy = sympy_union_str([a, b])
-  assert_eq(set_str(ours), sympy)
+  assert_eq(moon_set_str(ours), sympy)
   let f1 = finite_set([@symcore.int(2), @symcore.int(3)])
   let f2 = finite_set([@symcore.int(3), @symcore.int(4)])
   let ours2 = union([f1, f2])
   let sympy2 = sympy_union_str([f1, f2])
-  assert_eq(set_str(ours2), sympy2)
+  assert_eq(moon_set_str(ours2), sympy2)
 }
 
 ///|
@@ -77,12 +77,12 @@ test "symsets intersection parity" {
   let b = interval(@symcore.int(1), @symcore.int(3))
   let ours = intersection([a, b])
   let sympy = sympy_intersection_str([a, b])
-  assert_eq(set_str(ours), sympy)
+  assert_eq(moon_set_str(ours), sympy)
   let f1 = finite_set([@symcore.int(1), @symcore.int(2)])
   let f2 = finite_set([@symcore.int(2), @symcore.int(3)])
   let ours2 = intersection([f1, f2])
   let sympy2 = sympy_intersection_str([f1, f2])
-  assert_eq(set_str(ours2), sympy2)
+  assert_eq(moon_set_str(ours2), sympy2)
 }
 
 ///|
@@ -91,12 +91,12 @@ test "symsets complement parity" {
   let b = interval(@symcore.int(1), @symcore.int(3))
   let ours = complement(a, b)
   let sympy = sympy_complement_str(a, b)
-  assert_eq(set_str(ours), sympy)
+  assert_eq(moon_set_str(ours), sympy)
   let f1 = finite_set([@symcore.int(1), @symcore.int(2), @symcore.int(3)])
   let f2 = finite_set([@symcore.int(2)])
   let ours2 = complement(f1, f2)
   let sympy2 = sympy_complement_str(f1, f2)
-  assert_eq(set_str(ours2), sympy2)
+  assert_eq(moon_set_str(ours2), sympy2)
 }
 
 ///|

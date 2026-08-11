@@ -2,211 +2,187 @@
 /// Oracle helpers for SymPy sets.
 
 ///|
-pub type OracleArg = @sympy.OracleArg
-
-///|
-fn sympy_call(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum? raise {
-  @sympy.sympy_call(path, args, kwargs~)
+fn sympy_set_singleton(
+  builder : @recipe.Builder,
+  sympy : @recipe.ValueRef,
+  name : String,
+) -> @recipe.ValueRef raise {
+  let singletons = builder.getattr(sympy, "S")
+  builder.getattr(singletons, name)
 }
 
 ///|
-fn sympy_call_must(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum raise {
-  match sympy_call(path, args, kwargs~) {
-    Some(obj) => obj
-    None => fail("sympy-call-none:\{path}")
-  }
+fn sympy_set_call(
+  builder : @recipe.Builder,
+  sympy : @recipe.ValueRef,
+  name : String,
+  args : Array[@recipe.RecipeArg],
+) -> @recipe.ValueRef raise {
+  let callable = builder.getattr(sympy, name)
+  builder.require_non_none(
+    builder.call(callable, args),
+    message="sympy-call-none:sympy.\{name}",
+  )
 }
 
 ///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
+fn bool_expr_to_recipe(
+  builder : @recipe.Builder,
+  sympy : @recipe.ValueRef,
+  expr : @symlogic.BoolExpr,
+) -> @recipe.ValueRef raise {
+  let sympify = builder.getattr(sympy, "sympify")
+  builder.require_non_none(
+    builder.call(sympify, [Str(@symlogic.to_string(expr))]),
+    message="sympy-call-none:sympy.sympify",
+  )
 }
 
 ///|
-fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
-  @sympy.expr_to_sympy(expr)
-}
-
-///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
-}
-
-///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
-}
-
-///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let s = obj.to_string()
-  py_gil_release(state)
-  s
-}
-
-///|
-fn py_str_enum(obj : @py.PyObjectEnum) -> String {
-  py_str_obj(objenum_to_obj(obj))
-}
-
-///|
-fn sympy_const(name : String) -> @py.PyObject raise {
-  let res = sympy_call_must("sympy.sympify", [Str(name)])
-  objenum_to_obj(res)
-}
-
-///|
-fn sympy_call_obj(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObject raise {
-  let res = sympy_call_must(path, args, kwargs~)
-  objenum_to_obj(res)
-}
-
-///|
-fn bool_expr_to_sympy(expr : @symlogic.BoolExpr) -> @py.PyObject raise {
-  let s = @symlogic.to_string(expr)
-  let res = sympy_call_must("sympy.sympify", [Str(s)])
-  objenum_to_obj(res)
-}
-
-///|
-fn set_to_sympy(set : @symsets.Set) -> @py.PyObject raise {
+fn set_to_recipe(
+  builder : @recipe.Builder,
+  encoder : @exprcodec.Encoder,
+  sympy : @recipe.ValueRef,
+  set : @symsets.Set,
+) -> @recipe.ValueRef raise {
   match set {
-    EmptySet => sympy_const("EmptySet")
-    UniversalSet => sympy_const("UniversalSet")
-    Naturals => sympy_const("Naturals")
-    Naturals0 => sympy_const("Naturals0")
-    Integers => sympy_const("Integers")
-    Rationals => sympy_const("Rationals")
-    Reals => sympy_const("Reals")
-    Complexes => sympy_const("Complexes")
+    EmptySet => sympy_set_singleton(builder, sympy, "EmptySet")
+    UniversalSet => sympy_set_singleton(builder, sympy, "UniversalSet")
+    Naturals => sympy_set_singleton(builder, sympy, "Naturals")
+    Naturals0 => sympy_set_singleton(builder, sympy, "Naturals0")
+    Integers => sympy_set_singleton(builder, sympy, "Integers")
+    Rationals => sympy_set_singleton(builder, sympy, "Rationals")
+    Reals => sympy_set_singleton(builder, sympy, "Reals")
+    Complexes => sympy_set_singleton(builder, sympy, "Complexes")
     FiniteSet(items) => {
-      let args : Array[OracleArg] = Array::new()
+      let args : Array[@recipe.RecipeArg] = []
       for item in items {
-        args.push(PyObj(expr_to_sympy(item)))
+        args.push(Ref(encoder.encode(item)))
       }
-      sympy_call_obj("sympy.FiniteSet", args)
+      sympy_set_call(builder, sympy, "FiniteSet", args)
     }
-    Interval(left~, right~, left_open~, right_open~) => {
-      let args : Array[OracleArg] = Array::new()
-      args.push(PyObj(expr_to_sympy(left)))
-      args.push(PyObj(expr_to_sympy(right)))
-      args.push(Bool(left_open))
-      args.push(Bool(right_open))
-      sympy_call_obj("sympy.Interval", args)
-    }
-    ConditionSet(symbol~, condition~, base~) => {
-      let args : Array[OracleArg] = [
-        PyObj(expr_to_sympy(symbol)),
-        PyObj(bool_expr_to_sympy(condition)),
-        PyObj(set_to_sympy(base)),
-      ]
-      sympy_call_obj("sympy.ConditionSet", args)
-    }
-    ImageSet(symbol~, expr~, base~) => {
-      let lambda_obj = sympy_call_obj("sympy.Lambda", [
-        PyObj(expr_to_sympy(symbol)),
-        PyObj(expr_to_sympy(expr)),
+    Interval(left~, right~, left_open~, right_open~) =>
+      sympy_set_call(builder, sympy, "Interval", [
+        Ref(encoder.encode(left)),
+        Ref(encoder.encode(right)),
+        Bool(left_open),
+        Bool(right_open),
       ])
-      let args : Array[OracleArg] = [
-        PyObj(lambda_obj),
-        PyObj(set_to_sympy(base)),
-      ]
-      sympy_call_obj("sympy.ImageSet", args)
+    ConditionSet(symbol~, condition~, base~) =>
+      sympy_set_call(builder, sympy, "ConditionSet", [
+        Ref(encoder.encode(symbol)),
+        Ref(bool_expr_to_recipe(builder, sympy, condition)),
+        Ref(set_to_recipe(builder, encoder, sympy, base)),
+      ])
+    ImageSet(symbol~, expr~, base~) => {
+      let lambda = sympy_set_call(builder, sympy, "Lambda", [
+        Ref(encoder.encode(symbol)),
+        Ref(encoder.encode(expr)),
+      ])
+      sympy_set_call(builder, sympy, "ImageSet", [
+        Ref(lambda),
+        Ref(set_to_recipe(builder, encoder, sympy, base)),
+      ])
     }
     ProductSet(items) => {
-      let args : Array[OracleArg] = Array::new()
+      let args : Array[@recipe.RecipeArg] = []
       for item in items {
-        args.push(PyObj(set_to_sympy(item)))
+        args.push(Ref(set_to_recipe(builder, encoder, sympy, item)))
       }
-      sympy_call_obj("sympy.ProductSet", args)
+      sympy_set_call(builder, sympy, "ProductSet", args)
     }
     Union(items) =>
       if items.is_empty() {
-        sympy_const("EmptySet")
+        sympy_set_singleton(builder, sympy, "EmptySet")
       } else {
-        let args : Array[OracleArg] = Array::new()
+        let args : Array[@recipe.RecipeArg] = []
         for item in items {
-          args.push(PyObj(set_to_sympy(item)))
+          args.push(Ref(set_to_recipe(builder, encoder, sympy, item)))
         }
-        sympy_call_obj("sympy.Union", args)
+        sympy_set_call(builder, sympy, "Union", args)
       }
     Intersection(items) =>
       if items.is_empty() {
-        sympy_const("UniversalSet")
+        sympy_set_singleton(builder, sympy, "UniversalSet")
       } else {
-        let args : Array[OracleArg] = Array::new()
+        let args : Array[@recipe.RecipeArg] = []
         for item in items {
-          args.push(PyObj(set_to_sympy(item)))
+          args.push(Ref(set_to_recipe(builder, encoder, sympy, item)))
         }
-        sympy_call_obj("sympy.Intersection", args)
+        sympy_set_call(builder, sympy, "Intersection", args)
       }
-    Complement(a, b) => {
-      let args : Array[OracleArg] = [
-        PyObj(set_to_sympy(a)),
-        PyObj(set_to_sympy(b)),
-      ]
-      sympy_call_obj("sympy.Complement", args)
-    }
+    Complement(a, b) =>
+      sympy_set_call(builder, sympy, "Complement", [
+        Ref(set_to_recipe(builder, encoder, sympy, a)),
+        Ref(set_to_recipe(builder, encoder, sympy, b)),
+      ])
   }
+}
+
+///|
+fn set_request_str(
+  operation : String,
+  sets : Array[@symsets.Set],
+) -> String raise {
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let value = if sets.is_empty() {
+    let singleton = if operation == "Union" {
+      "EmptySet"
+    } else {
+      "UniversalSet"
+    }
+    sympy_set_singleton(builder, sympy, singleton)
+  } else {
+    let args : Array[@recipe.RecipeArg] = []
+    for set in sets {
+      args.push(Ref(set_to_recipe(builder, encoder, sympy, set)))
+    }
+    sympy_set_call(builder, sympy, operation, args)
+  }
+  builder.request_str(value)
 }
 
 ///|
 pub fn set_str(set : @symsets.Set) -> String raise {
-  py_str_obj(set_to_sympy(set))
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let value = set_to_recipe(builder, encoder, sympy, set)
+  builder.request_str(value)
 }
 
 ///|
 pub fn union_str(sets : Array[@symsets.Set]) -> String raise {
-  if sets.is_empty() {
-    return py_str_obj(sympy_const("EmptySet"))
-  }
-  let args : Array[OracleArg] = Array::new()
-  for item in sets {
-    args.push(PyObj(set_to_sympy(item)))
-  }
-  let res = sympy_call_must("sympy.Union", args)
-  py_str_enum(res)
+  set_request_str("Union", sets)
 }
 
 ///|
 pub fn intersection_str(sets : Array[@symsets.Set]) -> String raise {
-  if sets.is_empty() {
-    return py_str_obj(sympy_const("UniversalSet"))
-  }
-  let args : Array[OracleArg] = Array::new()
-  for item in sets {
-    args.push(PyObj(set_to_sympy(item)))
-  }
-  let res = sympy_call_must("sympy.Intersection", args)
-  py_str_enum(res)
+  set_request_str("Intersection", sets)
 }
 
 ///|
 pub fn complement_str(a : @symsets.Set, b : @symsets.Set) -> String raise {
-  let args : Array[OracleArg] = [PyObj(set_to_sympy(a)), PyObj(set_to_sympy(b))]
-  let res = sympy_call_must("sympy.Complement", args)
-  py_str_enum(res)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let value = sympy_set_call(builder, sympy, "Complement", [
+    Ref(set_to_recipe(builder, encoder, sympy, a)),
+    Ref(set_to_recipe(builder, encoder, sympy, b)),
+  ])
+  builder.request_str(value)
 }
 
 ///|
 pub fn contains_str(set : @symsets.Set, elem : @symcore.Expr) -> String raise {
-  let args : Array[OracleArg] = [
-    PyObj(expr_to_sympy(elem)),
-    PyObj(set_to_sympy(set)),
-  ]
-  let res = sympy_call_must("sympy.Contains", args)
-  py_str_enum(res)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let value = sympy_set_call(builder, sympy, "Contains", [
+    Ref(encoder.encode(elem)),
+    Ref(set_to_recipe(builder, encoder, sympy, set)),
+  ])
+  builder.request_str(value)
 }

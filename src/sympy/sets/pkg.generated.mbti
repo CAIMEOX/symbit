@@ -3,7 +3,6 @@ package "CAIMEOX/symbit/sympy/sets"
 
 import {
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/sympy",
   "CAIMEOX/symbit/symsets",
 }
 
@@ -23,7 +22,5 @@ pub fn union_str(Array[@symsets.Set]) -> String raise
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-
