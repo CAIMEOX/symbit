@@ -1,40 +1,22 @@
 ///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
-}
-
-///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
-}
-
-///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
-}
-
-///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let s = obj.to_string()
-  py_gil_release(state)
-  s
-}
-
-///|
-fn sympy_call_must(
-  path : String,
-  args : Array[@sympy.OracleArg],
-  kwargs? : Map[String, @sympy.OracleArg] = {},
-) -> @py.PyObjectEnum raise {
-  match @sympy.sympy_call(path, args, kwargs~) {
-    Some(obj) => obj
-    None => fail("sympy-call-none:\{path}")
-  }
-}
-
-///|
+/// Run one named SymPy printer on a structurally encoded expression.
 pub fn printing_call(name : String, expr : @symcore.Expr) -> String raise {
-  let obj = @sympy.expr_to_sympy(expr)
-  py_str_obj(objenum_to_obj(sympy_call_must("sympy.\{name}", [PyObj(obj)])))
+  let builder = @recipe.Builder::new()
+  let expression = @exprcodec.encode_expr(builder, expr)
+  let path = ("sympy." + name).trim()
+  let parts : Array[String] = []
+  for part in path.split(".") {
+    parts.push(part.to_owned())
+  }
+  guard parts.length() >= 2 else { fail("sympy-call-empty") }
+  let module_name = parts[0:parts.length() - 1].join(".")
+  let attribute_name = parts[parts.length() - 1]
+  let module_obj = builder.import_module(module_name)
+  let printer = builder.getattr(module_obj, attribute_name)
+  let result = builder.call(printer, [Ref(expression)])
+  let result = builder.require_non_none(
+    result,
+    message="sympy-call-none:\{path}",
+  )
+  builder.request_str(result)
 }
