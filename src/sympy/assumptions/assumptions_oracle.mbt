@@ -1,88 +1,34 @@
 ///|
-pub type OracleArg = @sympy.OracleArg
-
-///|
-fn sympy_call(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum? raise {
-  @sympy.sympy_call(path, args, kwargs~)
-}
-
-///|
-fn sympy_call_must(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum raise {
-  match sympy_call(path, args, kwargs~) {
-    Some(obj) => obj
-    None => fail("sympy-call-none:\{path}")
-  }
-}
-
-///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
-}
-
-///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
-}
-
-///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
-}
-
-///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let s = obj.to_string()
-  py_gil_release(state)
-  s
-}
-
-///|
-fn py_str_enum(obj : @py.PyObjectEnum) -> String {
-  py_str_obj(objenum_to_obj(obj))
-}
-
-///|
-fn py_callable_from_enum(obj : @py.PyObjectEnum) -> @py.PyCallable raise {
-  match obj {
-    PyCallable(callable) => callable
-    PyClass(obj0) =>
-      @py.PyCallable::create(obj0) catch {
-        _ => fail("py-callable")
-      }
-    _ =>
-      @py.PyCallable::create(objenum_to_obj(obj)) catch {
-        _ => fail("py-callable")
-      }
-  }
+fn call_required(
+  builder : @recipe.Builder,
+  callable : @recipe.ValueRef,
+  args : Array[@recipe.RecipeArg],
+  kwargs? : Map[String, @recipe.RecipeArg] = {},
+  message? : String = "sympy-call-none",
+) -> @recipe.ValueRef raise {
+  builder.require_non_none(builder.call(callable, args, kwargs~), message~)
 }
 
 ///|
 fn put_tri_kw(
-  kwargs : Map[String, OracleArg],
+  kwargs : Map[String, @recipe.RecipeArg],
   key : String,
   value : @symassume.Tri,
 ) -> Unit {
   match @symassume.tri_to_bool_option(value) {
-    Some(v) => kwargs[key] = Bool(v)
+    Some(value) => kwargs[key] = Bool(value)
     None => ()
   }
 }
 
 ///|
-fn symbol_obj_with_facts(
+fn symbol_with_facts(
+  builder : @recipe.Builder,
+  sympy : @recipe.ValueRef,
   name : String,
   facts : @symassume.SymbolFacts,
-) -> @py.PyObject raise {
-  let kwargs : Map[String, OracleArg] = Map([])
+) -> @recipe.ValueRef raise {
+  let kwargs : Map[String, @recipe.RecipeArg] = Map([])
   put_tri_kw(kwargs, "zero", facts.is_zero)
   put_tri_kw(kwargs, "nonzero", facts.is_nonzero)
   put_tri_kw(kwargs, "integer", facts.is_integer)
@@ -90,28 +36,47 @@ fn symbol_obj_with_facts(
   put_tri_kw(kwargs, "real", facts.is_real)
   put_tri_kw(kwargs, "positive", facts.is_positive)
   put_tri_kw(kwargs, "nonnegative", facts.is_nonnegative)
-  objenum_to_obj(sympy_call_must("sympy.Symbol", [Str(name)], kwargs~))
+  let symbol = builder.getattr(sympy, "Symbol")
+  call_required(
+    builder,
+    symbol,
+    [Str(name)],
+    kwargs~,
+    message="sympy-call-none:sympy.Symbol",
+  )
 }
 
 ///|
 fn locals_from_env(
+  builder : @recipe.Builder,
+  sympy : @recipe.ValueRef,
   env : Map[String, @symassume.SymbolFacts],
-) -> Map[String, OracleArg] raise {
-  let locals : Map[String, OracleArg] = Map([])
+) -> @recipe.ValueRef raise {
+  let entries : Array[(@recipe.RecipeArg, @recipe.RecipeArg)] = []
   for name, facts in env {
-    locals[name] = PyObj(symbol_obj_with_facts(name, facts))
+    entries.push(
+      (Str(name), Ref(symbol_with_facts(builder, sympy, name, facts))),
+    )
   }
-  locals
+  builder.dict(entries)
 }
 
 ///|
 fn sympify_with_env(
+  builder : @recipe.Builder,
+  sympy : @recipe.ValueRef,
   expr : @symcore.Expr,
   env : Map[String, @symassume.SymbolFacts],
-) -> @py.PyObjectEnum raise {
-  let kwargs : Map[String, OracleArg] = { "locals": Dict(locals_from_env(env)) }
-  let expr_str = @symprint.pretty_string(expr)
-  sympy_call_must("sympy.sympify", [Str(expr_str)], kwargs~)
+) -> @recipe.ValueRef raise {
+  let sympify = builder.getattr(sympy, "sympify")
+  let locals = locals_from_env(builder, sympy, env)
+  call_required(
+    builder,
+    sympify,
+    [Str(@symprint.pretty_string(expr))],
+    kwargs={ "locals": Ref(locals) },
+    message="sympy-call-none:sympy.sympify",
+  )
 }
 
 ///|
@@ -120,11 +85,11 @@ pub fn expr_attr(
   attr : String,
   env? : Map[String, @symassume.SymbolFacts] = {},
 ) -> String raise {
-  let expr_obj = objenum_to_obj(sympify_with_env(expr, env))
-  match expr_obj.get_attr(attr, print_err=true) {
-    Some(value) => py_str_enum(value)
-    None => fail("sympy-attr-missing:\{attr}")
-  }
+  let builder = @recipe.Builder::new()
+  let sympy = builder.import_module("sympy")
+  let value = sympify_with_env(builder, sympy, expr, env)
+  let attribute = builder.getattr(value, attr)
+  builder.request_str(attribute)
 }
 
 ///|
@@ -184,72 +149,33 @@ pub fn is_nonnegative(
 }
 
 ///|
-fn assumptions_globals() -> @py.PyDict raise {
-  let builtins = match @py.pyimport("builtins") {
-    Some(mod) => mod
-    None => fail("py-builtins-missing")
-  }
-  let sympy_mod = match @py.pyimport("sympy") {
-    Some(mod) => mod
-    None => fail("py-sympy-missing")
-  }
-  let globals = @py.PyDict::new()
-  globals.set("__builtins__", builtins.obj())
-  globals.set("sympy", sympy_mod.obj())
-  for
-    name in [
-      "Q", "ask", "Implies", "Equivalent", "And", "Or", "Not", "Eq", "Ne", "Gt",
-      "Ge", "Lt", "Le", "MatrixSymbol",
-    ] {
-    match sympy_mod.get_attr(name, print_err=false) {
-      Some(obj) => globals.set(name, objenum_to_obj(obj))
-      None => ()
-    }
-  }
-  for sym_name in ["x", "y", "z", "a", "b", "c", "n", "m", "t", "u", "v"] {
-    let sym = sympy_call_must("sympy.Symbol", [Str(sym_name)])
-    globals.set(sym_name, objenum_to_obj(sym))
-  }
-  for const_name in ["oo", "zoo", "I", "E", "pi"] {
-    match sympy_mod.get_attr(const_name, print_err=false) {
-      Some(obj) => globals.set(const_name, objenum_to_obj(obj))
-      None => ()
-    }
-  }
-  globals
-}
-
-///|
-fn py_eval_assumptions(expr : String) -> @py.PyObjectEnum raise {
-  let state = py_gil_ensure()
-  let result = try {
-    let builtins = match @py.pyimport("builtins") {
-      Some(mod) => mod
-      None => fail("py-builtins-missing")
-    }
-    let eval_obj = match builtins.get_attr("eval", print_err=false) {
-      Some(obj) => obj
-      None => fail("py-eval-missing")
-    }
-    let eval_callable = py_callable_from_enum(eval_obj)
-    let globals = assumptions_globals()
-    let args = @sympy.py_pack_args([
-      Str(expr),
-      PyObj(globals.obj()),
-      PyObj(globals.obj()),
-    ])
-    match @sympy.py_call_object(eval_callable, args, print_err=false) {
-      Some(obj) => obj
-      None => fail("py-eval-none")
-    }
-  } catch {
-    err => {
-      py_gil_release(state)
-      raise err
-    }
-  }
-  py_gil_release(state)
-  result
+fn ask_query_str_raise(
+  proposition : String,
+  assumptions : String,
+) -> String raise {
+  let builder = @recipe.Builder::new()
+  let builtins = builder.import_module("builtins")
+  let sympy = builder.import_module("sympy")
+  let scope = builder.dict([
+    (Str("__builtins__"), Ref(builtins)),
+    (Str("sympy"), Ref(sympy)),
+  ])
+  let setup = "for _name in (\n" +
+    "    'Q', 'ask', 'Implies', 'Equivalent', 'And', 'Or', 'Not',\n" +
+    "    'Eq', 'Ne', 'Gt', 'Ge', 'Lt', 'Le', 'MatrixSymbol',\n" +
+    "):\n" +
+    "    if hasattr(sympy, _name):\n" +
+    "        globals()[_name] = getattr(sympy, _name)\n" +
+    "for _name in ('x', 'y', 'z', 'a', 'b', 'c', 'n', 'm', 't', 'u', 'v'):\n" +
+    "    globals()[_name] = sympy.Symbol(_name)\n" +
+    "for _name in ('oo', 'zoo', 'I', 'E', 'pi'):\n" +
+    "    if hasattr(sympy, _name):\n" +
+    "        globals()[_name] = getattr(sympy, _name)\n" +
+    "del _name\n"
+  let scope = builder.exec(scope, setup)
+  let expression = "str(ask(\{proposition}, assumptions=(\{assumptions})))"
+  let value = builder.eval(scope, expression)
+  builder.request_str(value)
 }
 
 ///|
@@ -257,24 +183,20 @@ pub fn ask_query_str(
   proposition : String,
   assumptions? : String = "True",
 ) -> String {
-  // Wrap with str(...) so Python None is represented as "None"
-  // instead of being treated as a missing return object.
-  let expr = "str(ask(\{proposition}, assumptions=(\{assumptions})))"
-  let result : Result[@py.PyObjectEnum, Error] = try
-    py_eval_assumptions(expr) |> Ok
+  let result : Result[String, Error] = try
+    ask_query_str_raise(proposition, assumptions) |> Ok
   catch {
-    err => Err(err)
+    error => Err(error)
   }
   match result {
-    Ok(value) => py_str_enum(value)
-    Err(err) => {
-      let msg = "\{err}"
-      @cpython.py_err_clear()
-      if msg.contains("inconsistent assumptions") ||
-        msg.contains("py-eval-none") {
+    Ok(value) => value
+    Err(error) => {
+      let message = "\{error}"
+      if message.contains("inconsistent assumptions") ||
+        message.contains("py-eval-none") {
         "InconsistentAssumptions"
       } else {
-        "OracleError:\{msg}"
+        "OracleError:\{message}"
       }
     }
   }

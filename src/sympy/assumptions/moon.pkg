@@ -2,9 +2,7 @@ import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/symassume",
-  "CAIMEOX/symbit/sympy",
-  "Kaida-Amethyst/python" @py,
-  "Kaida-Amethyst/python/cpython",
+  "CAIMEOX/symbit/sympy/recipe",
 }
 
 supported_targets = "native"

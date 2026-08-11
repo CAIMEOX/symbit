@@ -4,7 +4,6 @@ package "CAIMEOX/symbit/sympy/assumptions"
 import {
   "CAIMEOX/symbit/symassume",
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/sympy",
 }
 
 // Values
@@ -31,7 +30,5 @@ pub fn is_zero(@symcore.Expr, env? : Map[String, @symassume.SymbolFacts]) -> Str
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-
