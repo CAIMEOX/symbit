@@ -5,9 +5,11 @@ from __future__ import annotations
 
 import builtins
 import contextlib
+import importlib
 import io
 import json
 import os
+import operator
 from pathlib import Path
 import struct
 import sys
@@ -17,6 +19,7 @@ from typing import Any, Callable
 
 PROTOCOL_VERSION = 1
 MAX_FRAME_SIZE = 64 * 1024 * 1024
+MAX_JSON_SAFE_INTEGER = (1 << 53) - 1
 
 
 def _open_protocol_output() -> Any:
@@ -130,6 +133,22 @@ def _utilities_globals() -> dict[str, Any]:
     return globals_dict
 
 
+def _sympy_base_globals() -> dict[str, Any]:
+    globals_dict = {
+        "__builtins__": dict(builtins.__dict__),
+        "sympy": sympy,
+        "json": json,
+    }
+    globals_dict.update(
+        {
+            name: value
+            for name, value in vars(sympy).items()
+            if not name.startswith("_")
+        }
+    )
+    return globals_dict
+
+
 def _runtime_info(_: Any) -> dict[str, Any]:
     return {
         "protocol_version": PROTOCOL_VERSION,
@@ -174,6 +193,474 @@ def _crash(_: Any) -> None:
     os._exit(86)
 
 
+def _recipe_ref(value: Any, *, before: int, context: str) -> int:
+    if not isinstance(value, dict) or set(value) != {"ref"}:
+        raise ProtocolFault(f"{context} must be a reference object")
+    ref = value["ref"]
+    if type(ref) is not int or not 0 <= ref < before:
+        raise ProtocolFault(f"{context} must reference an earlier node")
+    return ref
+
+
+def _recipe_exact_fields(
+    value: dict[str, Any], expected: set[str], *, context: str
+) -> None:
+    if set(value) != expected:
+        raise ProtocolFault(f"{context} has invalid fields")
+
+
+def _validate_recipe_codec(codec: Any, *, context: str) -> None:
+    if isinstance(codec, str):
+        if codec not in (
+            "discard", "none", "str", "repr", "srepr", "bool", "int",
+            "float", "json",
+        ):
+            raise ProtocolFault(f"{context} has unknown codec")
+        return
+    if not isinstance(codec, dict):
+        raise ProtocolFault(f"{context} has unknown codec")
+    kind = codec.get("kind")
+    if kind in ("optional", "list"):
+        if set(codec) != {"kind", "item"}:
+            raise ProtocolFault(f"{context} {kind} codec has invalid fields")
+        _validate_recipe_codec(codec["item"], context=f"{context} {kind} item")
+    elif kind == "tuple":
+        if set(codec) != {"kind", "items"} or not isinstance(
+            codec.get("items"), list
+        ):
+            raise ProtocolFault(f"{context} tuple codec has invalid fields")
+        for index, item_codec in enumerate(codec["items"]):
+            _validate_recipe_codec(
+                item_codec, context=f"{context} tuple item {index}"
+            )
+    elif kind == "dict_pairs":
+        if set(codec) != {"kind", "key", "value"}:
+            raise ProtocolFault(
+                f"{context} dict_pairs codec has invalid fields"
+            )
+        _validate_recipe_codec(codec["key"], context=f"{context} dict key")
+        _validate_recipe_codec(
+            codec["value"], context=f"{context} dict value"
+        )
+    else:
+        raise ProtocolFault(f"{context} has unknown codec")
+
+
+def _validate_json_safe_integers(
+    value: Any, seen: set[int] | None = None
+) -> None:
+    if isinstance(value, int) and not isinstance(value, bool):
+        if abs(value) > MAX_JSON_SAFE_INTEGER:
+            raise ProtocolFault(
+                "recipe JSON result exceeds the JSON-safe integer range"
+            )
+        return
+    if not isinstance(value, (list, tuple, dict)):
+        return
+    if seen is None:
+        seen = set()
+    object_id = id(value)
+    if object_id in seen:
+        return
+    seen.add(object_id)
+    if isinstance(value, dict):
+        for key, item in value.items():
+            _validate_json_safe_integers(key, seen)
+            _validate_json_safe_integers(item, seen)
+    else:
+        for item in value:
+            _validate_json_safe_integers(item, seen)
+
+
+def _encode_recipe_result(value: Any, codec: Any) -> Any:
+    if isinstance(codec, dict):
+        kind = codec["kind"]
+        if kind == "optional":
+            if value is None:
+                return None
+            return _encode_recipe_result(value, codec["item"])
+        if kind == "list":
+            if not isinstance(value, list):
+                raise ProtocolFault("recipe result expected a list")
+            return [
+                _encode_recipe_result(item, codec["item"]) for item in value
+            ]
+        if kind == "tuple":
+            if not isinstance(value, tuple) or len(value) != len(codec["items"]):
+                raise ProtocolFault("recipe result expected a matching tuple")
+            return [
+                _encode_recipe_result(item, item_codec)
+                for item, item_codec in zip(value, codec["items"])
+            ]
+        if not isinstance(value, dict):
+            raise ProtocolFault("recipe result expected a dict")
+        return [
+            [
+                _encode_recipe_result(key, codec["key"]),
+                _encode_recipe_result(item, codec["value"]),
+            ]
+            for key, item in value.items()
+        ]
+    if codec == "discard":
+        return None
+    if codec == "none":
+        if value is not None:
+            raise ProtocolFault("recipe result expected None")
+        return None
+    if codec == "str":
+        return str(value)
+    if codec == "repr":
+        return repr(value)
+    if codec == "srepr":
+        return sympy.srepr(value)
+    if codec == "bool":
+        if value is True or value is sympy.true:
+            return True
+        if value is False or value is sympy.false:
+            return False
+        raise ProtocolFault("recipe result expected a boolean")
+    if codec == "int":
+        try:
+            return str(operator.index(value))
+        except TypeError as exc:
+            raise ProtocolFault(
+                "recipe result expected an index-compatible integer"
+            ) from exc
+    if codec == "float":
+        return repr(float(value))
+    _validate_json_safe_integers(value)
+    try:
+        return json.loads(
+            json.dumps(value, ensure_ascii=False, allow_nan=False)
+        )
+    except (TypeError, ValueError) as exc:
+        raise ProtocolFault("recipe result is not valid JSON") from exc
+
+
+def _recipe_v1(recipe: Any) -> Any:
+    if not isinstance(recipe, dict):
+        raise ProtocolFault("recipe must be a JSON object")
+    _recipe_exact_fields(
+        recipe, {"schema", "nodes", "result"}, context="recipe"
+    )
+    if type(recipe.get("schema")) is not int or recipe["schema"] != 1:
+        raise ProtocolFault("recipe schema must be 1")
+    nodes = recipe.get("nodes")
+    if not isinstance(nodes, list):
+        raise ProtocolFault("recipe nodes must be an array")
+    for expected_id, node in enumerate(nodes):
+        if not isinstance(node, dict):
+            raise ProtocolFault(f"recipe node {expected_id} must be an object")
+        if type(node.get("id")) is not int or node["id"] != expected_id:
+            raise ProtocolFault(
+                f"recipe node {expected_id} id must equal its array index"
+            )
+        op = node.get("op")
+        if op == "const":
+            codec = node.get("codec")
+            if codec == "none":
+                _recipe_exact_fields(
+                    node, {"id", "op", "codec"},
+                    context=f"recipe node {expected_id}",
+                )
+                if "value" in node:
+                    raise ProtocolFault(
+                        f"recipe node {expected_id} none constant cannot have a value"
+                    )
+            else:
+                _recipe_exact_fields(
+                    node, {"id", "op", "codec", "value"},
+                    context=f"recipe node {expected_id}",
+                )
+                if codec == "bool" and type(node.get("value")) is bool:
+                    pass
+                elif codec == "str" and isinstance(node.get("value"), str):
+                    pass
+                elif codec == "int" and isinstance(node.get("value"), str):
+                    try:
+                        int(node["value"], 10)
+                    except ValueError as exc:
+                        raise ProtocolFault(
+                            f"recipe node {expected_id} int constant must be a decimal string"
+                        ) from exc
+                elif codec == "float" and isinstance(node.get("value"), str):
+                    try:
+                        float(node["value"])
+                    except ValueError as exc:
+                        raise ProtocolFault(
+                            f"recipe node {expected_id} float constant must be a string"
+                        ) from exc
+                else:
+                    raise ProtocolFault(
+                        f"recipe node {expected_id} has unknown constant codec"
+                    )
+        elif op == "import":
+            _recipe_exact_fields(
+                node, {"id", "op", "module"},
+                context=f"recipe node {expected_id}",
+            )
+            if not isinstance(node.get("module"), str):
+                raise ProtocolFault(
+                    f"recipe node {expected_id} import module must be a string"
+                )
+        elif op == "getattr":
+            _recipe_exact_fields(
+                node, {"id", "op", "object", "name"},
+                context=f"recipe node {expected_id}",
+            )
+            _recipe_ref(
+                node.get("object"),
+                before=expected_id,
+                context=f"recipe node {expected_id} object",
+            )
+            if not isinstance(node.get("name"), str):
+                raise ProtocolFault(
+                    f"recipe node {expected_id} attribute name must be a string"
+                )
+        elif op == "getitem":
+            _recipe_exact_fields(
+                node, {"id", "op", "object", "key"},
+                context=f"recipe node {expected_id}",
+            )
+            _recipe_ref(
+                node.get("object"),
+                before=expected_id,
+                context=f"recipe node {expected_id} object",
+            )
+            _recipe_ref(
+                node.get("key"),
+                before=expected_id,
+                context=f"recipe node {expected_id} key",
+            )
+        elif op == "call":
+            _recipe_exact_fields(
+                node, {"id", "op", "callable", "args", "kwargs"},
+                context=f"recipe node {expected_id}",
+            )
+            _recipe_ref(
+                node.get("callable"),
+                before=expected_id,
+                context=f"recipe node {expected_id} callable",
+            )
+            args = node.get("args")
+            if not isinstance(args, list):
+                raise ProtocolFault(
+                    f"recipe node {expected_id} call args must be an array"
+                )
+            for arg_index, arg in enumerate(args):
+                _recipe_ref(
+                    arg,
+                    before=expected_id,
+                    context=f"recipe node {expected_id} arg {arg_index}",
+                )
+            kwargs = node.get("kwargs")
+            if not isinstance(kwargs, dict):
+                raise ProtocolFault(
+                    f"recipe node {expected_id} call kwargs must be an object"
+                )
+            for name, value in kwargs.items():
+                if not isinstance(name, str):
+                    raise ProtocolFault(
+                        f"recipe node {expected_id} kwarg name must be a string"
+                    )
+                _recipe_ref(
+                    value,
+                    before=expected_id,
+                    context=f"recipe node {expected_id} kwarg {name}",
+                )
+        elif op == "collection":
+            _recipe_exact_fields(
+                node, {"id", "op", "kind", "items"},
+                context=f"recipe node {expected_id}",
+            )
+            kind = node.get("kind")
+            if kind not in ("list", "tuple", "set", "frozenset", "dict"):
+                raise ProtocolFault(
+                    f"recipe node {expected_id} has unknown collection kind"
+                )
+            items = node.get("items")
+            if not isinstance(items, list):
+                raise ProtocolFault(
+                    f"recipe node {expected_id} collection items must be an array"
+                )
+            if kind == "dict":
+                for item_index, pair in enumerate(items):
+                    if not isinstance(pair, list) or len(pair) != 2:
+                        raise ProtocolFault(
+                            f"recipe node {expected_id} dict item {item_index} must be a pair"
+                        )
+                    for pair_index, value in enumerate(pair):
+                        _recipe_ref(
+                            value,
+                            before=expected_id,
+                            context=(
+                                f"recipe node {expected_id} dict item "
+                                f"{item_index}:{pair_index}"
+                            ),
+                        )
+            else:
+                for item_index, value in enumerate(items):
+                    _recipe_ref(
+                        value,
+                        before=expected_id,
+                        context=(
+                            f"recipe node {expected_id} collection item {item_index}"
+                        ),
+                    )
+        elif op == "scope":
+            _recipe_exact_fields(
+                node, {"id", "op", "profile"},
+                context=f"recipe node {expected_id}",
+            )
+            if node.get("profile") != "sympy.base":
+                raise ProtocolFault(
+                    f"recipe node {expected_id} has unknown scope profile"
+                )
+        elif op == "bind":
+            _recipe_exact_fields(
+                node, {"id", "op", "scope", "name", "value"},
+                context=f"recipe node {expected_id}",
+            )
+            _recipe_ref(
+                node.get("scope"),
+                before=expected_id,
+                context=f"recipe node {expected_id} scope",
+            )
+            if not isinstance(node.get("name"), str):
+                raise ProtocolFault(
+                    f"recipe node {expected_id} binding name must be a string"
+                )
+            _recipe_ref(
+                node.get("value"),
+                before=expected_id,
+                context=f"recipe node {expected_id} value",
+            )
+        elif op in ("exec", "eval"):
+            _recipe_exact_fields(
+                node, {"id", "op", "scope", "code"},
+                context=f"recipe node {expected_id}",
+            )
+            _recipe_ref(
+                node.get("scope"),
+                before=expected_id,
+                context=f"recipe node {expected_id} scope",
+            )
+            if not isinstance(node.get("code"), str):
+                raise ProtocolFault(
+                    f"recipe node {expected_id} code must be a string"
+                )
+        elif op == "require_non_none":
+            expected_fields = {"id", "op", "value"}
+            if "message" in node:
+                expected_fields.add("message")
+            _recipe_exact_fields(
+                node, expected_fields, context=f"recipe node {expected_id}"
+            )
+            _recipe_ref(
+                node.get("value"),
+                before=expected_id,
+                context=f"recipe node {expected_id} value",
+            )
+            if "message" in node and not isinstance(node["message"], str):
+                raise ProtocolFault(
+                    f"recipe node {expected_id} message must be a string"
+                )
+        else:
+            raise ProtocolFault(
+                f"recipe node {expected_id} has unknown op: {op}"
+            )
+    result = recipe.get("result")
+    if not isinstance(result, dict):
+        raise ProtocolFault("recipe result must be an object")
+    _recipe_exact_fields(
+        result, {"ref", "codec"}, context="recipe result"
+    )
+    result_ref = result.get("ref")
+    if type(result_ref) is not int or not 0 <= result_ref < len(nodes):
+        raise ProtocolFault("recipe result ref is out of range")
+    result_codec = result.get("codec")
+    _validate_recipe_codec(result_codec, context="recipe result")
+
+    new, evaluating, done = 0, 1, 2
+    states = [new] * len(nodes)
+    values: list[Any] = [None] * len(nodes)
+
+    def evaluate(node_id: int) -> Any:
+        if states[node_id] == done:
+            return values[node_id]
+        if states[node_id] == evaluating:
+            raise ProtocolFault(f"recipe node {node_id} is cyclic")
+        states[node_id] = evaluating
+        node = nodes[node_id]
+        op = node["op"]
+        if op == "const":
+            if node["codec"] == "none":
+                value = None
+            elif node["codec"] == "int":
+                value = int(node["value"], 10)
+            elif node["codec"] == "float":
+                value = float(node["value"])
+            else:
+                value = node["value"]
+        elif op == "import":
+            value = importlib.import_module(node["module"])
+        elif op == "getattr":
+            value = getattr(evaluate(node["object"]["ref"]), node["name"])
+        elif op == "getitem":
+            value = evaluate(node["object"]["ref"])[
+                evaluate(node["key"]["ref"])
+            ]
+        elif op == "call":
+            function = evaluate(node["callable"]["ref"])
+            args = [evaluate(arg["ref"]) for arg in node["args"]]
+            kwargs = {
+                name: evaluate(argument["ref"])
+                for name, argument in node["kwargs"].items()
+            }
+            value = function(*args, **kwargs)
+        elif op == "collection":
+            kind = node["kind"]
+            if kind == "dict":
+                value = {
+                    evaluate(pair[0]["ref"]): evaluate(pair[1]["ref"])
+                    for pair in node["items"]
+                }
+            else:
+                items = [evaluate(item["ref"]) for item in node["items"]]
+                if kind == "list":
+                    value = items
+                elif kind == "tuple":
+                    value = tuple(items)
+                elif kind == "set":
+                    value = set(items)
+                else:
+                    value = frozenset(items)
+        elif op == "scope":
+            value = _sympy_base_globals()
+        elif op == "bind":
+            scope = evaluate(node["scope"]["ref"])
+            scope[node["name"]] = evaluate(node["value"]["ref"])
+            value = scope
+        elif op == "exec":
+            scope = evaluate(node["scope"]["ref"])
+            exec(node["code"], scope, scope)
+            value = scope
+        elif op == "eval":
+            scope = evaluate(node["scope"]["ref"])
+            value = eval(node["code"], scope, scope)
+        else:
+            value = evaluate(node["value"]["ref"])
+            if value is None:
+                raise ValueError(
+                    node.get("message", "recipe value must not be None")
+                )
+        values[node_id] = value
+        states[node_id] = done
+        return value
+
+    return _encode_recipe_result(evaluate(result_ref), result_codec)
+
+
 PROGRAMS: dict[str, Callable[[Any], Any]] = {
     "runtime.info": _runtime_info,
     "runtime.echo": _echo,
@@ -182,6 +669,7 @@ PROGRAMS: dict[str, Callable[[Any], Any]] = {
     "integrals.eval_str": _eval_str,
     "unify.exec_result_str": _exec_result_str,
     "utilities.eval_str": _utilities_eval_str,
+    "oracle.recipe.v1": _recipe_v1,
 }
 
 
