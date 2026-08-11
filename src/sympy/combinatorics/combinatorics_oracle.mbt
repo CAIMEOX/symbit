@@ -1,310 +1,618 @@
 ///|
-/// Oracle helpers for SymPy combinatorics.
+/// Request-scoped oracle helpers for SymPy combinatorics.
 
 ///|
-pub type OracleArg = @sympy.OracleArg
-
-///|
-fn sympy_call(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum? raise {
-  @sympy.sympy_call(path, args, kwargs~)
+priv enum CombinatoricsArg {
+  CNull
+  CBoolean(Bool)
+  CInteger(Int)
+  CText(String)
+  CList(Array[CombinatoricsArg])
 }
 
 ///|
-fn sympy_call_must(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum raise {
-  match sympy_call(path, args, kwargs~) {
-    Some(obj) => obj
-    None => fail("sympy-call-none:\{path}")
-  }
-}
-
-///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
-}
-
-///|
-fn py_callable_from_enum(obj : @py.PyObjectEnum) -> @py.PyCallable raise {
-  match obj {
-    PyCallable(callable) => callable
-    PyClass(obj0) =>
-      @py.PyCallable::create(obj0) catch {
-        _ => fail("py-callable")
+fn CombinatoricsArg::materialize(
+  self : CombinatoricsArg,
+  builder : @recipe.Builder,
+) -> @recipe.RecipeArg raise {
+  match self {
+    CNull => Null
+    CBoolean(value) => Bool(value)
+    CInteger(value) => DecimalInt(Show::to_string(value))
+    CText(value) => Str(value)
+    CList(values) => {
+      let items : Array[@recipe.RecipeArg] = []
+      for value in values {
+        items.push(value.materialize(builder))
       }
-    _ =>
-      @py.PyCallable::create(objenum_to_obj(obj)) catch {
-        _ => fail("py-callable")
-      }
-  }
-}
-
-///|
-fn py_call_with_args(
-  callable : @py.PyCallable,
-  args : Array[OracleArg],
-) -> @py.PyObjectEnum raise {
-  let tup = @sympy.py_pack_args(args)
-  match @sympy.py_call_object(callable, tup, print_err=true) {
-    Some(obj) => obj
-    None => fail("py-call-none")
-  }
-}
-
-///|
-fn py_call_with_args_allow_none(
-  callable : @py.PyCallable,
-  args : Array[OracleArg],
-) -> Unit {
-  let tup = @sympy.py_pack_args(args)
-  let _ = @sympy.py_call_object(callable, tup, print_err=true)
-}
-
-///|
-fn py_call_with_args_kwargs(
-  callable : @py.PyCallable,
-  args : Array[OracleArg],
-  kwargs : Map[String, OracleArg],
-) -> @py.PyObjectEnum raise {
-  let tup = @sympy.py_pack_args(args)
-  let dict = @sympy.py_pack_kwargs(kwargs)
-  match
-    @sympy.py_call_object_kwargs(callable, tup, kwargs=dict, print_err=true) {
-    Some(obj) => obj
-    None => fail("py-call-none")
-  }
-}
-
-///|
-fn py_builtin_callable(name : String) -> @py.PyCallable raise {
-  let state = py_gil_ensure()
-  let callable = try {
-    match @py.pyimport("builtins") {
-      Some(mod) =>
-        match mod.get_attr(name, print_err=true) {
-          Some(PyCallable(callable)) => callable
-          Some(PyClass(obj0)) =>
-            @py.PyCallable::create(obj0) catch {
-              _ => fail("py-callable")
-            }
-          Some(other) =>
-            @py.PyCallable::create(objenum_to_obj(other)) catch {
-              _ => fail("py-callable")
-            }
-          None => fail("py-callable-missing:\{name}")
-        }
-      None => fail("py-builtin-missing")
-    }
-  } catch {
-    e => {
-      py_gil_release(state)
-      raise e
+      Ref(builder.list(items))
     }
   }
-  py_gil_release(state)
-  callable
 }
 
 ///|
-fn py_builtin_call(
-  name : String,
-  args : Array[OracleArg],
-) -> @py.PyObjectEnum raise {
-  py_call_with_args(py_builtin_callable(name), args)
+fn int_list_arg(values : Array[Int]) -> CombinatoricsArg {
+  CList(values.map(value => CInteger(value)))
 }
 
 ///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
+fn text_list_arg(values : Array[String]) -> CombinatoricsArg {
+  CList(values.map(value => CText(value)))
 }
 
 ///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
+fn int_matrix_arg(values : Array[Array[Int]]) -> CombinatoricsArg {
+  CList(values.map(value => int_list_arg(value)))
 }
 
 ///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let s = obj.to_string()
-  py_gil_release(state)
-  s
+fn int_cube_arg(values : Array[Array[Array[Int]]]) -> CombinatoricsArg {
+  CList(values.map(value => int_matrix_arg(value)))
 }
 
 ///|
-fn py_str_enum(obj : @py.PyObjectEnum) -> String {
-  py_str_obj(objenum_to_obj(obj))
+fn pair_list_arg(values : Array[(Int, Int)]) -> CombinatoricsArg {
+  CList(values.map(value => CList([CInteger(value.0), CInteger(value.1)])))
 }
 
 ///|
-fn py_int_enum(obj : @py.PyObjectEnum) -> Int? {
-  match obj {
-    PyInteger(v) => Some(v.to_int64().to_int())
-    _ => None
+fn pair_matrix_arg(values : Array[Array[(Int, Int)]]) -> CombinatoricsArg {
+  CList(values.map(value => pair_list_arg(value)))
+}
+
+///|
+fn optional_int_arg(value : Int?) -> CombinatoricsArg {
+  match value {
+    Some(value) => CInteger(value)
+    None => CNull
   }
 }
 
 ///|
-fn py_list_to_pyobjects(value : @py.PyObjectEnum) -> Array[@py.PyObject] raise {
-  let state = py_gil_ensure()
-  let res = try {
-    let out : Array[@py.PyObject] = Array::new()
-    match value {
-      PyList(list) => {
-        let len = list.len()
-        for i in 0..<len {
-          match list.get(i) {
-            Some(obj) => out.push(objenum_to_obj(obj))
-            None => ()
-          }
-        }
-        out
-      }
-      PyTuple(tup) => {
-        let len = tup.len().to_int()
-        for i in 0..<len {
-          match tup.get(i) {
-            Some(obj) => out.push(objenum_to_obj(obj))
-            None => ()
-          }
-        }
-        out
-      }
-      _ => fail("expected list/tuple")
-    }
-  } catch {
-    e => {
-      py_gil_release(state)
-      raise e
-    }
+fn optional_text_arg(value : String?) -> CombinatoricsArg {
+  match value {
+    Some(value) => CText(value)
+    None => CNull
   }
-  py_gil_release(state)
-  res
 }
 
 ///|
-fn list_str_equiv(ours : Array[String], items : Array[@py.PyObject]) -> Bool {
-  if ours.length() != items.length() {
-    return false
+fn optional_int_list_arg(value : Array[Int]?) -> CombinatoricsArg {
+  match value {
+    Some(value) => int_list_arg(value)
+    None => CNull
   }
-  for i in 0..<ours.length() {
-    if py_str_obj(items[i]) != ours[i] {
-      return false
-    }
-  }
-  true
 }
 
 ///|
-fn sort_strings(values : Array[String]) -> Array[String] {
-  let out : Array[String] = Array::new()
-  for v in values {
-    out.push(v)
-  }
-  let n = out.length()
-  for i in 0..<n {
-    for j in (i + 1)..<n {
-      if out[j] < out[i] {
-        let tmp = out[i]
-        out[i] = out[j]
-        out[j] = tmp
-      }
-    }
-  }
-  out
+fn nullable_int_list_arg(values : Array[Int?]) -> CombinatoricsArg {
+  CList(values.map(value => optional_int_arg(value)))
 }
 
 ///|
-fn list_int_equiv(ours : Array[Int], items : Array[@py.PyObject]) -> Bool raise {
-  if ours.length() != items.length() {
-    return false
-  }
-  for i in 0..<ours.length() {
-    let s = py_str_obj(items[i])
-    if @string.parse_int(s) != ours[i] {
-      return false
-    }
-  }
-  true
+fn combinatorics_source() -> String {
+  let source =
+    #|def _int_value(value):
+    #|    return int(str(value))
+    #|
+    #|def _int_list_equal(ours, values):
+    #|    values = list(values)
+    #|    if len(ours) != len(values):
+    #|        return False
+    #|    return all(ours[i] == _int_value(values[i]) for i in range(len(ours)))
+    #|
+    #|def _int_matrix_equal(ours, values):
+    #|    values = list(values)
+    #|    if len(ours) != len(values):
+    #|        return False
+    #|    return all(_int_list_equal(ours[i], list(values[i])) for i in range(len(ours)))
+    #|
+    #|def _unordered_int_matrix_equal(ours, values):
+    #|    values = list(values)
+    #|    if len(ours) != len(values):
+    #|        return False
+    #|    ours_keys = sorted(','.join(str(item) for item in row) for row in ours)
+    #|    value_keys = sorted(','.join(str(item) for item in list(row)) for row in values)
+    #|    return ours_keys == value_keys
+    #|
+    #|def _int_cube_equal(ours, values):
+    #|    values = list(values)
+    #|    if len(ours) != len(values):
+    #|        return False
+    #|    return all(_int_matrix_equal(ours[i], values[i]) for i in range(len(ours)))
+    #|
+    #|def _string_list_equal(ours, values):
+    #|    values = list(values)
+    #|    if len(ours) != len(values):
+    #|        return False
+    #|    return all(ours[i] == str(values[i]) for i in range(len(ours)))
+    #|
+    #|def _pair_list_equal(ours, values):
+    #|    values = list(values)
+    #|    if len(ours) != len(values):
+    #|        return False
+    #|    for i, item in enumerate(values):
+    #|        parts = list(item)
+    #|        if len(parts) != 2:
+    #|            return False
+    #|        if ours[i][0] != _int_value(parts[0]) or ours[i][1] != _int_value(parts[1]):
+    #|            return False
+    #|    return True
+    #|
+    #|def _unordered_pair_list_equal(ours, values):
+    #|    ours_keys = sorted(str(pair[0]) + ',' + str(pair[1]) for pair in ours)
+    #|    value_keys = []
+    #|    for item in list(values):
+    #|        parts = list(item)
+    #|        if len(parts) == 2:
+    #|            left = _int_value(parts[0])
+    #|            right = _int_value(parts[1])
+    #|            low, high = (left, right) if left < right else (right, left)
+    #|            value_keys.append(str(low) + ',' + str(high))
+    #|    return ours_keys == sorted(value_keys)
+    #|
+    #|def _dict_pairs_equal(ours, value):
+    #|    pairs = [(_int_value(key), _int_value(item)) for key, item in value.items()]
+    #|    pairs.sort(key=lambda pair: pair[0])
+    #|    if len(ours) != len(pairs):
+    #|        return False
+    #|    return all(ours[i][0] == pairs[i][0] and ours[i][1] == pairs[i][1] for i in range(len(ours)))
+    #|
+    #|def _permutation(array, size):
+    #|    from sympy.combinatorics.permutations import Permutation
+    #|    if size is None:
+    #|        return Permutation(array)
+    #|    return Permutation(array, size=size)
+    #|
+    #|def _permutation_cycles(cycles, size):
+    #|    from sympy.combinatorics.permutations import Permutation
+    #|    if size is None:
+    #|        return Permutation(cycles)
+    #|    return Permutation(cycles, size=size)
+    #|
+    #|def _permutation_list(arrays):
+    #|    return [_permutation(array, None) for array in arrays]
+    #|
+    #|def _permutation_arrays(values):
+    #|    return [list(value.array_form) for value in list(values)]
+    #|
+    #|def _permutation_group(generators):
+    #|    from sympy.combinatorics.perm_groups import PermutationGroup
+    #|    return PermutationGroup(_permutation_list(generators))
+    #|
+    #|def _permutation_group_elements(group):
+    #|    return list(group.generate_dimino(af=True))
+    #|
+    #|def _polyhedron(name):
+    #|    import sympy.combinatorics.polyhedron as module
+    #|    return getattr(module, name)
+    #|
+    #|def _free_group_tuple(symbols):
+    #|    from sympy.combinatorics.free_groups import free_group
+    #|    return free_group(', '.join(symbols))
+    #|
+    #|def _free_group_word(symbols, form):
+    #|    items = _free_group_tuple(symbols)
+    #|    group = items[0]
+    #|    symbol_items = list(group.symbols)
+    #|    if len(form) == 0:
+    #|        return group.dtype()
+    #|    for pair in form:
+    #|        if not 0 <= pair[0] < len(symbol_items):
+    #|            raise IndexError('free-group symbol index out of range')
+    #|    pairs = [(symbol_items[pair[0]], pair[1]) for pair in form]
+    #|    return group.dtype(pairs)
+    #|
+    #|def _free_group_named_form(symbols, word):
+    #|    result = []
+    #|    for item in list(word.array_form):
+    #|        parts = list(item)
+    #|        if len(parts) != 2:
+    #|            continue
+    #|        name_text = str(parts[0])
+    #|        try:
+    #|            index = int(name_text)
+    #|        except Exception:
+    #|            name = name_text
+    #|        else:
+    #|            name = symbols[index] if 0 <= index < len(symbols) else name_text
+    #|        result.append((name, _int_value(parts[1])))
+    #|    return result
+    #|
+    #|def _free_group_expected_form(symbols, form):
+    #|    return [(symbols[pair[0]], pair[1]) for pair in form if 0 <= pair[0] < len(symbols)]
+    #|
+    #|def _free_group_form_equal(symbols, form, word):
+    #|    return _free_group_expected_form(symbols, form) == _free_group_named_form(symbols, word)
+    #|
+    #|def _tensor_component(base, generators, count, symmetry):
+    #|    return (base, _permutation_list(generators), count, symmetry)
+    #|
+    #|def graycode_generate(n, ours, start, rank):
+    #|    from sympy.combinatorics.graycode import GrayCode
+    #|    kwargs = {}
+    #|    if start is not None:
+    #|        kwargs['start'] = start
+    #|    if rank is not None:
+    #|        kwargs['rank'] = rank
+    #|    return _string_list_equal(ours, list(GrayCode(n).generate_gray(**kwargs)))
+    #|
+    #|def graycode_rank(n, start, ours):
+    #|    from sympy.combinatorics.graycode import GrayCode
+    #|    return str(GrayCode(n, start=start).rank) == str(ours)
+    #|
+    #|def gray_to_bin_value(bits, ours):
+    #|    from sympy.combinatorics.graycode import gray_to_bin
+    #|    return str(gray_to_bin(bits)) == ours
+    #|
+    #|def bin_to_gray_value(bits, ours):
+    #|    from sympy.combinatorics.graycode import bin_to_gray
+    #|    return str(bin_to_gray(bits)) == ours
+    #|
+    #|def graycode_subsets_value(items, ours):
+    #|    from sympy.combinatorics.graycode import graycode_subsets
+    #|    return _int_matrix_equal(ours, list(graycode_subsets(items)))
+    #|
+    #|def ksubsets_value(superset, size, ours):
+    #|    from sympy.combinatorics.subsets import ksubsets
+    #|    return _int_matrix_equal(ours, list(ksubsets(superset, size)))
+    #|
+    #|def subset_rank(subset, superset, ours_binary, ours_lexicographic, ours_gray):
+    #|    from sympy.combinatorics.subsets import Subset
+    #|    value = Subset(subset, superset)
+    #|    return (str(value.rank_binary) == str(ours_binary)
+    #|            and str(value.rank_lexicographic) == str(ours_lexicographic)
+    #|            and str(value.rank_gray) == str(ours_gray))
+    #|
+    #|def subset_next_prev(subset, superset, ours_next, ours_previous):
+    #|    from sympy.combinatorics.subsets import Subset
+    #|    value = Subset(subset, superset)
+    #|    return (_int_list_equal(ours_next, value.next_binary().subset)
+    #|            and _int_list_equal(ours_previous, value.prev_binary().subset))
+    #|
+    #|def prufer_tree(sequence, ours):
+    #|    from sympy.combinatorics.prufer import Prufer
+    #|    return _int_matrix_equal(ours, Prufer(sequence).tree_repr)
+    #|
+    #|def prufer_sequence(edges, ours):
+    #|    from sympy.combinatorics.prufer import Prufer
+    #|    return _int_list_equal(ours, Prufer(edges).prufer_repr)
+    #|
+    #|def prufer_rank(sequence, ours):
+    #|    from sympy.combinatorics.prufer import Prufer
+    #|    return str(Prufer(sequence).rank) == str(ours)
+    #|
+    #|def integer_partition_conjugate(partition, ours):
+    #|    from sympy.combinatorics.partitions import IntegerPartition
+    #|    return _int_list_equal(ours, IntegerPartition(partition).conjugate)
+    #|
+    #|def integer_partition_next_prev(partition, ours_next, ours_previous):
+    #|    from sympy.combinatorics.partitions import IntegerPartition
+    #|    value = IntegerPartition(partition)
+    #|    return (_int_list_equal(ours_next, value.next_lex().partition)
+    #|            and _int_list_equal(ours_previous, value.prev_lex().partition))
+    #|
+    #|def rgs_rank_value(rgs, ours):
+    #|    from sympy.combinatorics.partitions import RGS_rank
+    #|    return str(RGS_rank(rgs)) == str(ours)
+    #|
+    #|def rgs_unrank_value(rank, size, ours):
+    #|    from sympy.combinatorics.partitions import RGS_unrank
+    #|    return _int_list_equal(ours, RGS_unrank(rank, size))
+    #|
+    #|def partition_rgs(blocks, ours_rgs, ours_rank):
+    #|    from sympy.combinatorics.partitions import Partition
+    #|    value = Partition(*blocks)
+    #|    return (_int_list_equal(ours_rgs, value.RGS)
+    #|            and str(value.rank) == str(ours_rank))
+    #|
+    #|def permutation_array_form(array, ours, size):
+    #|    return _int_list_equal(ours, _permutation(array, size).array_form)
+    #|
+    #|def permutation_cycles_array_form(cycles, ours, size):
+    #|    return _int_list_equal(ours, _permutation_cycles(cycles, size).array_form)
+    #|
+    #|def permutation_cyclic_form(array, ours, size):
+    #|    return _int_matrix_equal(ours, _permutation(array, size).cyclic_form)
+    #|
+    #|def permutation_full_cyclic_form(array, ours, size):
+    #|    return _int_matrix_equal(ours, _permutation(array, size).full_cyclic_form)
+    #|
+    #|def permutation_cycle_structure(array, ours, size):
+    #|    return _dict_pairs_equal(ours, _permutation(array, size).cycle_structure)
+    #|
+    #|def permutation_parity(array, ours, size):
+    #|    return str(_permutation(array, size).parity()) == str(ours)
+    #|
+    #|def permutation_order(array, ours, size):
+    #|    return str(_permutation(array, size).order()) == str(ours)
+    #|
+    #|def permutation_rank(array, ours, size):
+    #|    return str(_permutation(array, size).rank()) == str(ours)
+    #|
+    #|def permutation_inversion_vector(array, ours, size):
+    #|    return _int_list_equal(ours, _permutation(array, size).inversion_vector())
+    #|
+    #|def permutation_transpositions(array, ours, size):
+    #|    return _pair_list_equal(ours, _permutation(array, size).transpositions())
+    #|
+    #|def permutation_unrank_lex(size, rank, ours):
+    #|    from sympy.combinatorics.permutations import Permutation
+    #|    return _int_list_equal(ours, Permutation.unrank_lex(size, rank).array_form)
+    #|
+    #|def permutation_next_lex(array, has_value, ours):
+    #|    value = _permutation(array, None).next_lex()
+    #|    if value is None:
+    #|        raise ValueError('py-call-none')
+    #|    if not has_value:
+    #|        return False
+    #|    return _int_list_equal(ours, value.array_form)
+    #|
+    #|def permutation_apply_array(array, values, ours, size):
+    #|    return _string_list_equal(ours, _permutation(array, size)(values))
+    #|
+    #|def permutation_from_sequence(sequence, ours):
+    #|    from sympy.combinatorics.permutations import Permutation
+    #|    return _int_list_equal(ours, Permutation.from_sequence(sequence).array_form)
+    #|
+    #|def generators_symmetric(size, ours):
+    #|    from sympy.combinatorics.generators import symmetric
+    #|    return _unordered_int_matrix_equal(ours, list(symmetric(size)))
+    #|
+    #|def generators_cyclic(size, ours):
+    #|    from sympy.combinatorics.generators import cyclic
+    #|    return _unordered_int_matrix_equal(ours, list(cyclic(size)))
+    #|
+    #|def generators_alternating(size, ours):
+    #|    from sympy.combinatorics.generators import alternating
+    #|    return _unordered_int_matrix_equal(ours, list(alternating(size)))
+    #|
+    #|def generators_dihedral(size, ours):
+    #|    from sympy.combinatorics.generators import dihedral
+    #|    return _unordered_int_matrix_equal(ours, list(dihedral(size)))
+    #|
+    #|def permutation_group_elements(generators, ours):
+    #|    return _unordered_int_matrix_equal(ours, _permutation_group_elements(_permutation_group(generators)))
+    #|
+    #|def permutation_group_order(generators, ours):
+    #|    return str(_permutation_group(generators).order()) == str(ours)
+    #|
+    #|def named_group_elements(kind, size, ours):
+    #|    import sympy.combinatorics.named_groups as module
+    #|    group = getattr(module, kind)(size)
+    #|    return _unordered_int_matrix_equal(ours, _permutation_group_elements(group))
+    #|
+    #|def named_group_order(kind, size, ours):
+    #|    import sympy.combinatorics.named_groups as module
+    #|    return str(getattr(module, kind)(size).order()) == str(ours)
+    #|
+    #|def abelian_group_elements(orders, ours):
+    #|    from sympy.combinatorics.named_groups import AbelianGroup
+    #|    return _unordered_int_matrix_equal(ours, _permutation_group_elements(AbelianGroup(*orders)))
+    #|
+    #|def group_number_nilpotent(value, ours):
+    #|    from sympy.combinatorics.group_numbers import is_nilpotent_number
+    #|    try:
+    #|        result = is_nilpotent_number(value)
+    #|    except Exception:
+    #|        return False
+    #|    return str(result) == ('True' if ours else 'False')
+    #|
+    #|def group_number_abelian(value, ours):
+    #|    from sympy.combinatorics.group_numbers import is_abelian_number
+    #|    try:
+    #|        result = is_abelian_number(value)
+    #|    except Exception:
+    #|        return False
+    #|    return str(result) == ('True' if ours else 'False')
+    #|
+    #|def group_number_cyclic(value, ours):
+    #|    from sympy.combinatorics.group_numbers import is_cyclic_number
+    #|    try:
+    #|        result = is_cyclic_number(value)
+    #|    except Exception:
+    #|        return False
+    #|    return str(result) == ('True' if ours else 'False')
+    #|
+    #|def group_number_count(value, ours_ok, ours_value):
+    #|    from sympy.combinatorics.group_numbers import groups_count
+    #|    try:
+    #|        result = groups_count(value)
+    #|    except Exception:
+    #|        return not ours_ok
+    #|    return ours_ok and str(result) == ours_value
+    #|
+    #|def schur_number_value(size, has_value, value):
+    #|    from sympy.combinatorics.schur_number import SchurNumber
+    #|    expected = str(value) if has_value else 'SchurNumber(' + str(size) + ')'
+    #|    return str(SchurNumber(size)) == expected
+    #|
+    #|def schur_number_lower_bound(size, value):
+    #|    from sympy.combinatorics.schur_number import SchurNumber
+    #|    return str(SchurNumber(size).lower_bound()) == str(value)
+    #|
+    #|def schur_partition_value(size, ours):
+    #|    from sympy.combinatorics.schur_number import schur_partition
+    #|    return _int_matrix_equal(ours, schur_partition(size))
+    #|
+    #|def galois_group_elements(name, ours):
+    #|    import sympy.combinatorics.galois as module
+    #|    group = getattr(module, name)()
+    #|    return _unordered_int_matrix_equal(ours, _permutation_group_elements(group))
+    #|
+    #|def galois_enum_group_elements(enum_name, member_name, ours):
+    #|    import sympy.combinatorics.galois as module
+    #|    group = getattr(getattr(module, enum_name), member_name).get_perm_group()
+    #|    return _unordered_int_matrix_equal(ours, _permutation_group_elements(group))
+    #|
+    #|def polyhedron_corners(name, ours):
+    #|    return _string_list_equal(ours, _polyhedron(name).corners)
+    #|
+    #|def polyhedron_faces(name, ours):
+    #|    return _unordered_int_matrix_equal(ours, list(_polyhedron(name).faces))
+    #|
+    #|def polyhedron_edges(name, ours):
+    #|    return _unordered_pair_list_equal(ours, list(_polyhedron(name).edges))
+    #|
+    #|def polyhedron_group_elements(name, ours):
+    #|    return _unordered_int_matrix_equal(ours, _permutation_group_elements(_polyhedron(name).pgroup))
+    #|
+    #|def polyhedron_array_form_index(name, index, ours):
+    #|    value = _polyhedron(name).copy()
+    #|    try:
+    #|        value.rotate(index)
+    #|    except Exception:
+    #|        pass
+    #|    return _int_list_equal(ours, value.array_form)
+    #|
+    #|def polyhedron_array_form_permutation(name, array, ours):
+    #|    value = _polyhedron(name).copy()
+    #|    try:
+    #|        value.rotate(_permutation(array, None))
+    #|    except Exception:
+    #|        pass
+    #|    return _int_list_equal(ours, value.array_form)
+    #|
+    #|def polyhedron_cyclic_form_index(name, index, ours):
+    #|    value = _polyhedron(name).copy()
+    #|    try:
+    #|        value.rotate(index)
+    #|    except Exception:
+    #|        pass
+    #|    return _int_matrix_equal(ours, value.cyclic_form)
+    #|
+    #|def util_base_ordering(base, degree, ours):
+    #|    from sympy.combinatorics.util import _base_ordering
+    #|    return _int_list_equal(ours, _base_ordering(base, degree))
+    #|
+    #|def free_group_multiply(symbols, form_a, form_b, ours):
+    #|    left = _free_group_word(symbols, form_a)
+    #|    right = _free_group_word(symbols, form_b)
+    #|    return _free_group_form_equal(symbols, ours, left.__mul__(right))
+    #|
+    #|def free_group_power(symbols, form, exponent, ours):
+    #|    return _free_group_form_equal(symbols, ours, pow(_free_group_word(symbols, form), exponent))
+    #|
+    #|def free_group_inverse(symbols, form, ours):
+    #|    return _free_group_form_equal(symbols, ours, _free_group_word(symbols, form).inverse())
+    #|
+    #|def free_group_subword(symbols, form, start, end, ours):
+    #|    return _free_group_form_equal(symbols, ours, _free_group_word(symbols, form).subword(start, end))
+    #|
+    #|def fp_group_reduce(symbols, relators, word_form, ours):
+    #|    from sympy.combinatorics.fp_groups import FpGroup
+    #|    group = _free_group_tuple(symbols)[0]
+    #|    fp_group = FpGroup(group, [_free_group_word(symbols, relator) for relator in relators])
+    #|    reduced = fp_group.reduce(_free_group_word(symbols, word_form))
+    #|    return _free_group_form_equal(symbols, ours, reduced)
+    #|
+    #|def fp_group_coset_table(symbols, relators, subgroup, strategy, ours):
+    #|    from sympy.combinatorics.fp_groups import FpGroup, coset_enumeration_c, coset_enumeration_r
+    #|    group = _free_group_tuple(symbols)[0]
+    #|    fp_group = FpGroup(group, [_free_group_word(symbols, relator) for relator in relators])
+    #|    subgroup_words = [_free_group_word(symbols, word) for word in subgroup]
+    #|    enumerate_cosets = coset_enumeration_c if strategy == 'coset_table_based' else coset_enumeration_r
+    #|    table = enumerate_cosets(fp_group, subgroup_words)
+    #|    try:
+    #|        table.compress()
+    #|    except Exception:
+    #|        pass
+    #|    try:
+    #|        table.standardize()
+    #|    except Exception:
+    #|        pass
+    #|    return _int_matrix_equal(ours, table.table)
+    #|
+    #|def util_check_cycles(array, ours):
+    #|    from sympy.combinatorics.util import _check_cycles_alt_sym
+    #|    return str(_check_cycles_alt_sym(_permutation(array, None))) == ('True' if ours else 'False')
+    #|
+    #|def util_distribute_gens(base, generators, ours):
+    #|    from sympy.combinatorics.util import _distribute_gens_by_base
+    #|    values = _distribute_gens_by_base(base, _permutation_list(generators))
+    #|    arrays = [_permutation_arrays(part) for part in list(values)]
+    #|    return _int_cube_equal(ours, arrays)
+    #|
+    #|def util_strong_gens(distributed, ours):
+    #|    from sympy.combinatorics.util import _strong_gens_from_distr
+    #|    values = [_permutation_list(part) for part in distributed]
+    #|    return _int_matrix_equal(ours, _permutation_arrays(_strong_gens_from_distr(values)))
+    #|
+    #|def tensor_dummy_sgs(dummies, symmetry, size, ours):
+    #|    from sympy.combinatorics.tensor_can import dummy_sgs
+    #|    return _int_matrix_equal(ours, dummy_sgs(dummies, symmetry, size))
+    #|
+    #|def tensor_min_dummies(dummies, symmetries, indices, ours):
+    #|    from sympy.combinatorics.tensor_can import _min_dummies
+    #|    return _int_list_equal(ours, _min_dummies(dummies, symmetries, indices))
+    #|
+    #|def tensor_symmetric_group(size, antisymmetric, ours_base, ours_generators):
+    #|    from sympy.combinatorics.tensor_can import get_symmetric_group_sgs
+    #|    parts = list(get_symmetric_group_sgs(size, antisymmetric))
+    #|    if len(parts) != 2 or not _int_list_equal(ours_base, parts[0]):
+    #|        return False
+    #|    return _int_matrix_equal(ours_generators, _permutation_arrays(parts[1]))
+    #|
+    #|def tensor_perm_af_direct_product(gens1, gens2, signed, ours):
+    #|    from sympy.combinatorics.tensor_can import perm_af_direct_product
+    #|    return _int_matrix_equal(ours, perm_af_direct_product(gens1, gens2, signed))
+    #|
+    #|def tensor_bsgs_direct_product(base1, gens1, base2, gens2, signed, ours_base, ours_gens):
+    #|    from sympy.combinatorics.tensor_can import bsgs_direct_product
+    #|    parts = list(bsgs_direct_product(base1, _permutation_list(gens1), base2, _permutation_list(gens2), signed))
+    #|    if len(parts) != 2 or not _int_list_equal(ours_base, parts[0]):
+    #|        return False
+    #|    return _int_matrix_equal(ours_gens, _permutation_arrays(parts[1]))
+    #|
+    #|def tensor_gens_value(base, generators, list_free, symmetry, ours_size, ours_base, ours_generators):
+    #|    from sympy.combinatorics.tensor_can import tensor_gens
+    #|    parts = list(tensor_gens(base, _permutation_list(generators), list_free, symmetry))
+    #|    if len(parts) != 3 or type(parts[0]) is not int or parts[0] != ours_size:
+    #|        return False
+    #|    if not _int_list_equal(ours_base, parts[1]):
+    #|        return False
+    #|    return _int_matrix_equal(ours_generators, _permutation_arrays(parts[2]))
+    #|
+    #|def tensor_canonical_free(base, generators, permutation, num_free, ours):
+    #|    from sympy.combinatorics.tensor_can import canonical_free
+    #|    value = canonical_free(base, _permutation_list(generators), _permutation(permutation, None), num_free)
+    #|    return _int_list_equal(ours, value)
+    #|
+    #|def tensor_double_coset(dummies, symmetries, base, generators, permutation, ours):
+    #|    from sympy.combinatorics.tensor_can import double_coset_can_rep, get_transversals
+    #|    generator_objects = _permutation_list(generators)
+    #|    transversals = get_transversals(base, generator_objects)
+    #|    value = double_coset_can_rep(dummies, symmetries, base, generator_objects, transversals, _permutation(permutation, None))
+    #|    if type(value) is int:
+    #|        return value == 0 and ours is None
+    #|    return ours is not None and _int_list_equal(ours, value)
+    #|
+    #|def tensor_canonicalize(dummies, msym, permutation, bases, generators, counts, symmetries, ours):
+    #|    from sympy.combinatorics.tensor_can import canonicalize
+    #|    components = [_tensor_component(bases[i], generators[i], counts[i], symmetries[i]) for i in range(len(counts))]
+    #|    value = canonicalize(_permutation(permutation, None), dummies, msym, *components)
+    #|    if type(value) is int:
+    #|        return value == 0 and ours is None
+    #|    return ours is not None and _int_list_equal(ours, value)
+  source
 }
 
 ///|
-fn list_list_int_equiv(
-  ours : Array[Array[Int]],
-  items : Array[@py.PyObject],
+fn combinatorics_call(
+  helper_name : String,
+  args : Array[CombinatoricsArg],
 ) -> Bool raise {
-  if ours.length() != items.length() {
-    return false
+  let builder = @recipe.Builder::new()
+  let builtins = builder.import_module("builtins")
+  let scope = builder.dict([(Str("__builtins__"), Ref(builtins))])
+  let scope = builder.exec(scope, combinatorics_source())
+  let callable = builder.getitem(scope, Str(helper_name))
+  let call_args : Array[@recipe.RecipeArg] = []
+  for argument in args {
+    call_args.push(argument.materialize(builder))
   }
-  for i in 0..<ours.length() {
-    let lst = py_builtin_call("list", [PyObj(items[i])])
-    let sub = py_list_to_pyobjects(lst)
-    if !list_int_equiv(ours[i], sub) {
-      return false
-    }
-  }
-  true
-}
-
-///|
-fn list_list_int_equiv_unordered(
-  ours : Array[Array[Int]],
-  items : Array[@py.PyObject],
-) -> Bool raise {
-  if ours.length() != items.length() {
-    return false
-  }
-  let ours_keys : Array[String] = Array::new()
-  for arr in ours {
-    ours_keys.push(arr.map(x => "\{x}").join(","))
-  }
-  let items_keys : Array[String] = Array::new()
-  for i in 0..<items.length() {
-    let lst = py_builtin_call("list", [PyObj(items[i])])
-    let sub = py_list_to_pyobjects(lst)
-    let key = sub.map(o => py_str_obj(o)).join(",")
-    items_keys.push(key)
-  }
-  let ours_sorted = sort_strings(ours_keys)
-  let items_sorted = sort_strings(items_keys)
-  for i in 0..<ours_sorted.length() {
-    if ours_sorted[i] != items_sorted[i] {
-      return false
-    }
-  }
-  true
-}
-
-///|
-fn array_eq_ints_local(a : Array[Int], b : Array[Int]) -> Bool {
-  if a.length() != b.length() {
-    return false
-  }
-  for i in 0..<a.length() {
-    if a[i] != b[i] {
-      return false
-    }
-  }
-  true
-}
-
-///|
-fn array_list_eq(ours : Array[Array[Int]], other : Array[Array[Int]]) -> Bool {
-  if ours.length() != other.length() {
-    return false
-  }
-  for i in 0..<ours.length() {
-    if !array_eq_ints_local(ours[i], other[i]) {
-      return false
-    }
-  }
-  true
+  let result = builder.call(callable, call_args)
+  builder.request_bool(result)
 }
 
 ///|
@@ -314,59 +622,31 @@ pub fn graycode_generate_equiv(
   start? : String,
   rank? : Int,
 ) -> Bool raise {
-  let gray = sympy_call_must("sympy.combinatorics.graycode.GrayCode", [Int(n)])
-  let kwargs : Map[String, OracleArg] = Map([])
-  match start {
-    Some(s) => kwargs["start"] = Str(s)
-    None => ()
-  }
-  match rank {
-    Some(r) => kwargs["rank"] = Int(r)
-    None => ()
-  }
-  let gen_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(gray)),
-    Str("generate_gray"),
+  combinatorics_call("graycode_generate", [
+    CInteger(n),
+    text_list_arg(ours),
+    optional_text_arg(start),
+    optional_int_arg(rank),
   ])
-  let gen = py_call_with_args_kwargs(
-    py_callable_from_enum(gen_call),
-    [],
-    kwargs,
-  )
-  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(gen))])
-  let items = py_list_to_pyobjects(lst)
-  list_str_equiv(ours, items)
 }
 
 ///|
 pub fn graycode_rank_equiv(n : Int, start : String, ours : Int) -> Bool raise {
-  let kwargs : Map[String, OracleArg] = { "start": Str(start) }
-  let gray = sympy_call_must(
-    "sympy.combinatorics.graycode.GrayCode",
-    [Int(n)],
-    kwargs~,
-  )
-  let rank = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(gray)),
-    Str("rank"),
+  combinatorics_call("graycode_rank", [
+    CInteger(n),
+    CText(start),
+    CInteger(ours),
   ])
-  py_str_enum(rank) == ours.to_string()
 }
 
 ///|
 pub fn gray_to_bin_equiv(bits : String, ours : String) -> Bool raise {
-  let res = sympy_call_must("sympy.combinatorics.graycode.gray_to_bin", [
-    Str(bits),
-  ])
-  py_str_enum(res) == ours
+  combinatorics_call("gray_to_bin_value", [CText(bits), CText(ours)])
 }
 
 ///|
 pub fn bin_to_gray_equiv(bits : String, ours : String) -> Bool raise {
-  let res = sympy_call_must("sympy.combinatorics.graycode.bin_to_gray", [
-    Str(bits),
-  ])
-  py_str_enum(res) == ours
+  combinatorics_call("bin_to_gray_value", [CText(bits), CText(ours)])
 }
 
 ///|
@@ -374,12 +654,10 @@ pub fn graycode_subsets_equiv(
   items : Array[Int],
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let res = sympy_call_must("sympy.combinatorics.graycode.graycode_subsets", [
-    IntList(items),
+  combinatorics_call("graycode_subsets_value", [
+    int_list_arg(items),
+    int_matrix_arg(ours),
   ])
-  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(res))])
-  let items_py = py_list_to_pyobjects(lst)
-  list_list_int_equiv(ours, items_py)
 }
 
 ///|
@@ -388,11 +666,11 @@ pub fn ksubsets_equiv(
   k : Int,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let args : Array[OracleArg] = [IntList(superset), Int(k)]
-  let res = sympy_call_must("sympy.combinatorics.subsets.ksubsets", args)
-  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(res))])
-  let items = py_list_to_pyobjects(lst)
-  list_list_int_equiv(ours, items)
+  combinatorics_call("ksubsets_value", [
+    int_list_arg(superset),
+    CInteger(k),
+    int_matrix_arg(ours),
+  ])
 }
 
 ///|
@@ -403,24 +681,13 @@ pub fn subset_rank_equiv(
   ours_lex : Int,
   ours_gray : Int,
 ) -> Bool raise {
-  let args : Array[OracleArg] = [IntList(subset), IntList(superset)]
-  let obj = sympy_call_must("sympy.combinatorics.subsets.Subset", args)
-  let rank_bin = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("rank_binary"),
+  combinatorics_call("subset_rank", [
+    int_list_arg(subset),
+    int_list_arg(superset),
+    CInteger(ours_bin),
+    CInteger(ours_lex),
+    CInteger(ours_gray),
   ])
-  let rank_lex = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("rank_lexicographic"),
-  ])
-  let rank_gray = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("rank_gray"),
-  ])
-  let ok_bin = py_str_enum(rank_bin) == ours_bin.to_string()
-  let ok_lex = py_str_enum(rank_lex) == ours_lex.to_string()
-  let ok_gray = py_str_enum(rank_gray) == ours_gray.to_string()
-  ok_bin && ok_lex && ok_gray
 }
 
 ///|
@@ -430,29 +697,12 @@ pub fn subset_next_prev_equiv(
   ours_next : Array[Int],
   ours_prev : Array[Int],
 ) -> Bool raise {
-  let args : Array[OracleArg] = [IntList(subset), IntList(superset)]
-  let obj = sympy_call_must("sympy.combinatorics.subsets.Subset", args)
-  let nxt_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("next_binary"),
+  combinatorics_call("subset_next_prev", [
+    int_list_arg(subset),
+    int_list_arg(superset),
+    int_list_arg(ours_next),
+    int_list_arg(ours_prev),
   ])
-  let prv_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("prev_binary"),
-  ])
-  let nxt = py_call_with_args(py_callable_from_enum(nxt_call), [])
-  let prv = py_call_with_args(py_callable_from_enum(prv_call), [])
-  let nxt_subset = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(nxt)),
-    Str("subset"),
-  ])
-  let prv_subset = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(prv)),
-    Str("subset"),
-  ])
-  let nxt_items = py_list_to_pyobjects(nxt_subset)
-  let prv_items = py_list_to_pyobjects(prv_subset)
-  list_int_equiv(ours_next, nxt_items) && list_int_equiv(ours_prev, prv_items)
 }
 
 ///|
@@ -460,13 +710,7 @@ pub fn prufer_equiv_tree(
   seq : Array[Int],
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let obj = sympy_call_must("sympy.combinatorics.prufer.Prufer", [IntList(seq)])
-  let tree = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("tree_repr"),
-  ])
-  let items = py_list_to_pyobjects(tree)
-  list_list_int_equiv(ours, items)
+  combinatorics_call("prufer_tree", [int_list_arg(seq), int_matrix_arg(ours)])
 }
 
 ///|
@@ -474,29 +718,15 @@ pub fn prufer_equiv_sequence(
   edges : Array[Array[Int]],
   ours : Array[Int],
 ) -> Bool raise {
-  let py_edges : Array[OracleArg] = Array::new()
-  for edge in edges {
-    py_edges.push(IntList(edge))
-  }
-  let obj = sympy_call_must("sympy.combinatorics.prufer.Prufer", [
-    List(py_edges),
+  combinatorics_call("prufer_sequence", [
+    int_matrix_arg(edges),
+    int_list_arg(ours),
   ])
-  let seq = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("prufer_repr"),
-  ])
-  let items = py_list_to_pyobjects(seq)
-  list_int_equiv(ours, items)
 }
 
 ///|
 pub fn prufer_rank_equiv(seq : Array[Int], ours : Int) -> Bool raise {
-  let obj = sympy_call_must("sympy.combinatorics.prufer.Prufer", [IntList(seq)])
-  let rank = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("rank"),
-  ])
-  py_str_enum(rank) == ours.to_string()
+  combinatorics_call("prufer_rank", [int_list_arg(seq), CInteger(ours)])
 }
 
 ///|
@@ -504,15 +734,10 @@ pub fn integer_partition_conjugate_equiv(
   part : Array[Int],
   ours : Array[Int],
 ) -> Bool raise {
-  let obj = sympy_call_must("sympy.combinatorics.partitions.IntegerPartition", [
-    IntList(part),
+  combinatorics_call("integer_partition_conjugate", [
+    int_list_arg(part),
+    int_list_arg(ours),
   ])
-  let conj = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("conjugate"),
-  ])
-  let items = py_list_to_pyobjects(conj)
-  list_int_equiv(ours, items)
 }
 
 ///|
@@ -521,48 +746,25 @@ pub fn integer_partition_next_prev_equiv(
   ours_next : Array[Int],
   ours_prev : Array[Int],
 ) -> Bool raise {
-  let obj = sympy_call_must("sympy.combinatorics.partitions.IntegerPartition", [
-    IntList(part),
+  combinatorics_call("integer_partition_next_prev", [
+    int_list_arg(part),
+    int_list_arg(ours_next),
+    int_list_arg(ours_prev),
   ])
-  let nxt_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("next_lex"),
-  ])
-  let prv_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("prev_lex"),
-  ])
-  let nxt = py_call_with_args(py_callable_from_enum(nxt_call), [])
-  let prv = py_call_with_args(py_callable_from_enum(prv_call), [])
-  let nxt_part = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(nxt)),
-    Str("partition"),
-  ])
-  let prv_part = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(prv)),
-    Str("partition"),
-  ])
-  let nxt_list = py_list_to_pyobjects(nxt_part)
-  let prv_list = py_list_to_pyobjects(prv_part)
-  list_int_equiv(ours_next, nxt_list) && list_int_equiv(ours_prev, prv_list)
 }
 
 ///|
 pub fn rgs_rank_equiv(rgs : Array[Int], ours : Int) -> Bool raise {
-  let obj = sympy_call_must("sympy.combinatorics.partitions.RGS_rank", [
-    IntList(rgs),
-  ])
-  py_str_enum(obj) == ours.to_string()
+  combinatorics_call("rgs_rank_value", [int_list_arg(rgs), CInteger(ours)])
 }
 
 ///|
 pub fn rgs_unrank_equiv(rank : Int, m : Int, ours : Array[Int]) -> Bool raise {
-  let obj = sympy_call_must("sympy.combinatorics.partitions.RGS_unrank", [
-    Int(rank),
-    Int(m),
+  combinatorics_call("rgs_unrank_value", [
+    CInteger(rank),
+    CInteger(m),
+    int_list_arg(ours),
   ])
-  let items = py_list_to_pyobjects(obj)
-  list_int_equiv(ours, items)
 }
 
 ///|
@@ -571,264 +773,11 @@ pub fn partition_rgs_equiv(
   ours_rgs : Array[Int],
   ours_rank : Int,
 ) -> Bool raise {
-  let args : Array[OracleArg] = Array::new()
-  for block in blocks {
-    args.push(IntList(block))
-  }
-  let obj = sympy_call_must("sympy.combinatorics.partitions.Partition", args)
-  let rgs = py_builtin_call("getattr", [PyObj(objenum_to_obj(obj)), Str("RGS")])
-  let rank = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("rank"),
+  combinatorics_call("partition_rgs", [
+    int_matrix_arg(blocks),
+    int_list_arg(ours_rgs),
+    CInteger(ours_rank),
   ])
-  let items = py_list_to_pyobjects(rgs)
-  list_int_equiv(ours_rgs, items) && py_str_enum(rank) == ours_rank.to_string()
-}
-
-///|
-fn perm_obj_from_array(
-  array : Array[Int],
-  size : Int?,
-) -> @py.PyObjectEnum raise {
-  let kwargs : Map[String, OracleArg] = Map([])
-  match size {
-    Some(s) => kwargs["size"] = Int(s)
-    None => ()
-  }
-  sympy_call_must(
-    "sympy.combinatorics.permutations.Permutation",
-    [IntList(array)],
-    kwargs~,
-  )
-}
-
-///|
-fn perm_obj_from_cycles(
-  cycles : Array[Array[Int]],
-  size : Int?,
-) -> @py.PyObjectEnum raise {
-  let kwargs : Map[String, OracleArg] = Map([])
-  match size {
-    Some(s) => kwargs["size"] = Int(s)
-    None => ()
-  }
-  let args_list : Array[OracleArg] = Array::new()
-  for cycle in cycles {
-    args_list.push(IntList(cycle))
-  }
-  sympy_call_must(
-    "sympy.combinatorics.permutations.Permutation",
-    [List(args_list)],
-    kwargs~,
-  )
-}
-
-///|
-fn perm_class_obj() -> @py.PyObjectEnum raise {
-  let state = py_gil_ensure()
-  let obj = try {
-    match @py.pyimport("sympy.combinatorics.permutations") {
-      Some(mod) =>
-        match mod.get_attr("Permutation", print_err=true) {
-          Some(attr) => attr
-          None =>
-            fail("sympy-missing:sympy.combinatorics.permutations.Permutation")
-        }
-      None => fail("sympy-missing:sympy.combinatorics.permutations")
-    }
-  } catch {
-    e => {
-      py_gil_release(state)
-      raise e
-    }
-  }
-  py_gil_release(state)
-  obj
-}
-
-///|
-fn list_pair_int_equiv(
-  ours : Array[(Int, Int)],
-  items : Array[@py.PyObject],
-) -> Bool raise {
-  if ours.length() != items.length() {
-    return false
-  }
-  for i in 0..<ours.length() {
-    let lst = py_builtin_call("list", [PyObj(items[i])])
-    let parts = py_list_to_pyobjects(lst)
-    if parts.length() != 2 {
-      return false
-    }
-    let a = @string.parse_int(py_str_obj(parts[0]))
-    let b = @string.parse_int(py_str_obj(parts[1]))
-    if ours[i].0 != a || ours[i].1 != b {
-      return false
-    }
-  }
-  true
-}
-
-///|
-fn py_dict_pairs_sorted(obj : @py.PyObjectEnum) -> Array[(Int, Int)] raise {
-  let items_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("items"),
-  ])
-  let items = py_call_with_args(py_callable_from_enum(items_call), [])
-  let items_list = py_builtin_call("list", [PyObj(objenum_to_obj(items))])
-  let items_objs = py_list_to_pyobjects(items_list)
-  let pairs : Array[(Int, Int)] = Array::new()
-  for item in items_objs {
-    let lst = py_builtin_call("list", [PyObj(item)])
-    let parts = py_list_to_pyobjects(lst)
-    if parts.length() == 2 {
-      let a = @string.parse_int(py_str_obj(parts[0]))
-      let b = @string.parse_int(py_str_obj(parts[1]))
-      pairs.push((a, b))
-    }
-  }
-  let n = pairs.length()
-  for i in 0..<n {
-    for j in (i + 1)..<n {
-      if pairs[j].0 < pairs[i].0 {
-        let tmp = pairs[i]
-        pairs[i] = pairs[j]
-        pairs[j] = tmp
-      }
-    }
-  }
-  pairs
-}
-
-///|
-fn perm_array_form_from_obj(obj : @py.PyObject) -> Array[Int] raise {
-  let arr = py_builtin_call("getattr", [PyObj(obj), Str("array_form")])
-  let items = py_list_to_pyobjects(arr)
-  let out : Array[Int] = Array::new()
-  for item in items {
-    out.push(@string.parse_int(py_str_obj(item)))
-  }
-  out
-}
-
-///|
-fn perm_list_to_arrays(obj : @py.PyObjectEnum) -> Array[Array[Int]] raise {
-  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(obj))])
-  let items = py_list_to_pyobjects(lst)
-  let out : Array[Array[Int]] = Array::new()
-  for item in items {
-    out.push(perm_array_form_from_obj(item))
-  }
-  out
-}
-
-///|
-fn perm_list_list_to_arrays(
-  obj : @py.PyObjectEnum,
-) -> Array[Array[Array[Int]]] raise {
-  let outer = py_builtin_call("list", [PyObj(objenum_to_obj(obj))])
-  let items = py_list_to_pyobjects(outer)
-  let out : Array[Array[Array[Int]]] = Array::new()
-  for item in items {
-    let lst = py_builtin_call("list", [PyObj(item)])
-    out.push(perm_list_to_arrays(lst))
-  }
-  out
-}
-
-///|
-fn list_list_list_int_equiv(
-  ours : Array[Array[Array[Int]]],
-  other : Array[Array[Array[Int]]],
-) -> Bool {
-  if ours.length() != other.length() {
-    return false
-  }
-  for i in 0..<ours.length() {
-    if ours[i].length() != other[i].length() {
-      return false
-    }
-    for j in 0..<ours[i].length() {
-      if ours[i][j].length() != other[i][j].length() {
-        return false
-      }
-      for k in 0..<ours[i][j].length() {
-        if ours[i][j][k] != other[i][j][k] {
-          return false
-        }
-      }
-    }
-  }
-  true
-}
-
-///|
-fn list_pair_int_equiv_unordered(
-  ours : Array[(Int, Int)],
-  items : Array[@py.PyObject],
-) -> Bool raise {
-  let mut ours_keys : Array[String] = Array::new()
-  for p in ours {
-    ours_keys.push("\{p.0},\{p.1}")
-  }
-  ours_keys = sort_strings(ours_keys)
-  let mut other_keys : Array[String] = Array::new()
-  for item in items {
-    let lst = py_builtin_call("list", [PyObj(item)])
-    let parts = py_list_to_pyobjects(lst)
-    if parts.length() == 2 {
-      let a = @string.parse_int(py_str_obj(parts[0]))
-      let b = @string.parse_int(py_str_obj(parts[1]))
-      let x = if a < b { a } else { b }
-      let y = if a < b { b } else { a }
-      other_keys.push("\{x},\{y}")
-    }
-  }
-  other_keys = sort_strings(other_keys)
-  if ours_keys.length() != other_keys.length() {
-    return false
-  }
-  for i in 0..<ours_keys.length() {
-    if ours_keys[i] != other_keys[i] {
-      return false
-    }
-  }
-  true
-}
-
-///|
-fn perm_group_obj_from_gens(gens : Array[Array[Int]]) -> @py.PyObjectEnum raise {
-  let perm_args : Array[OracleArg] = Array::new()
-  for g in gens {
-    let p = sympy_call_must("sympy.combinatorics.permutations.Permutation", [
-      IntList(g),
-    ])
-    perm_args.push(PyObj(objenum_to_obj(p)))
-  }
-  sympy_call_must("sympy.combinatorics.perm_groups.PermutationGroup", [
-    List(perm_args),
-  ])
-}
-
-///|
-fn py_import_module(path : String) -> @py.PyModule raise {
-  match @py.pyimport(path) {
-    Some(mod) => mod
-    None => fail("py-import-missing:\{path}")
-  }
-}
-
-///|
-fn perm_group_elements(obj : @py.PyObjectEnum) -> Array[@py.PyObject] raise {
-  let call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("generate_dimino"),
-  ])
-  let kwargs : Map[String, OracleArg] = { "af": Bool(true) }
-  let res = py_call_with_args_kwargs(py_callable_from_enum(call), [], kwargs)
-  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(res))])
-  py_list_to_pyobjects(lst)
 }
 
 ///|
@@ -837,13 +786,11 @@ pub fn perm_array_form_equiv_from_array(
   ours : Array[Int],
   size? : Int,
 ) -> Bool raise {
-  let obj = perm_obj_from_array(array, size)
-  let arr = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("array_form"),
+  combinatorics_call("permutation_array_form", [
+    int_list_arg(array),
+    int_list_arg(ours),
+    optional_int_arg(size),
   ])
-  let items = py_list_to_pyobjects(arr)
-  list_int_equiv(ours, items)
 }
 
 ///|
@@ -852,13 +799,11 @@ pub fn perm_array_form_equiv_from_cycles(
   ours : Array[Int],
   size? : Int,
 ) -> Bool raise {
-  let obj = perm_obj_from_cycles(cycles, size)
-  let arr = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("array_form"),
+  combinatorics_call("permutation_cycles_array_form", [
+    int_matrix_arg(cycles),
+    int_list_arg(ours),
+    optional_int_arg(size),
   ])
-  let items = py_list_to_pyobjects(arr)
-  list_int_equiv(ours, items)
 }
 
 ///|
@@ -867,13 +812,11 @@ pub fn perm_cyclic_form_equiv_from_array(
   ours : Array[Array[Int]],
   size? : Int,
 ) -> Bool raise {
-  let obj = perm_obj_from_array(array, size)
-  let cyc = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("cyclic_form"),
+  combinatorics_call("permutation_cyclic_form", [
+    int_list_arg(array),
+    int_matrix_arg(ours),
+    optional_int_arg(size),
   ])
-  let items = py_list_to_pyobjects(cyc)
-  list_list_int_equiv(ours, items)
 }
 
 ///|
@@ -882,13 +825,11 @@ pub fn perm_full_cyclic_form_equiv_from_array(
   ours : Array[Array[Int]],
   size? : Int,
 ) -> Bool raise {
-  let obj = perm_obj_from_array(array, size)
-  let cyc = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("full_cyclic_form"),
+  combinatorics_call("permutation_full_cyclic_form", [
+    int_list_arg(array),
+    int_matrix_arg(ours),
+    optional_int_arg(size),
   ])
-  let items = py_list_to_pyobjects(cyc)
-  list_list_int_equiv(ours, items)
 }
 
 ///|
@@ -897,21 +838,11 @@ pub fn perm_cycle_structure_equiv_from_array(
   ours : Array[(Int, Int)],
   size? : Int,
 ) -> Bool raise {
-  let obj = perm_obj_from_array(array, size)
-  let cs = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("cycle_structure"),
+  combinatorics_call("permutation_cycle_structure", [
+    int_list_arg(array),
+    pair_list_arg(ours),
+    optional_int_arg(size),
   ])
-  let pairs = py_dict_pairs_sorted(cs)
-  if ours.length() != pairs.length() {
-    return false
-  }
-  for i in 0..<ours.length() {
-    if ours[i].0 != pairs[i].0 || ours[i].1 != pairs[i].1 {
-      return false
-    }
-  }
-  true
 }
 
 ///|
@@ -920,13 +851,11 @@ pub fn perm_parity_equiv_from_array(
   ours : Int,
   size? : Int,
 ) -> Bool raise {
-  let obj = perm_obj_from_array(array, size)
-  let call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("parity"),
+  combinatorics_call("permutation_parity", [
+    int_list_arg(array),
+    CInteger(ours),
+    optional_int_arg(size),
   ])
-  let res = py_call_with_args(py_callable_from_enum(call), [])
-  py_str_enum(res) == ours.to_string()
 }
 
 ///|
@@ -935,13 +864,11 @@ pub fn perm_order_equiv_from_array(
   ours : Int,
   size? : Int,
 ) -> Bool raise {
-  let obj = perm_obj_from_array(array, size)
-  let call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("order"),
+  combinatorics_call("permutation_order", [
+    int_list_arg(array),
+    CInteger(ours),
+    optional_int_arg(size),
   ])
-  let res = py_call_with_args(py_callable_from_enum(call), [])
-  py_str_enum(res) == ours.to_string()
 }
 
 ///|
@@ -950,13 +877,11 @@ pub fn perm_rank_equiv_from_array(
   ours : Int,
   size? : Int,
 ) -> Bool raise {
-  let obj = perm_obj_from_array(array, size)
-  let call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("rank"),
+  combinatorics_call("permutation_rank", [
+    int_list_arg(array),
+    CInteger(ours),
+    optional_int_arg(size),
   ])
-  let res = py_call_with_args(py_callable_from_enum(call), [])
-  py_str_enum(res) == ours.to_string()
 }
 
 ///|
@@ -965,14 +890,11 @@ pub fn perm_inversion_vector_equiv_from_array(
   ours : Array[Int],
   size? : Int,
 ) -> Bool raise {
-  let obj = perm_obj_from_array(array, size)
-  let call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("inversion_vector"),
+  combinatorics_call("permutation_inversion_vector", [
+    int_list_arg(array),
+    int_list_arg(ours),
+    optional_int_arg(size),
   ])
-  let res = py_call_with_args(py_callable_from_enum(call), [])
-  let items = py_list_to_pyobjects(res)
-  list_int_equiv(ours, items)
 }
 
 ///|
@@ -981,14 +903,11 @@ pub fn perm_transpositions_equiv_from_array(
   ours : Array[(Int, Int)],
   size? : Int,
 ) -> Bool raise {
-  let obj = perm_obj_from_array(array, size)
-  let call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("transpositions"),
+  combinatorics_call("permutation_transpositions", [
+    int_list_arg(array),
+    pair_list_arg(ours),
+    optional_int_arg(size),
   ])
-  let res = py_call_with_args(py_callable_from_enum(call), [])
-  let items = py_list_to_pyobjects(res)
-  list_pair_int_equiv(ours, items)
 }
 
 ///|
@@ -997,21 +916,11 @@ pub fn perm_unrank_lex_equiv(
   rank : Int,
   ours : Array[Int],
 ) -> Bool raise {
-  let cls = perm_class_obj()
-  let call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(cls)),
-    Str("unrank_lex"),
+  combinatorics_call("permutation_unrank_lex", [
+    CInteger(size),
+    CInteger(rank),
+    int_list_arg(ours),
   ])
-  let obj = py_call_with_args(py_callable_from_enum(call), [
-    Int(size),
-    Int(rank),
-  ])
-  let arr = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("array_form"),
-  ])
-  let items = py_list_to_pyobjects(arr)
-  list_int_equiv(ours, items)
 }
 
 ///|
@@ -1020,25 +929,11 @@ pub fn perm_next_lex_equiv(
   has_value : Bool,
   ours : Array[Int],
 ) -> Bool raise {
-  let obj = perm_obj_from_array(array, None)
-  let call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("next_lex"),
+  combinatorics_call("permutation_next_lex", [
+    int_list_arg(array),
+    CBoolean(has_value),
+    int_list_arg(ours),
   ])
-  let res = py_call_with_args(py_callable_from_enum(call), [])
-  let is_none = py_str_enum(res) == "None"
-  if !has_value {
-    return is_none
-  }
-  if is_none {
-    return false
-  }
-  let arr = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(res)),
-    Str("array_form"),
-  ])
-  let items = py_list_to_pyobjects(arr)
-  list_int_equiv(ours, items)
 }
 
 ///|
@@ -1048,14 +943,12 @@ pub fn perm_apply_array_equiv(
   ours : Array[String],
   size? : Int,
 ) -> Bool raise {
-  let obj = perm_obj_from_array(array, size)
-  let args : Array[OracleArg] = Array::new()
-  for v in values {
-    args.push(Str(v))
-  }
-  let call = py_call_with_args(py_callable_from_enum(obj), [List(args)])
-  let items = py_list_to_pyobjects(call)
-  list_str_equiv(ours, items)
+  combinatorics_call("permutation_apply_array", [
+    int_list_arg(array),
+    text_list_arg(values),
+    text_list_arg(ours),
+    optional_int_arg(size),
+  ])
 }
 
 ///|
@@ -1063,18 +956,10 @@ pub fn perm_from_sequence_string_equiv(
   seq : String,
   ours : Array[Int],
 ) -> Bool raise {
-  let cls = perm_class_obj()
-  let call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(cls)),
-    Str("from_sequence"),
+  combinatorics_call("permutation_from_sequence", [
+    CText(seq),
+    int_list_arg(ours),
   ])
-  let obj = py_call_with_args(py_callable_from_enum(call), [Str(seq)])
-  let arr = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("array_form"),
-  ])
-  let items = py_list_to_pyobjects(arr)
-  list_int_equiv(ours, items)
 }
 
 ///|
@@ -1082,18 +967,12 @@ pub fn generators_symmetric_equiv(
   n : Int,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let gen = sympy_call_must("sympy.combinatorics.generators.symmetric", [Int(n)])
-  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(gen))])
-  let items = py_list_to_pyobjects(lst)
-  list_list_int_equiv_unordered(ours, items)
+  combinatorics_call("generators_symmetric", [CInteger(n), int_matrix_arg(ours)])
 }
 
 ///|
 pub fn generators_cyclic_equiv(n : Int, ours : Array[Array[Int]]) -> Bool raise {
-  let gen = sympy_call_must("sympy.combinatorics.generators.cyclic", [Int(n)])
-  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(gen))])
-  let items = py_list_to_pyobjects(lst)
-  list_list_int_equiv_unordered(ours, items)
+  combinatorics_call("generators_cyclic", [CInteger(n), int_matrix_arg(ours)])
 }
 
 ///|
@@ -1101,12 +980,10 @@ pub fn generators_alternating_equiv(
   n : Int,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let gen = sympy_call_must("sympy.combinatorics.generators.alternating", [
-    Int(n),
+  combinatorics_call("generators_alternating", [
+    CInteger(n),
+    int_matrix_arg(ours),
   ])
-  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(gen))])
-  let items = py_list_to_pyobjects(lst)
-  list_list_int_equiv_unordered(ours, items)
 }
 
 ///|
@@ -1114,10 +991,7 @@ pub fn generators_dihedral_equiv(
   n : Int,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let gen = sympy_call_must("sympy.combinatorics.generators.dihedral", [Int(n)])
-  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(gen))])
-  let items = py_list_to_pyobjects(lst)
-  list_list_int_equiv_unordered(ours, items)
+  combinatorics_call("generators_dihedral", [CInteger(n), int_matrix_arg(ours)])
 }
 
 ///|
@@ -1125,9 +999,10 @@ pub fn perm_group_elements_equiv_from_gens(
   gens : Array[Array[Int]],
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let obj = perm_group_obj_from_gens(gens)
-  let items = perm_group_elements(obj)
-  list_list_int_equiv_unordered(ours, items)
+  combinatorics_call("permutation_group_elements", [
+    int_matrix_arg(gens),
+    int_matrix_arg(ours),
+  ])
 }
 
 ///|
@@ -1135,13 +1010,10 @@ pub fn perm_group_order_equiv_from_gens(
   gens : Array[Array[Int]],
   ours : Int,
 ) -> Bool raise {
-  let obj = perm_group_obj_from_gens(gens)
-  let call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("order"),
+  combinatorics_call("permutation_group_order", [
+    int_matrix_arg(gens),
+    CInteger(ours),
   ])
-  let res = py_call_with_args(py_callable_from_enum(call), [])
-  py_str_enum(res) == ours.to_string()
 }
 
 ///|
@@ -1150,11 +1022,11 @@ pub fn named_group_elements_equiv(
   n : Int,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let mod = py_import_module("sympy.combinatorics.named_groups")
-  let call = py_builtin_call("getattr", [PyObj(mod.obj()), Str(kind)])
-  let obj = py_call_with_args(py_callable_from_enum(call), [Int(n)])
-  let items = perm_group_elements(obj)
-  list_list_int_equiv_unordered(ours, items)
+  combinatorics_call("named_group_elements", [
+    CText(kind),
+    CInteger(n),
+    int_matrix_arg(ours),
+  ])
 }
 
 ///|
@@ -1163,15 +1035,11 @@ pub fn named_group_order_equiv(
   n : Int,
   ours : Int,
 ) -> Bool raise {
-  let mod = py_import_module("sympy.combinatorics.named_groups")
-  let call = py_builtin_call("getattr", [PyObj(mod.obj()), Str(kind)])
-  let obj = py_call_with_args(py_callable_from_enum(call), [Int(n)])
-  let order_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("order"),
+  combinatorics_call("named_group_order", [
+    CText(kind),
+    CInteger(n),
+    CInteger(ours),
   ])
-  let res = py_call_with_args(py_callable_from_enum(order_call), [])
-  py_str_enum(res) == ours.to_string()
 }
 
 ///|
@@ -1179,49 +1047,25 @@ pub fn abelian_group_elements_equiv(
   orders : Array[Int],
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let mod = py_import_module("sympy.combinatorics.named_groups")
-  let call = py_builtin_call("getattr", [PyObj(mod.obj()), Str("AbelianGroup")])
-  let args : Array[OracleArg] = Array::new()
-  for n in orders {
-    args.push(Int(n))
-  }
-  let obj = py_call_with_args(py_callable_from_enum(call), args)
-  let items = perm_group_elements(obj)
-  list_list_int_equiv_unordered(ours, items)
+  combinatorics_call("abelian_group_elements", [
+    int_list_arg(orders),
+    int_matrix_arg(ours),
+  ])
 }
 
 ///|
 pub fn group_numbers_is_nilpotent_equiv(n : Int, ours : Bool) -> Bool raise {
-  let res = sympy_call(
-    "sympy.combinatorics.group_numbers.is_nilpotent_number",
-    [Int(n)],
-  )
-  match res {
-    Some(obj) => py_str_enum(obj) == (if ours { "True" } else { "False" })
-    None => false
-  }
+  combinatorics_call("group_number_nilpotent", [CInteger(n), CBoolean(ours)])
 }
 
 ///|
 pub fn group_numbers_is_abelian_equiv(n : Int, ours : Bool) -> Bool raise {
-  let res = sympy_call("sympy.combinatorics.group_numbers.is_abelian_number", [
-    Int(n),
-  ])
-  match res {
-    Some(obj) => py_str_enum(obj) == (if ours { "True" } else { "False" })
-    None => false
-  }
+  combinatorics_call("group_number_abelian", [CInteger(n), CBoolean(ours)])
 }
 
 ///|
 pub fn group_numbers_is_cyclic_equiv(n : Int, ours : Bool) -> Bool raise {
-  let res = sympy_call("sympy.combinatorics.group_numbers.is_cyclic_number", [
-    Int(n),
-  ])
-  match res {
-    Some(obj) => py_str_enum(obj) == (if ours { "True" } else { "False" })
-    None => false
-  }
+  combinatorics_call("group_number_cyclic", [CInteger(n), CBoolean(ours)])
 }
 
 ///|
@@ -1230,45 +1074,33 @@ pub fn group_numbers_groups_count_equiv(
   ours_ok : Bool,
   ours_value : String,
 ) -> Bool raise {
-  let res = sympy_call("sympy.combinatorics.group_numbers.groups_count", [
-    Int(n),
+  combinatorics_call("group_number_count", [
+    CInteger(n),
+    CBoolean(ours_ok),
+    CText(ours_value),
   ])
-  match res {
-    Some(obj) => ours_ok && py_str_enum(obj) == ours_value
-    None => !ours_ok
-  }
 }
 
 ///|
 pub fn schur_number_equiv(k : Int, has_value : Bool, value : Int) -> Bool raise {
-  let obj = sympy_call_must("sympy.combinatorics.schur_number.SchurNumber", [
-    Int(k),
+  combinatorics_call("schur_number_value", [
+    CInteger(k),
+    CBoolean(has_value),
+    CInteger(value),
   ])
-  let expected = if has_value { value.to_string() } else { "SchurNumber(\{k})" }
-  py_str_enum(obj) == expected
 }
 
 ///|
 pub fn schur_number_lower_bound_equiv(k : Int, value : Int) -> Bool raise {
-  let obj = sympy_call_must("sympy.combinatorics.schur_number.SchurNumber", [
-    Int(k),
-  ])
-  let call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("lower_bound"),
-  ])
-  let res = py_call_with_args(py_callable_from_enum(call), [])
-  py_str_enum(res) == value.to_string()
+  combinatorics_call("schur_number_lower_bound", [CInteger(k), CInteger(value)])
 }
 
 ///|
 pub fn schur_partition_equiv(n : Int, ours : Array[Array[Int]]) -> Bool raise {
-  let obj = sympy_call_must(
-    "sympy.combinatorics.schur_number.schur_partition",
-    [Int(n)],
-  )
-  let items = py_list_to_pyobjects(obj)
-  list_list_int_equiv(ours, items)
+  combinatorics_call("schur_partition_value", [
+    CInteger(n),
+    int_matrix_arg(ours),
+  ])
 }
 
 ///|
@@ -1276,11 +1108,10 @@ pub fn galois_group_elements_equiv(
   name : String,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let mod = py_import_module("sympy.combinatorics.galois")
-  let call = py_builtin_call("getattr", [PyObj(mod.obj()), Str(name)])
-  let obj = py_call_with_args(py_callable_from_enum(call), [])
-  let items = perm_group_elements(obj)
-  list_list_int_equiv_unordered(ours, items)
+  combinatorics_call("galois_group_elements", [
+    CText(name),
+    int_matrix_arg(ours),
+  ])
 }
 
 ///|
@@ -1289,35 +1120,11 @@ pub fn galois_enum_group_elements_equiv(
   member_name : String,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let mod = py_import_module("sympy.combinatorics.galois")
-  let enum_obj = py_builtin_call("getattr", [PyObj(mod.obj()), Str(enum_name)])
-  let member_obj = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(enum_obj)),
-    Str(member_name),
+  combinatorics_call("galois_enum_group_elements", [
+    CText(enum_name),
+    CText(member_name),
+    int_matrix_arg(ours),
   ])
-  let get_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(member_obj)),
-    Str("get_perm_group"),
-  ])
-  let group = py_call_with_args(py_callable_from_enum(get_call), [])
-  let items = perm_group_elements(group)
-  list_list_int_equiv_unordered(ours, items)
-}
-
-///|
-fn polyhedron_obj(name : String) -> @py.PyObjectEnum raise {
-  let mod = py_import_module("sympy.combinatorics.polyhedron")
-  py_builtin_call("getattr", [PyObj(mod.obj()), Str(name)])
-}
-
-///|
-fn polyhedron_copy_obj(name : String) -> @py.PyObjectEnum raise {
-  let obj = polyhedron_obj(name)
-  let call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("copy"),
-  ])
-  py_call_with_args(py_callable_from_enum(call), [])
 }
 
 ///|
@@ -1325,13 +1132,7 @@ pub fn polyhedron_corners_equiv(
   name : String,
   ours : Array[String],
 ) -> Bool raise {
-  let obj = polyhedron_obj(name)
-  let corners = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("corners"),
-  ])
-  let items = py_list_to_pyobjects(corners)
-  list_str_equiv(ours, items)
+  combinatorics_call("polyhedron_corners", [CText(name), text_list_arg(ours)])
 }
 
 ///|
@@ -1339,14 +1140,7 @@ pub fn polyhedron_faces_equiv(
   name : String,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let obj = polyhedron_obj(name)
-  let faces = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("faces"),
-  ])
-  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(faces))])
-  let items = py_list_to_pyobjects(lst)
-  list_list_int_equiv_unordered(ours, items)
+  combinatorics_call("polyhedron_faces", [CText(name), int_matrix_arg(ours)])
 }
 
 ///|
@@ -1354,14 +1148,7 @@ pub fn polyhedron_edges_equiv(
   name : String,
   ours : Array[(Int, Int)],
 ) -> Bool raise {
-  let obj = polyhedron_obj(name)
-  let edges = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("edges"),
-  ])
-  let lst = py_builtin_call("list", [PyObj(objenum_to_obj(edges))])
-  let items = py_list_to_pyobjects(lst)
-  list_pair_int_equiv_unordered(ours, items)
+  combinatorics_call("polyhedron_edges", [CText(name), pair_list_arg(ours)])
 }
 
 ///|
@@ -1369,13 +1156,10 @@ pub fn polyhedron_pgroup_elements_equiv(
   name : String,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let obj = polyhedron_obj(name)
-  let pgroup = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("pgroup"),
+  combinatorics_call("polyhedron_group_elements", [
+    CText(name),
+    int_matrix_arg(ours),
   ])
-  let items = perm_group_elements(pgroup)
-  list_list_int_equiv_unordered(ours, items)
 }
 
 ///|
@@ -1384,18 +1168,11 @@ pub fn polyhedron_array_form_equiv_index(
   idx : Int,
   ours : Array[Int],
 ) -> Bool raise {
-  let obj = polyhedron_copy_obj(name)
-  let rotate_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("rotate"),
+  combinatorics_call("polyhedron_array_form_index", [
+    CText(name),
+    CInteger(idx),
+    int_list_arg(ours),
   ])
-  py_call_with_args_allow_none(py_callable_from_enum(rotate_call), [Int(idx)])
-  let arr = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("array_form"),
-  ])
-  let items = py_list_to_pyobjects(arr)
-  list_int_equiv(ours, items)
 }
 
 ///|
@@ -1404,21 +1181,11 @@ pub fn polyhedron_array_form_equiv_perm(
   perm_array : Array[Int],
   ours : Array[Int],
 ) -> Bool raise {
-  let obj = polyhedron_copy_obj(name)
-  let rotate_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("rotate"),
+  combinatorics_call("polyhedron_array_form_permutation", [
+    CText(name),
+    int_list_arg(perm_array),
+    int_list_arg(ours),
   ])
-  let perm = perm_obj_from_array(perm_array, None)
-  py_call_with_args_allow_none(py_callable_from_enum(rotate_call), [
-    PyObj(objenum_to_obj(perm)),
-  ])
-  let arr = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("array_form"),
-  ])
-  let items = py_list_to_pyobjects(arr)
-  list_int_equiv(ours, items)
 }
 
 ///|
@@ -1427,18 +1194,11 @@ pub fn polyhedron_cyclic_form_equiv_index(
   idx : Int,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let obj = polyhedron_copy_obj(name)
-  let rotate_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("rotate"),
+  combinatorics_call("polyhedron_cyclic_form_index", [
+    CText(name),
+    CInteger(idx),
+    int_matrix_arg(ours),
   ])
-  py_call_with_args_allow_none(py_callable_from_enum(rotate_call), [Int(idx)])
-  let cyc = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("cyclic_form"),
-  ])
-  let items = py_list_to_pyobjects(cyc)
-  list_list_int_equiv(ours, items)
 }
 
 ///|
@@ -1447,115 +1207,11 @@ pub fn util_base_ordering_equiv(
   degree : Int,
   ours : Array[Int],
 ) -> Bool raise {
-  let obj = sympy_call_must("sympy.combinatorics.util._base_ordering", [
-    IntList(base),
-    Int(degree),
+  combinatorics_call("util_base_ordering", [
+    int_list_arg(base),
+    CInteger(degree),
+    int_list_arg(ours),
   ])
-  let items = py_list_to_pyobjects(obj)
-  list_int_equiv(ours, items)
-}
-
-///|
-fn free_group_tuple(symbols : Array[String]) -> Array[@py.PyObject] raise {
-  let sym_str = symbols.join(", ")
-  let obj = sympy_call_must("sympy.combinatorics.free_groups.free_group", [
-    Str(sym_str),
-  ])
-  py_list_to_pyobjects(obj)
-}
-
-///|
-fn free_group_word_from_form(
-  symbols : Array[String],
-  form : Array[(Int, Int)],
-) -> @py.PyObjectEnum raise {
-  let items = free_group_tuple(symbols)
-  let group_obj = items[0]
-  let sym_list_obj = py_builtin_call("getattr", [
-    PyObj(group_obj),
-    Str("symbols"),
-  ])
-  let sym_items = py_list_to_pyobjects(sym_list_obj)
-  let dtype = py_builtin_call("getattr", [PyObj(group_obj), Str("dtype")])
-  let callable = py_callable_from_enum(dtype)
-  if form.is_empty() {
-    return py_call_with_args(callable, [])
-  }
-  let pair_args : Array[OracleArg] = Array::new()
-  for pair in form {
-    let idx = pair.0
-    let exp = pair.1
-    let sym = sym_items[idx]
-    let tup = py_builtin_call("tuple", [List([PyObj(sym), Int(exp)])])
-    pair_args.push(PyObj(objenum_to_obj(tup)))
-  }
-  py_call_with_args(callable, [List(pair_args)])
-}
-
-///|
-fn free_group_array_form_named(
-  symbols : Array[String],
-  obj : @py.PyObjectEnum,
-) -> Array[(String, Int)] raise {
-  let arr = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(obj)),
-    Str("array_form"),
-  ])
-  let items = py_list_to_pyobjects(arr)
-  let out : Array[(String, Int)] = Array::new()
-  for item in items {
-    // fallback for tuple unpacking
-    let list_pair = py_builtin_call("list", [PyObj(item)])
-    let values = py_list_to_pyobjects(list_pair)
-    if values.length() == 2 {
-      let name_str = py_str_obj(values[0])
-      let name = try @string.parse_int(name_str) catch {
-        _ => name_str
-      } noraise {
-        idx =>
-          if idx >= 0 && idx < symbols.length() {
-            symbols[idx]
-          } else {
-            name_str
-          }
-      }
-      let exp = @string.parse_int(py_str_obj(values[1]))
-      out.push((name, exp))
-    }
-  }
-  out
-}
-
-///|
-fn free_group_form_to_named(
-  symbols : Array[String],
-  form : Array[(Int, Int)],
-) -> Array[(String, Int)] {
-  let out : Array[(String, Int)] = Array::new()
-  for pair in form {
-    let idx = pair.0
-    let exp = pair.1
-    if idx >= 0 && idx < symbols.length() {
-      out.push((symbols[idx], exp))
-    }
-  }
-  out
-}
-
-///|
-fn named_pairs_equiv(
-  a : Array[(String, Int)],
-  b : Array[(String, Int)],
-) -> Bool {
-  if a.length() != b.length() {
-    return false
-  }
-  for i in 0..<a.length() {
-    if a[i].0 != b[i].0 || a[i].1 != b[i].1 {
-      return false
-    }
-  }
-  true
 }
 
 ///|
@@ -1565,18 +1221,12 @@ pub fn free_group_mul_equiv(
   form_b : Array[(Int, Int)],
   ours_form : Array[(Int, Int)],
 ) -> Bool raise {
-  let a = free_group_word_from_form(symbols, form_a)
-  let b = free_group_word_from_form(symbols, form_b)
-  let mul_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(a)),
-    Str("__mul__"),
+  combinatorics_call("free_group_multiply", [
+    text_list_arg(symbols),
+    pair_list_arg(form_a),
+    pair_list_arg(form_b),
+    pair_list_arg(ours_form),
   ])
-  let prod = py_call_with_args(py_callable_from_enum(mul_call), [
-    PyObj(objenum_to_obj(b)),
-  ])
-  let sympy_named = free_group_array_form_named(symbols, prod)
-  let ours_named = free_group_form_to_named(symbols, ours_form)
-  named_pairs_equiv(ours_named, sympy_named)
 }
 
 ///|
@@ -1586,11 +1236,12 @@ pub fn free_group_pow_equiv(
   n : Int,
   ours_form : Array[(Int, Int)],
 ) -> Bool raise {
-  let a = free_group_word_from_form(symbols, form_a)
-  let powed = py_builtin_call("pow", [PyObj(objenum_to_obj(a)), Int(n)])
-  let sympy_named = free_group_array_form_named(symbols, powed)
-  let ours_named = free_group_form_to_named(symbols, ours_form)
-  named_pairs_equiv(ours_named, sympy_named)
+  combinatorics_call("free_group_power", [
+    text_list_arg(symbols),
+    pair_list_arg(form_a),
+    CInteger(n),
+    pair_list_arg(ours_form),
+  ])
 }
 
 ///|
@@ -1599,15 +1250,11 @@ pub fn free_group_inverse_equiv(
   form_a : Array[(Int, Int)],
   ours_form : Array[(Int, Int)],
 ) -> Bool raise {
-  let a = free_group_word_from_form(symbols, form_a)
-  let inv_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(a)),
-    Str("inverse"),
+  combinatorics_call("free_group_inverse", [
+    text_list_arg(symbols),
+    pair_list_arg(form_a),
+    pair_list_arg(ours_form),
   ])
-  let inv = py_call_with_args(py_callable_from_enum(inv_call), [])
-  let sympy_named = free_group_array_form_named(symbols, inv)
-  let ours_named = free_group_form_to_named(symbols, ours_form)
-  named_pairs_equiv(ours_named, sympy_named)
 }
 
 ///|
@@ -1618,18 +1265,13 @@ pub fn free_group_subword_equiv(
   to_j : Int,
   ours_form : Array[(Int, Int)],
 ) -> Bool raise {
-  let a = free_group_word_from_form(symbols, form_a)
-  let call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(a)),
-    Str("subword"),
+  combinatorics_call("free_group_subword", [
+    text_list_arg(symbols),
+    pair_list_arg(form_a),
+    CInteger(from_i),
+    CInteger(to_j),
+    pair_list_arg(ours_form),
   ])
-  let sub = py_call_with_args(py_callable_from_enum(call), [
-    Int(from_i),
-    Int(to_j),
-  ])
-  let sympy_named = free_group_array_form_named(symbols, sub)
-  let ours_named = free_group_form_to_named(symbols, ours_form)
-  named_pairs_equiv(ours_named, sympy_named)
 }
 
 ///|
@@ -1639,28 +1281,12 @@ pub fn fp_group_reduce_equiv(
   word_form : Array[(Int, Int)],
   ours_form : Array[(Int, Int)],
 ) -> Bool raise {
-  let items = free_group_tuple(symbols)
-  let group_obj = items[0]
-  let rel_args : Array[OracleArg] = Array::new()
-  for rel in relator_forms {
-    let w = free_group_word_from_form(symbols, rel)
-    rel_args.push(PyObj(objenum_to_obj(w)))
-  }
-  let fp = sympy_call_must("sympy.combinatorics.fp_groups.FpGroup", [
-    PyObj(group_obj),
-    List(rel_args),
+  combinatorics_call("fp_group_reduce", [
+    text_list_arg(symbols),
+    pair_matrix_arg(relator_forms),
+    pair_list_arg(word_form),
+    pair_list_arg(ours_form),
   ])
-  let word = free_group_word_from_form(symbols, word_form)
-  let reduce_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(fp)),
-    Str("reduce"),
-  ])
-  let reduced = py_call_with_args(py_callable_from_enum(reduce_call), [
-    PyObj(objenum_to_obj(word)),
-  ])
-  let sympy_named = free_group_array_form_named(symbols, reduced)
-  let ours_named = free_group_form_to_named(symbols, ours_form)
-  named_pairs_equiv(ours_named, sympy_named)
 }
 
 ///|
@@ -1671,63 +1297,13 @@ pub fn fp_group_coset_table_equiv(
   strategy : String,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let items = free_group_tuple(symbols)
-  let group_obj = items[0]
-  let rel_args : Array[OracleArg] = Array::new()
-  for rel in relator_forms {
-    let w = free_group_word_from_form(symbols, rel)
-    rel_args.push(PyObj(objenum_to_obj(w)))
-  }
-  let fp = sympy_call_must("sympy.combinatorics.fp_groups.FpGroup", [
-    PyObj(group_obj),
-    List(rel_args),
+  combinatorics_call("fp_group_coset_table", [
+    text_list_arg(symbols),
+    pair_matrix_arg(relator_forms),
+    pair_matrix_arg(subgroup_forms),
+    CText(strategy),
+    int_matrix_arg(ours),
   ])
-  let sub_args : Array[OracleArg] = Array::new()
-  for rel in subgroup_forms {
-    let w = free_group_word_from_form(symbols, rel)
-    sub_args.push(PyObj(objenum_to_obj(w)))
-  }
-  let call = if strategy == "coset_table_based" {
-    "sympy.combinatorics.fp_groups.coset_enumeration_c"
-  } else {
-    "sympy.combinatorics.fp_groups.coset_enumeration_r"
-  }
-  let coset_table = sympy_call_must(call, [
-    PyObj(objenum_to_obj(fp)),
-    List(sub_args),
-  ])
-  let compress_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(coset_table)),
-    Str("compress"),
-  ])
-  py_call_with_args_allow_none(py_callable_from_enum(compress_call), [])
-  let std_call = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(coset_table)),
-    Str("standardize"),
-  ])
-  py_call_with_args_allow_none(py_callable_from_enum(std_call), [])
-  let table = py_builtin_call("getattr", [
-    PyObj(objenum_to_obj(coset_table)),
-    Str("table"),
-  ])
-  let rows = py_list_to_pyobjects(table)
-  if rows.length() != ours.length() {
-    return false
-  }
-  for i in 0..<rows.length() {
-    let row_list = py_builtin_call("list", [PyObj(rows[i])])
-    let row_objs = py_list_to_pyobjects(row_list)
-    if row_objs.length() != ours[i].length() {
-      return false
-    }
-    for j in 0..<row_objs.length() {
-      let val = @string.parse_int(py_str_obj(row_objs[j]))
-      if val != ours[i][j] {
-        return false
-      }
-    }
-  }
-  true
 }
 
 ///|
@@ -1735,11 +1311,10 @@ pub fn util_check_cycles_alt_sym_equiv(
   perm_array : Array[Int],
   ours : Bool,
 ) -> Bool raise {
-  let perm = perm_obj_from_array(perm_array, None)
-  let res = sympy_call_must("sympy.combinatorics.util._check_cycles_alt_sym", [
-    PyObj(objenum_to_obj(perm)),
+  combinatorics_call("util_check_cycles", [
+    int_list_arg(perm_array),
+    CBoolean(ours),
   ])
-  py_str_enum(res) == (if ours { "True" } else { "False" })
 }
 
 ///|
@@ -1748,17 +1323,11 @@ pub fn util_distribute_gens_by_base_equiv(
   gens : Array[Array[Int]],
   ours : Array[Array[Array[Int]]],
 ) -> Bool raise {
-  let perm_args : Array[OracleArg] = Array::new()
-  for g in gens {
-    let p = perm_obj_from_array(g, None)
-    perm_args.push(PyObj(objenum_to_obj(p)))
-  }
-  let obj = sympy_call_must(
-    "sympy.combinatorics.util._distribute_gens_by_base",
-    [IntList(base), List(perm_args)],
-  )
-  let nested = perm_list_list_to_arrays(obj)
-  list_list_list_int_equiv(ours, nested)
+  combinatorics_call("util_distribute_gens", [
+    int_list_arg(base),
+    int_matrix_arg(gens),
+    int_cube_arg(ours),
+  ])
 }
 
 ///|
@@ -1766,83 +1335,10 @@ pub fn util_strong_gens_from_distr_equiv(
   strong_gens_distr : Array[Array[Array[Int]]],
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let outer : Array[OracleArg] = Array::new()
-  for part in strong_gens_distr {
-    let inner : Array[OracleArg] = Array::new()
-    for g in part {
-      let p = perm_obj_from_array(g, None)
-      inner.push(PyObj(objenum_to_obj(p)))
-    }
-    outer.push(List(inner))
-  }
-  let obj = sympy_call_must(
-    "sympy.combinatorics.util._strong_gens_from_distr",
-    [List(outer)],
-  )
-  let res = perm_list_to_arrays(obj)
-  if res.length() != ours.length() {
-    return false
-  }
-  for i in 0..<ours.length() {
-    if ours[i].length() != res[i].length() {
-      return false
-    }
-    for j in 0..<ours[i].length() {
-      if ours[i][j] != res[i][j] {
-        return false
-      }
-    }
-  }
-  true
-}
-
-///|
-fn int_list_list_arg(values : Array[Array[Int]]) -> OracleArg {
-  let args : Array[OracleArg] = Array::new()
-  for v in values {
-    args.push(IntList(v))
-  }
-  List(args)
-}
-
-///|
-fn sym_list_arg(values : Array[Int?]) -> OracleArg {
-  let args : Array[OracleArg] = Array::new()
-  for v in values {
-    match v {
-      Some(n) => args.push(Int(n))
-      None => args.push(Null)
-    }
-  }
-  List(args)
-}
-
-///|
-fn perm_list_arg(values : Array[Array[Int]]) -> OracleArg raise {
-  let args : Array[OracleArg] = Array::new()
-  for g in values {
-    let p = perm_obj_from_array(g, None)
-    args.push(PyObj(objenum_to_obj(p)))
-  }
-  List(args)
-}
-
-///|
-fn tensor_component_tuple(
-  base : Array[Int],
-  gens : Array[Array[Int]],
-  count : Int,
-  sym : Int?,
-) -> @py.PyObjectEnum raise {
-  let args : Array[OracleArg] = Array::new()
-  args.push(IntList(base))
-  args.push(perm_list_arg(gens))
-  args.push(Int(count))
-  match sym {
-    Some(v) => args.push(Int(v))
-    None => args.push(Null)
-  }
-  py_builtin_call("tuple", [List(args)])
+  combinatorics_call("util_strong_gens", [
+    int_cube_arg(strong_gens_distr),
+    int_matrix_arg(ours),
+  ])
 }
 
 ///|
@@ -1852,17 +1348,12 @@ pub fn tensor_can_dummy_sgs_equiv(
   n : Int,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let sym_arg = match sym {
-    Some(v) => OracleArg::Int(v)
-    None => Null
-  }
-  let obj = sympy_call_must("sympy.combinatorics.tensor_can.dummy_sgs", [
-    IntList(dummies),
-    sym_arg,
-    Int(n),
+  combinatorics_call("tensor_dummy_sgs", [
+    int_list_arg(dummies),
+    optional_int_arg(sym),
+    CInteger(n),
+    int_matrix_arg(ours),
   ])
-  let items = py_list_to_pyobjects(obj)
-  list_list_int_equiv(ours, items)
 }
 
 ///|
@@ -1872,13 +1363,12 @@ pub fn tensor_can_min_dummies_equiv(
   indices : Array[Int],
   ours : Array[Int],
 ) -> Bool raise {
-  let obj = sympy_call_must("sympy.combinatorics.tensor_can._min_dummies", [
-    int_list_list_arg(dummies),
-    sym_list_arg(sym),
-    IntList(indices),
+  combinatorics_call("tensor_min_dummies", [
+    int_matrix_arg(dummies),
+    nullable_int_list_arg(sym),
+    int_list_arg(indices),
+    int_list_arg(ours),
   ])
-  let items = py_list_to_pyobjects(obj)
-  list_int_equiv(ours, items)
 }
 
 ///|
@@ -1888,20 +1378,12 @@ pub fn tensor_can_symmetric_group_equiv(
   base : Array[Int],
   gens : Array[Array[Int]],
 ) -> Bool raise {
-  let obj = sympy_call_must(
-    "sympy.combinatorics.tensor_can.get_symmetric_group_sgs",
-    [Int(n), Bool(antisym)],
-  )
-  let parts = py_list_to_pyobjects(obj)
-  if parts.length() != 2 {
-    return false
-  }
-  let base_items = py_list_to_pyobjects(@py.PyObjectEnum::create(parts[0]))
-  if !list_int_equiv(base, base_items) {
-    return false
-  }
-  let gens_arrays = perm_list_to_arrays(@py.PyObjectEnum::create(parts[1]))
-  array_list_eq(gens, gens_arrays)
+  combinatorics_call("tensor_symmetric_group", [
+    CInteger(n),
+    CBoolean(antisym),
+    int_list_arg(base),
+    int_matrix_arg(gens),
+  ])
 }
 
 ///|
@@ -1911,12 +1393,12 @@ pub fn tensor_can_perm_af_direct_product_equiv(
   signed : Bool,
   ours : Array[Array[Int]],
 ) -> Bool raise {
-  let obj = sympy_call_must(
-    "sympy.combinatorics.tensor_can.perm_af_direct_product",
-    [int_list_list_arg(gens1), int_list_list_arg(gens2), Bool(signed)],
-  )
-  let items = py_list_to_pyobjects(obj)
-  list_list_int_equiv(ours, items)
+  combinatorics_call("tensor_perm_af_direct_product", [
+    int_matrix_arg(gens1),
+    int_matrix_arg(gens2),
+    CBoolean(signed),
+    int_matrix_arg(ours),
+  ])
 }
 
 ///|
@@ -1929,26 +1411,15 @@ pub fn tensor_can_bsgs_direct_product_equiv(
   ours_base : Array[Int],
   ours_gens : Array[Array[Int]],
 ) -> Bool raise {
-  let obj = sympy_call_must(
-    "sympy.combinatorics.tensor_can.bsgs_direct_product",
-    [
-      IntList(base1),
-      perm_list_arg(gens1),
-      IntList(base2),
-      perm_list_arg(gens2),
-      Bool(signed),
-    ],
-  )
-  let parts = py_list_to_pyobjects(obj)
-  if parts.length() != 2 {
-    return false
-  }
-  let base_items = py_list_to_pyobjects(@py.PyObjectEnum::create(parts[0]))
-  if !list_int_equiv(ours_base, base_items) {
-    return false
-  }
-  let gens_arrays = perm_list_to_arrays(@py.PyObjectEnum::create(parts[1]))
-  array_list_eq(ours_gens, gens_arrays)
+  combinatorics_call("tensor_bsgs_direct_product", [
+    int_list_arg(base1),
+    int_matrix_arg(gens1),
+    int_list_arg(base2),
+    int_matrix_arg(gens2),
+    CBoolean(signed),
+    int_list_arg(ours_base),
+    int_matrix_arg(ours_gens),
+  ])
 }
 
 ///|
@@ -1961,33 +1432,15 @@ pub fn tensor_can_tensor_gens_equiv(
   ours_base : Array[Int],
   ours_gens : Array[Array[Int]],
 ) -> Bool raise {
-  let sym_arg = match sym {
-    Some(v) => OracleArg::Int(v)
-    None => Null
-  }
-  let obj = sympy_call_must("sympy.combinatorics.tensor_can.tensor_gens", [
-    IntList(base),
-    perm_list_arg(gens),
-    int_list_list_arg(list_free),
-    sym_arg,
+  combinatorics_call("tensor_gens_value", [
+    int_list_arg(base),
+    int_matrix_arg(gens),
+    int_matrix_arg(list_free),
+    optional_int_arg(sym),
+    CInteger(ours_size),
+    int_list_arg(ours_base),
+    int_matrix_arg(ours_gens),
   ])
-  let parts = py_list_to_pyobjects(obj)
-  if parts.length() != 3 {
-    return false
-  }
-  let size_val = match py_int_enum(@py.PyObjectEnum::create(parts[0])) {
-    Some(v) => v
-    None => return false
-  }
-  if size_val != ours_size {
-    return false
-  }
-  let base_items = py_list_to_pyobjects(@py.PyObjectEnum::create(parts[1]))
-  if !list_int_equiv(ours_base, base_items) {
-    return false
-  }
-  let gens_arrays = perm_list_to_arrays(@py.PyObjectEnum::create(parts[2]))
-  array_list_eq(ours_gens, gens_arrays)
 }
 
 ///|
@@ -1998,15 +1451,13 @@ pub fn tensor_can_canonical_free_equiv(
   num_free : Int,
   ours : Array[Int],
 ) -> Bool raise {
-  let g_obj = perm_obj_from_array(g, None)
-  let obj = sympy_call_must("sympy.combinatorics.tensor_can.canonical_free", [
-    IntList(base),
-    perm_list_arg(gens),
-    PyObj(objenum_to_obj(g_obj)),
-    Int(num_free),
+  combinatorics_call("tensor_canonical_free", [
+    int_list_arg(base),
+    int_matrix_arg(gens),
+    int_list_arg(g),
+    CInteger(num_free),
+    int_list_arg(ours),
   ])
-  let items = py_list_to_pyobjects(obj)
-  list_int_equiv(ours, items)
 }
 
 ///|
@@ -2018,38 +1469,14 @@ pub fn tensor_can_double_coset_can_rep_equiv(
   g : Array[Int],
   ours : Array[Int]?,
 ) -> Bool raise {
-  let transv = sympy_call_must(
-    "sympy.combinatorics.tensor_can.get_transversals",
-    [IntList(base), perm_list_arg(sgens)],
-  )
-  let g_obj = perm_obj_from_array(g, None)
-  let obj = sympy_call_must(
-    "sympy.combinatorics.tensor_can.double_coset_can_rep",
-    [
-      int_list_list_arg(dummies),
-      sym_list_arg(sym),
-      IntList(base),
-      perm_list_arg(sgens),
-      PyObj(objenum_to_obj(transv)),
-      PyObj(objenum_to_obj(g_obj)),
-    ],
-  )
-  match py_int_enum(obj) {
-    Some(v) => {
-      if v != 0 {
-        return false
-      }
-      ours is None
-    }
-    None =>
-      match ours {
-        Some(arr) => {
-          let items = py_list_to_pyobjects(obj)
-          list_int_equiv(arr, items)
-        }
-        None => false
-      }
-  }
+  combinatorics_call("tensor_double_coset", [
+    int_matrix_arg(dummies),
+    nullable_int_list_arg(sym),
+    int_list_arg(base),
+    int_matrix_arg(sgens),
+    int_list_arg(g),
+    optional_int_list_arg(ours),
+  ])
 }
 
 ///|
@@ -2063,30 +1490,14 @@ pub fn tensor_can_canonicalize_equiv(
   syms : Array[Int?],
   ours : Array[Int]?,
 ) -> Bool raise {
-  let g_obj = perm_obj_from_array(g, None)
-  let args : Array[OracleArg] = Array::new()
-  args.push(PyObj(objenum_to_obj(g_obj)))
-  args.push(int_list_list_arg(dummies))
-  args.push(sym_list_arg(msym))
-  for i in 0..<counts.length() {
-    let tup = tensor_component_tuple(bases[i], gens_list[i], counts[i], syms[i])
-    args.push(PyObj(objenum_to_obj(tup)))
-  }
-  let obj = sympy_call_must("sympy.combinatorics.tensor_can.canonicalize", args)
-  match py_int_enum(obj) {
-    Some(v) => {
-      if v != 0 {
-        return false
-      }
-      ours is None
-    }
-    None =>
-      match ours {
-        Some(arr) => {
-          let items = py_list_to_pyobjects(obj)
-          list_int_equiv(arr, items)
-        }
-        None => false
-      }
-  }
+  combinatorics_call("tensor_canonicalize", [
+    int_matrix_arg(dummies),
+    nullable_int_list_arg(msym),
+    int_list_arg(g),
+    int_matrix_arg(bases),
+    int_cube_arg(gens_list),
+    int_list_arg(counts),
+    nullable_int_list_arg(syms),
+    optional_int_list_arg(ours),
+  ])
 }

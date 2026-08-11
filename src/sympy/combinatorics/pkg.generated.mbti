@@ -1,10 +1,6 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "CAIMEOX/symbit/sympy/combinatorics"
 
-import {
-  "CAIMEOX/symbit/sympy",
-}
-
 // Values
 pub fn abelian_group_elements_equiv(Array[Int], Array[Array[Int]]) -> Bool raise
 
@@ -159,7 +155,5 @@ pub fn util_strong_gens_from_distr_equiv(Array[Array[Array[Int]]], Array[Array[I
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-
