@@ -104,6 +104,32 @@ def _integrals_globals() -> dict[str, Any]:
     }
 
 
+def _utilities_globals() -> dict[str, Any]:
+    sympy_names = (
+        "Eq", "Function", "I", "Integral", "Pow", "S", "Symbol", "acos",
+        "cos", "cosh", "exp", "log", "sin", "sinh", "sqrt",
+    )
+    globals_dict = {
+        "__builtins__": builtins,
+        "sympy": sympy,
+        "json": json,
+    }
+    globals_dict.update({name: getattr(sympy, name) for name in sympy_names})
+    globals_dict.update(
+        {
+            name: sympy.Symbol(name)
+            for name in ("x", "y", "z", "C1", "C2", "C3", "u2", "_a")
+        }
+    )
+    globals_dict.update(
+        {
+            name: sympy.Function(name)
+            for name in ("f", "g", "h", "u", "X", "Y")
+        }
+    )
+    return globals_dict
+
+
 def _runtime_info(_: Any) -> dict[str, Any]:
     return {
         "protocol_version": PROTOCOL_VERSION,
@@ -123,6 +149,13 @@ def _eval_str(code: Any) -> str:
     if not isinstance(code, str):
         raise ProtocolFault("string-evaluation input must be a string")
     globals_dict = _integrals_globals()
+    return str(eval(code, globals_dict, globals_dict))
+
+
+def _utilities_eval_str(code: Any) -> str:
+    if not isinstance(code, str):
+        raise ProtocolFault("utilities evaluation input must be a string")
+    globals_dict = _utilities_globals()
     return str(eval(code, globals_dict, globals_dict))
 
 
@@ -148,6 +181,7 @@ PROGRAMS: dict[str, Callable[[Any], Any]] = {
     "runtime.crash": _crash,
     "integrals.eval_str": _eval_str,
     "unify.exec_result_str": _exec_result_str,
+    "utilities.eval_str": _utilities_eval_str,
 }
 
 

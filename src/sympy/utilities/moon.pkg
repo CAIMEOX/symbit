@@ -1,6 +1,5 @@
 import {
-  "CAIMEOX/symbit/sympy",
-  "Kaida-Amethyst/python" @py,
+  "CAIMEOX/symbit/sympy/runtime",
 }
 
 import {
@@ -8,6 +7,7 @@ import {
   "moonbitlang/core/ref",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/sympy/runtime",
   "CAIMEOX/symbit/symutilities",
 } for "test"
 

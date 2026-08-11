@@ -1,14 +1,7 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "CAIMEOX/symbit/sympy/utilities"
 
-import {
-  "CAIMEOX/symbit/sympy",
-  "Kaida-Amethyst/python",
-}
-
 // Values
-pub fn utilities_eval(String) -> @python.PyObjectEnum raise
-
 pub fn utilities_eval_repr(String) -> String raise
 
 pub fn utilities_eval_str(String) -> String raise
@@ -18,7 +11,5 @@ pub fn utilities_eval_str(String) -> String raise
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-

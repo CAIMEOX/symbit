@@ -33,6 +33,8 @@ Current migrated programs:
   profile.
 - `unify.exec_result_str` executes one request-scoped parity script and returns
   its `__result__` value as a string.
+- `utilities.eval_str` evaluates one expression with the legacy utilities
+  aliases and returns its string value.
 
 The runtime and the first migrated package can be checked with:
 
@@ -40,4 +42,5 @@ The runtime and the first migrated package can be checked with:
 SYMBIT_PYTHON=/absolute/path/to/python moon test --target native src/sympy/runtime
 SYMBIT_PYTHON=/absolute/path/to/python moon test --target native src/sympy/integrals
 SYMBIT_PYTHON=/absolute/path/to/python moon test --target native src/sympy/unify
+SYMBIT_PYTHON=/absolute/path/to/python moon test --target native src/sympy/utilities
 ```
