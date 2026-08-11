@@ -1,10 +1,6 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "CAIMEOX/symbit/sympy/holonomic"
 
-import {
-  "CAIMEOX/symbit/sympy",
-}
-
 // Values
 pub fn differential_expr_srepr(String, var_name? : String, generator? : String) -> String raise
 
@@ -39,7 +35,5 @@ pub fn sympy_equiv_str(String, String) -> Bool raise
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-
