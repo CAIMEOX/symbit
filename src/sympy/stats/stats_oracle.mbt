@@ -2,270 +2,154 @@
 /// Oracle helpers for SymPy stats.
 
 ///|
-pub type OracleArg = @sympy.OracleArg
-
-///|
-fn py_call_object(
-  callable : @py.PyCallable,
-  args : @py.PyTuple,
-  print_err? : Bool = false,
-) -> @py.PyObjectEnum? {
-  @sympy.py_call_object(callable, args, print_err~)
+fn stats_scope(builder : @recipe.Builder) -> @recipe.ValueRef raise {
+  let builtins = builder.import_module("builtins")
+  let sympy = builder.import_module("sympy")
+  let stats = builder.import_module("sympy.stats")
+  let scope = builder.dict([
+    (Str("__builtins__"), Ref(builtins)),
+    (Str("sympy"), Ref(sympy)),
+    (Str("stats"), Ref(stats)),
+  ])
+  let setup = "for _name in (\n" +
+    "    'symbols', 'Symbol', 'Integer', 'Rational', 'Eq', 'Ne', 'Lt', 'Le',\n" +
+    "    'Gt', 'Ge', 'And', 'Or', 'Not', 'exp', 'log', 'sqrt', 'sin', 'cos',\n" +
+    "    'tan', 'Lambda', 'Product', 'Sum', 'Indexed', 'IndexedBase', 'pi',\n" +
+    "    'I', 'E', 'erf', 'erfc', 'erfinv', 'erfcinv', 'atan', 'Abs',\n" +
+    "    'besseli', 'besselk', 'betaincinv', 'gammaincinv', 'gamma', 'beta',\n" +
+    "    'lowergamma', 'EulerGamma', 'factorial', 'binomial', 'simplify',\n" +
+    "    'srepr', 'oo', 'S', 'Matrix', 'MatrixSymbol', 'Trace', 'Determinant',\n" +
+    "    'Inverse', 'Transpose', 'Identity', 'Integral', 'Piecewise', 'Tuple',\n" +
+    "):\n" +
+    "    if hasattr(sympy, _name):\n" +
+    "        globals()[_name] = getattr(sympy, _name)\n" +
+    "for _name in (\n" +
+    "    'P', 'E', 'H', 'Probability', 'Expectation', 'Variance', 'Covariance',\n" +
+    "    'variance', 'covariance', 'density', 'cdf', 'characteristic_function',\n" +
+    "    'moment_generating_function', 'quantile', 'median', 'skewness',\n" +
+    "    'kurtosis', 'entropy', 'factorial_moment', 'cmoment', 'smoment',\n" +
+    "    'moment', 'correlation', 'dependent', 'given', 'pspace',\n" +
+    "    'random_symbols', 'sample_stochastic_process', 'Die', 'Coin',\n" +
+    "    'Bernoulli', 'DiscreteUniform', 'Binomial', 'Poisson', 'Geometric',\n" +
+    "    'NegativeBinomial', 'Normal', 'Exponential', 'Gamma', 'PoissonProcess',\n" +
+    "    'WienerProcess', 'Wishart', 'MatrixNormal', 'MatrixGamma',\n" +
+    "    'MatrixStudentT',\n" +
+    "):\n" +
+    "    if hasattr(stats, _name):\n" +
+    "        globals()[_name] = getattr(stats, _name)\n" +
+    "for _name in (\n" +
+    "    'x', 'y', 'z', 't', 'l', 'k', 'n', 'm', 'A', 'B', 'C', 'D', 'E0',\n" +
+    "    'F', 'G', 'H0', 'I0', 'J', 'K', 'L', 'M', 'N', 'O', 'P0', 'Q',\n" +
+    "    'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_H', '_i', '_j',\n" +
+    "    '_k', '_x', '_y', '_z', '_s',\n" +
+    "):\n" +
+    "    try:\n" +
+    "        globals()[_name] = sympy.Symbol(_name)\n" +
+    "    except Exception:\n" +
+    "        pass\n" +
+    "del _name\n"
+  builder.exec(scope, setup)
 }
 
 ///|
-fn sympy_call(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum? raise {
-  @sympy.sympy_call(path, args, kwargs~)
+fn stats_eval_value(
+  builder : @recipe.Builder,
+  expression : String,
+) -> @recipe.ValueRef raise {
+  let scope = stats_scope(builder)
+  let builtins = builder.import_module("builtins")
+  let evaluate = builder.getattr(builtins, "eval")
+  let value = builder.call(evaluate, [Str(expression), Ref(scope), Ref(scope)])
+  builder.require_non_none(value, message="python-eval-none")
 }
 
 ///|
-fn sympy_call_must(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum raise {
-  match sympy_call(path, args, kwargs~) {
-    Some(obj) => obj
-    None => fail("sympy-call-none:\{path}")
-  }
-}
-
-///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
-}
-
-///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
-}
-
-///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
-}
-
-///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let out = obj.to_string()
-  py_gil_release(state)
-  out
-}
-
-///|
-fn py_str_enum(obj : @py.PyObjectEnum) -> String {
-  py_str_obj(objenum_to_obj(obj))
-}
-
-///|
-fn py_callable_from_enum(obj : @py.PyObjectEnum) -> @py.PyCallable raise {
-  match obj {
-    PyCallable(callable) => callable
-    PyClass(obj0) =>
-      @py.PyCallable::create(obj0) catch {
-        _ => fail("py-callable")
-      }
-    _ =>
-      @py.PyCallable::create(objenum_to_obj(obj)) catch {
-        _ => fail("py-callable")
-      }
-  }
-}
-
-///|
-fn import_module(name : String) -> @py.PyModule raise {
-  match @py.pyimport(name) {
-    Some(mod) => mod
-    None => fail("py-import-missing:\{name}")
-  }
-}
-
-///|
-fn try_bind_name(
-  globals : @py.PyDict,
-  mod : @py.PyModule,
-  name : String,
-) -> Unit {
-  match mod.get_attr(name, print_err=false) {
-    Some(obj) => globals.set(name, objenum_to_obj(obj))
-    None => ()
-  }
-}
-
-///|
-fn sympy_names() -> Array[String] {
-  [
-    "symbols", "Symbol", "Integer", "Rational", "Eq", "Ne", "Lt", "Le", "Gt", "Ge",
-    "And", "Or", "Not", "exp", "log", "sqrt", "sin", "cos", "tan", "Lambda", "Product",
-    "Sum", "Indexed", "IndexedBase", "pi", "I", "E", "erf", "erfc", "erfinv", "erfcinv",
-    "atan", "Abs", "besseli", "besselk", "betaincinv", "gammaincinv", "gamma", "beta",
-    "lowergamma", "EulerGamma", "factorial", "binomial", "simplify", "srepr", "oo",
-    "S", "Matrix", "MatrixSymbol", "Trace", "Determinant", "Inverse", "Transpose",
-    "Identity", "Integral", "Piecewise", "Tuple",
-  ]
-}
-
-///|
-fn sympy_stats_names() -> Array[String] {
-  [
-    "P", "E", "H", "Probability", "Expectation", "Variance", "Covariance", "variance",
-    "covariance", "density", "cdf", "characteristic_function", "moment_generating_function",
-    "quantile", "median", "skewness", "kurtosis", "entropy", "factorial_moment",
-    "cmoment", "smoment", "moment", "correlation", "dependent", "given", "pspace",
-    "random_symbols", "sample_stochastic_process", "Die", "Coin", "Bernoulli", "DiscreteUniform",
-    "Binomial", "Poisson", "Geometric", "NegativeBinomial", "Normal", "Exponential",
-    "Gamma", "PoissonProcess", "WienerProcess", "Wishart", "MatrixNormal", "MatrixGamma",
-    "MatrixStudentT",
-  ]
-}
-
-///|
-fn bind_symbol(globals : @py.PyDict, name : String) -> Unit raise {
-  let sym = sympy_call_must("sympy.Symbol", [Str(name)])
-  globals.set(name, objenum_to_obj(sym))
-}
-
-///|
-fn stats_globals() -> @py.PyDict raise {
-  let builtins = import_module("builtins")
-  let sympy_mod = import_module("sympy")
-  let stats_mod = import_module("sympy.stats")
-  let globals = @py.PyDict::new()
-  globals.set("__builtins__", builtins.obj())
-  globals.set("sympy", sympy_mod.obj())
-  globals.set("stats", stats_mod.obj())
-  for name in sympy_names() {
-    try_bind_name(globals, sympy_mod, name)
-  }
-  for name in sympy_stats_names() {
-    try_bind_name(globals, stats_mod, name)
-  }
-  for
-    sym_name in [
-      "x", "y", "z", "t", "l", "k", "n", "m", "A", "B", "C", "D", "E0", "F", "G",
-      "H0", "I0", "J", "K", "L", "M", "N", "O", "P0", "Q", "R", "S", "T", "U", "V",
-      "W", "X", "Y", "Z", "_H", "_i", "_j", "_k", "_x", "_y", "_z", "_s",
-    ] {
-    bind_symbol(globals, sym_name) catch {
-      _ => ()
-    }
-  }
-  globals
-}
-
-///|
-fn py_eval_stats(expr : String) -> @py.PyObjectEnum raise {
-  let state = py_gil_ensure()
-  let result = try {
-    let builtins = import_module("builtins")
-    let eval_obj = match builtins.get_attr("eval", print_err=true) {
-      Some(obj) => obj
-      None => fail("py-eval-missing")
-    }
-    let eval_callable = py_callable_from_enum(eval_obj)
-    let globals = stats_globals()
-    let args = @sympy.py_pack_args([
-      Str(expr),
-      PyObj(globals.obj()),
-      PyObj(globals.obj()),
-    ])
-    match py_call_object(eval_callable, args, print_err=true) {
-      Some(obj) => obj
-      None => fail("py-eval-none")
-    }
-  } catch {
-    err => {
-      py_gil_release(state)
-      raise err
-    }
-  }
-  py_gil_release(state)
-  result
-}
-
-///|
-fn py_eval_stats_silent(expr : String) -> @py.PyObjectEnum? {
-  let state = py_gil_ensure()
-  let result : @py.PyObjectEnum? = try {
-    let builtins = import_module("builtins")
-    let eval_obj = match builtins.get_attr("eval", print_err=false) {
-      Some(obj) => obj
-      None => fail("py-eval-missing")
-    }
-    let eval_callable = py_callable_from_enum(eval_obj)
-    let globals = stats_globals()
-    let args = @sympy.py_pack_args([
-      Str(expr),
-      PyObj(globals.obj()),
-      PyObj(globals.obj()),
-    ])
-    py_call_object(eval_callable, args, print_err=false)
-  } catch {
-    _ => {
-      py_gil_release(state)
-      return None
-    }
-  }
-  py_gil_release(state)
-  result
-}
-
-///|
+/// Evaluate a Python expression in the stats oracle profile and stringify it.
 pub fn stats_eval_str(expr : String) -> String raise {
-  py_str_enum(py_eval_stats(expr))
+  let builder = @recipe.Builder::new()
+  let value = stats_eval_value(builder, expr)
+  builder.request_str(value)
 }
 
 ///|
+/// Evaluate a stats expression, returning `None` when Python rejects it.
 pub fn stats_try_eval_str(expr : String) -> String? {
-  match py_eval_stats_silent(expr) {
-    Some(v) => Some(py_str_enum(v))
-    None => None
+  Some(stats_eval_str(expr)) catch {
+    _ => None
   }
 }
 
 ///|
+/// Evaluate a stats expression and return its SymPy structural representation.
 pub fn stats_eval_srepr(expr : String) -> String raise {
-  let obj = objenum_to_obj(py_eval_stats(expr))
-  let srepr = sympy_call_must("sympy.srepr", [PyObj(obj)])
-  py_str_enum(srepr)
+  let builder = @recipe.Builder::new()
+  let value = stats_eval_value(builder, expr)
+  builder.request_srepr(value)
 }
 
 ///|
+/// Test two stats expressions for symbolic or structural equivalence.
 pub fn stats_expr_equiv(a : String, b : String) -> Bool raise {
-  let locals = stats_globals()
-  let kwargs : Map[String, OracleArg] = { "locals": PyObj(locals.obj()) }
-  let a_obj = objenum_to_obj(
-    sympy_call_must("sympy.sympify", [Str(a)], kwargs~),
+  let builder = @recipe.Builder::new()
+  let scope = stats_scope(builder)
+  let sympy = builder.import_module("sympy")
+  let sympify = builder.getattr(sympy, "sympify")
+  let left = builder.call(sympify, [Str(a)], kwargs={ "locals": Ref(scope) })
+  let left = builder.require_non_none(
+    left,
+    message="sympy-call-none:sympy.sympify",
   )
-  let b_obj = objenum_to_obj(
-    sympy_call_must("sympy.sympify", [Str(b)], kwargs~),
+  let right = builder.call(sympify, [Str(b)], kwargs={ "locals": Ref(scope) })
+  let right = builder.require_non_none(
+    right,
+    message="sympy-call-none:sympy.sympify",
   )
-  match sympy_call("sympy.Eq", [PyObj(a_obj), PyObj(b_obj)]) {
-    Some(eq_obj) => {
-      let simp = sympy_call_must("sympy.simplify", [
-        PyObj(objenum_to_obj(eq_obj)),
-      ])
-      let txt = py_str_enum(simp)
-      if txt == "True" {
-        return true
-      }
-      if txt == "False" {
-        return false
-      }
-    }
-    None => ()
-  }
-  let arepr = sympy_call_must("sympy.srepr", [PyObj(a_obj)])
-  let brepr = sympy_call_must("sympy.srepr", [PyObj(b_obj)])
-  py_str_enum(arepr) == py_str_enum(brepr)
+  let eq = builder.getattr(sympy, "Eq")
+  let equality = builder.call(eq, [Ref(left), Ref(right)])
+  let equality = builder.require_non_none(
+    equality,
+    message="sympy-call-none:sympy.Eq",
+  )
+  let simplify = builder.getattr(sympy, "simplify")
+  let simplified = builder.call(simplify, [Ref(equality)])
+  let simplified = builder.require_non_none(
+    simplified,
+    message="sympy-call-none:sympy.simplify",
+  )
+  let builtins = builder.import_module("builtins")
+  let stringify = builder.getattr(builtins, "str")
+  let text = builder.call(stringify, [Ref(simplified)])
+  let srepr = builder.getattr(sympy, "srepr")
+  let left_repr = builder.call(srepr, [Ref(left)])
+  let right_repr = builder.call(srepr, [Ref(right)])
+  let operator = builder.import_module("operator")
+  let equal = builder.getattr(operator, "eq")
+  let not_equal = builder.getattr(operator, "ne")
+  let and_ = builder.getattr(operator, "and_")
+  let or_ = builder.getattr(operator, "or_")
+  let definitely_true = builder.call(equal, [Ref(text), Str("True")])
+  let not_definitely_false = builder.call(not_equal, [Ref(text), Str("False")])
+  let structurally_equal = builder.call(equal, [Ref(left_repr), Ref(right_repr)])
+  let fallback = builder.call(and_, [
+    Ref(not_definitely_false),
+    Ref(structurally_equal),
+  ])
+  let result = builder.call(or_, [Ref(definitely_true), Ref(fallback)])
+  builder.request_bool(result)
 }
 
 ///|
+/// Compare the structural representations of two evaluated stats expressions.
 pub fn stats_srepr_eq(a : String, b : String) -> Bool raise {
-  stats_eval_srepr(a) == stats_eval_srepr(b)
+  let builder = @recipe.Builder::new()
+  let left = stats_eval_value(builder, a)
+  let right = stats_eval_value(builder, b)
+  let sympy = builder.import_module("sympy")
+  let srepr = builder.getattr(sympy, "srepr")
+  let left_repr = builder.call(srepr, [Ref(left)])
+  let right_repr = builder.call(srepr, [Ref(right)])
+  let operator = builder.import_module("operator")
+  let equal = builder.getattr(operator, "eq")
+  let result = builder.call(equal, [Ref(left_repr), Ref(right_repr)])
+  builder.request_bool(result)
 }

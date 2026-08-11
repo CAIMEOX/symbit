@@ -1,6 +1,5 @@
 import {
-  "CAIMEOX/symbit/sympy",
-  "Kaida-Amethyst/python" @py,
+  "CAIMEOX/symbit/sympy/recipe",
 }
 
 import {

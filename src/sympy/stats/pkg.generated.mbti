@@ -1,10 +1,6 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "CAIMEOX/symbit/sympy/stats"
 
-import {
-  "CAIMEOX/symbit/sympy",
-}
-
 // Values
 pub fn stats_eval_srepr(String) -> String raise
 
@@ -21,7 +17,5 @@ pub fn stats_try_eval_str(String) -> String?
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-
