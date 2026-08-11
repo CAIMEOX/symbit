@@ -57,7 +57,7 @@ test "symcore parity plain symbol names stay plain symbols" {
   inspect(core_expr_srepr(Symbol("pi")), content="Symbol('pi')")
   inspect(core_expr_srepr(Symbol("True")), content="Symbol('True')")
   inspect(core_expr_srepr(NumberSymbol(Pi)), content="pi")
-  inspect(core_expr_srepr(Boolean(true)), content="True")
+  inspect(core_expr_srepr(Boolean(true)), content="true")
 }
 
 ///|

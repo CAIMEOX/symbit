@@ -3,7 +3,6 @@ package "CAIMEOX/symbit/sympy/core"
 
 import {
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/sympy",
 }
 
 // Values
@@ -17,7 +16,7 @@ pub fn core_evalf_sstr(@symcore.Expr) -> String raise
 
 pub fn core_expr_latex(@symcore.Expr, mode? : String) -> String raise
 
-pub fn core_expr_latex_kwargs(@symcore.Expr, kwargs? : Map[String, @sympy.OracleArg]) -> String raise
+pub fn core_expr_latex_kwargs(@symcore.Expr, kwargs? : Map[String, OracleArg]) -> String raise
 
 pub fn core_expr_srepr(@symcore.Expr) -> String raise
 
@@ -50,8 +49,17 @@ pub fn core_xreplace_sstr(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> String
 // Errors
 
 // Types and methods
+pub(all) enum OracleArg {
+  Null
+  Str(String)
+  Int(Int)
+  Bool(Bool)
+  StrList(Array[String])
+  IntList(Array[Int])
+  List(Array[OracleArg])
+  Dict(Map[String, OracleArg])
+}
 
 // Type aliases
 
 // Traits
-

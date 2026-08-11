@@ -7,7 +7,7 @@ fn assert_latex_parity(expr : @symcore.Expr) -> Unit raise {
 fn assert_latex_parity_kwargs(
   expr : @symcore.Expr,
   actual : String,
-  kwargs? : Map[String, @sympy.OracleArg] = {},
+  kwargs? : Map[String, OracleArg] = {},
 ) -> Unit raise {
   assert_eq(actual, core_expr_latex_kwargs(expr, kwargs~))
 }

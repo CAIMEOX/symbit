@@ -1,74 +1,157 @@
 ///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
+/// Serializable keyword values accepted by the core printer oracle.
+pub(all) enum OracleArg {
+  Null
+  Str(String)
+  Int(Int)
+  Bool(Bool)
+  StrList(Array[String])
+  IntList(Array[Int])
+  List(Array[OracleArg])
+  Dict(Map[String, OracleArg])
 }
 
 ///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
-}
-
-///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
-}
-
-///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let s = obj.to_string()
-  py_gil_release(state)
-  s
-}
-
-///|
-fn py_callable_from_enum(obj : @py.PyObjectEnum) -> @py.PyCallable raise {
-  match obj {
-    PyCallable(callable) => callable
-    PyClass(obj0) =>
-      @py.PyCallable::create(obj0) catch {
-        _ => fail("py-callable")
+fn OracleArg::materialize(
+  self : OracleArg,
+  builder : @recipe.Builder,
+) -> @recipe.RecipeArg raise {
+  match self {
+    Null => Null
+    Str(value) => Str(value)
+    Int(value) => DecimalInt(value.to_string())
+    Bool(value) => Bool(value)
+    StrList(values) => {
+      let items : Array[@recipe.RecipeArg] = []
+      for value in values {
+        items.push(Str(value))
       }
-    _ =>
-      @py.PyCallable::create(objenum_to_obj(obj)) catch {
-        _ => fail("py-callable")
+      Ref(builder.list(items))
+    }
+    IntList(values) => {
+      let items : Array[@recipe.RecipeArg] = []
+      for value in values {
+        items.push(DecimalInt(value.to_string()))
       }
+      Ref(builder.list(items))
+    }
+    List(values) => {
+      let items : Array[@recipe.RecipeArg] = []
+      for value in values {
+        items.push(value.materialize(builder))
+      }
+      Ref(builder.list(items))
+    }
+    Dict(values) => {
+      let items : Array[(@recipe.RecipeArg, @recipe.RecipeArg)] = []
+      for key, value in values {
+        items.push((Str(key), value.materialize(builder)))
+      }
+      Ref(builder.dict(items))
+    }
   }
 }
 
 ///|
-fn sympy_call_must(
-  path : String,
-  args : Array[@sympy.OracleArg],
-  kwargs? : Map[String, @sympy.OracleArg] = {},
-) -> @py.PyObjectEnum raise {
-  match @sympy.sympy_call(path, args, kwargs~) {
-    Some(obj) => obj
-    None => fail("sympy-call-none:\{path}")
+fn materialize_kwargs(
+  builder : @recipe.Builder,
+  kwargs : Map[String, OracleArg],
+) -> Map[String, @recipe.RecipeArg] raise {
+  let result : Map[String, @recipe.RecipeArg] = Map([])
+  for name, value in kwargs {
+    result[name] = value.materialize(builder)
   }
+  result
+}
+
+///|
+fn call_required(
+  builder : @recipe.Builder,
+  callable : @recipe.ValueRef,
+  args : Array[@recipe.RecipeArg],
+  kwargs? : Map[String, @recipe.RecipeArg] = {},
+  message? : String = "sympy-call-none",
+) -> @recipe.ValueRef raise {
+  builder.require_non_none(builder.call(callable, args, kwargs~), message~)
+}
+
+///|
+fn sympy_sstr_value(
+  builder : @recipe.Builder,
+  sympy : @recipe.ValueRef,
+  value : @recipe.ValueRef,
+) -> @recipe.ValueRef raise {
+  let sstr = builder.getattr(sympy, "sstr")
+  call_required(
+    builder,
+    sstr,
+    [Ref(value)],
+    message="sympy-call-none:sympy.sstr",
+  )
+}
+
+///|
+fn sstr_tuple_value(
+  builder : @recipe.Builder,
+  sympy : @recipe.ValueRef,
+  iterable : @recipe.ValueRef,
+  should_sort? : Bool = false,
+) -> @recipe.ValueRef raise {
+  let builtins = builder.import_module("builtins")
+  let map_fn = builder.getattr(builtins, "map")
+  let sstr = builder.getattr(sympy, "sstr")
+  let mapped = call_required(builder, map_fn, [Ref(sstr), Ref(iterable)])
+  let ordered = if should_sort {
+    let sorted_fn = builder.getattr(builtins, "sorted")
+    call_required(builder, sorted_fn, [Ref(mapped)])
+  } else {
+    mapped
+  }
+  let tuple_fn = builder.getattr(builtins, "tuple")
+  call_required(builder, tuple_fn, [Ref(ordered)])
 }
 
 ///|
 pub fn core_expr_sstr(expr : @symcore.Expr) -> String raise {
-  let obj = @sympy.expr_to_sympy(expr)
-  py_str_obj(objenum_to_obj(sympy_call_must("sympy.sstr", [PyObj(obj)])))
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let value = sympy_sstr_value(builder, sympy, encoder.encode(expr))
+  builder.request_str(value)
 }
 
 ///|
 pub fn core_expr_srepr(expr : @symcore.Expr) -> String raise {
-  let obj = @sympy.expr_to_sympy(expr)
-  py_str_obj(objenum_to_obj(sympy_call_must("sympy.srepr", [PyObj(obj)])))
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let srepr = builder.getattr(sympy, "srepr")
+  let value = call_required(
+    builder,
+    srepr,
+    [Ref(encoder.encode(expr))],
+    message="sympy-call-none:sympy.srepr",
+  )
+  builder.request_str(value)
 }
 
 ///|
 pub fn core_expr_latex_kwargs(
   expr : @symcore.Expr,
-  kwargs? : Map[String, @sympy.OracleArg] = {},
+  kwargs? : Map[String, OracleArg] = {},
 ) -> String raise {
-  let obj = @sympy.expr_to_sympy(expr)
-  py_str_obj(
-    objenum_to_obj(sympy_call_must("sympy.latex", [PyObj(obj)], kwargs~)),
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let latex = builder.getattr(sympy, "latex")
+  let value = call_required(
+    builder,
+    latex,
+    [Ref(encoder.encode(expr))],
+    kwargs=materialize_kwargs(builder, kwargs),
+    message="sympy-call-none:sympy.latex",
   )
+  builder.request_str(value)
 }
 
 ///|
@@ -81,121 +164,49 @@ pub fn core_expr_latex(
 
 ///|
 pub fn core_func_sstr(expr : @symcore.Expr) -> String raise {
-  let globals = @py.PyDict::new()
-  globals.set("expr", @sympy.expr_to_sympy(expr))
-  py_str_obj(
-    core_eval_with_globals(
-      "getattr(expr.func, '__name__', sympy.sstr(expr.func))", globals,
-    ),
-  )
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let value = encoder.encode(expr)
+  let function = builder.getattr(value, "func")
+  let fallback = sympy_sstr_value(builder, sympy, function)
+  let name = builder.getattr_or(function, "__name__", fallback)
+  builder.request_str(name)
 }
 
 ///|
 pub fn core_args_sstr(expr : @symcore.Expr) -> String raise {
-  let globals = @py.PyDict::new()
-  globals.set("expr", @sympy.expr_to_sympy(expr))
-  py_str_obj(
-    core_eval_with_globals("tuple(sympy.sstr(v) for v in expr.args)", globals),
-  )
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let args = builder.getattr(encoder.encode(expr), "args")
+  let value = sstr_tuple_value(builder, sympy, args)
+  builder.request_str(value)
 }
 
 ///|
 pub fn core_attr_bool(expr : @symcore.Expr, attr : String) -> Bool raise {
-  let expr_obj = @sympy.expr_to_sympy(expr)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let value = encoder.encode(expr)
   if attr == "is_nan" {
-    let globals = @py.PyDict::new()
-    globals.set("expr", expr_obj)
-    return py_str_obj(core_eval_with_globals("expr is sympy.nan", globals)) ==
-      "True"
+    let operator = builder.import_module("operator")
+    let identical = builder.getattr(operator, "is_")
+    let nan = builder.getattr(sympy, "nan")
+    let result = call_required(builder, identical, [Ref(value), Ref(nan)])
+    return builder.request_bool(result)
   }
   if attr == "is_one" {
-    let globals = @py.PyDict::new()
-    globals.set("expr", expr_obj)
-    return py_str_obj(
-        core_eval_with_globals("expr == sympy.Integer(1)", globals),
-      ) ==
-      "True"
+    let operator = builder.import_module("operator")
+    let equal = builder.getattr(operator, "eq")
+    let integer = builder.getattr(sympy, "Integer")
+    let one = call_required(builder, integer, [DecimalInt("1")])
+    let result = call_required(builder, equal, [Ref(value), Ref(one)])
+    return builder.request_bool(result)
   }
-  match expr_obj.get_attr(attr, print_err=true) {
-    Some(value) => py_str_obj(objenum_to_obj(value)) == "True"
-    None => fail("sympy-attr-missing:\{attr}")
-  }
-}
-
-///|
-fn core_eval_with_globals(
-  code : String,
-  globals : @py.PyDict,
-) -> @py.PyObject raise {
-  let builtins = match @py.pyimport("builtins") {
-    Some(mod) => mod
-    None => fail("py-builtins-missing")
-  }
-  let eval_obj = match builtins.get_attr("eval", print_err=true) {
-    Some(obj) => obj
-    None => fail("py-eval-missing")
-  }
-  globals.set("__builtins__", builtins.obj())
-  let sympy_mod = match @py.pyimport("sympy") {
-    Some(mod) => mod.obj()
-    None => fail("py-sympy-missing")
-  }
-  globals.set("sympy", sympy_mod)
-  let args = @sympy.py_pack_args([Str(code), PyObj(globals.obj())])
-  let res = match @sympy.py_call_object(py_callable_from_enum(eval_obj), args) {
-    Some(obj) => obj
-    None => fail("py-eval-none")
-  }
-  objenum_to_obj(res)
-}
-
-///|
-fn core_exec_result_str(script : String) -> String raise {
-  let state = py_gil_ensure()
-  let res = try {
-    let builtins = match @py.pyimport("builtins") {
-      Some(mod) => mod
-      None => fail("py-builtins-missing")
-    }
-    let exec_obj = match builtins.get_attr("exec", print_err=true) {
-      Some(obj) => obj
-      None => fail("py-exec-missing")
-    }
-    let eval_obj = match builtins.get_attr("eval", print_err=true) {
-      Some(obj) => obj
-      None => fail("py-eval-missing")
-    }
-    let eval_callable = py_callable_from_enum(eval_obj)
-    let globals = @py.PyDict::new()
-    globals.set("__builtins__", builtins.obj())
-    let sympy_mod = match @py.pyimport("sympy") {
-      Some(mod) => mod.obj()
-      None => fail("py-sympy-missing")
-    }
-    globals.set("sympy", sympy_mod)
-    let exec_args = @sympy.py_pack_args([
-      Str(script),
-      PyObj(globals.obj()),
-      PyObj(globals.obj()),
-    ])
-    ignore(@sympy.py_call_object(py_callable_from_enum(exec_obj), exec_args))
-    let eval_args = @sympy.py_pack_args([
-      Str("__result__"),
-      PyObj(globals.obj()),
-      PyObj(globals.obj()),
-    ])
-    match @sympy.py_call_object(eval_callable, eval_args) {
-      Some(obj) => py_str_obj(objenum_to_obj(obj))
-      None => fail("py-eval-result-none")
-    }
-  } catch {
-    err => {
-      py_gil_release(state)
-      raise err
-    }
-  }
-  py_gil_release(state)
-  res
+  let attribute = builder.getattr(value, attr)
+  builder.request_str(attribute) == "True"
 }
 
 ///|
@@ -205,7 +216,7 @@ pub fn core_parameters_sstr(
   distribute? : Bool = true,
   exp_is_pow? : Bool = false,
 ) -> String raise {
-  let eval_text = if evaluate { "True" } else { "False" }
+  let evaluate_text = if evaluate { "True" } else { "False" }
   let distribute_text = if distribute { "True" } else { "False" }
   let exp_is_pow_text = if exp_is_pow { "True" } else { "False" }
   let script = "import contextlib\n" +
@@ -214,7 +225,7 @@ pub fn core_parameters_sstr(
     "y = sympy.Symbol('y')\n" +
     "with contextlib.ExitStack() as _stack:\n" +
     "    _stack.enter_context(evaluate(" +
-    eval_text +
+    evaluate_text +
     "))\n" +
     "    _stack.enter_context(distribute(" +
     distribute_text +
@@ -225,29 +236,41 @@ pub fn core_parameters_sstr(
     "    __result__ = sympy.sstr(" +
     expr_code +
     ")\n"
-  core_exec_result_str(script)
+  let builder = @recipe.Builder::new()
+  // Match the deliberately narrow globals dictionary used by the former
+  // embedded-Python helper.  In particular, unqualified SymPy names are not
+  // injected here: callers must spell them through `sympy` unless the script
+  // imports them itself.
+  let builtins = builder.import_module("builtins")
+  let sympy = builder.import_module("sympy")
+  let scope = builder.dict([
+    (Str("__builtins__"), Ref(builtins)),
+    (Str("sympy"), Ref(sympy)),
+  ])
+  let executed = builder.exec(scope, script)
+  let result = builder.getitem(executed, Str("__result__"))
+  builder.request_str(result)
 }
 
 ///|
 pub fn core_free_symbols_sstr(expr : @symcore.Expr) -> String raise {
-  let globals = @py.PyDict::new()
-  globals.set("expr", @sympy.expr_to_sympy(expr))
-  py_str_obj(
-    core_eval_with_globals(
-      "tuple(sorted((sympy.sstr(v) for v in expr.free_symbols)))", globals,
-    ),
-  )
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let symbols = builder.getattr(encoder.encode(expr), "free_symbols")
+  let value = sstr_tuple_value(builder, sympy, symbols, should_sort=true)
+  builder.request_str(value)
 }
 
 ///|
 pub fn core_atoms_sstr(expr : @symcore.Expr) -> String raise {
-  let globals = @py.PyDict::new()
-  globals.set("expr", @sympy.expr_to_sympy(expr))
-  py_str_obj(
-    core_eval_with_globals(
-      "tuple(sorted((sympy.sstr(v) for v in expr.atoms())))", globals,
-    ),
-  )
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let atoms = builder.getattr(encoder.encode(expr), "atoms")
+  let values = call_required(builder, atoms, [])
+  let result = sstr_tuple_value(builder, sympy, values, should_sort=true)
+  builder.request_str(result)
 }
 
 ///|
@@ -255,10 +278,12 @@ pub fn core_has_bool(
   expr : @symcore.Expr,
   needle : @symcore.Expr,
 ) -> Bool raise {
-  let globals = @py.PyDict::new()
-  globals.set("expr", @sympy.expr_to_sympy(expr))
-  globals.set("needle", @sympy.expr_to_sympy(needle))
-  py_str_obj(core_eval_with_globals("expr.has(needle)", globals)) == "True"
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let value = encoder.encode(expr)
+  let has = builder.getattr(value, "has")
+  let result = call_required(builder, has, [Ref(encoder.encode(needle))])
+  builder.request_str(result) == "True"
 }
 
 ///|
@@ -267,22 +292,51 @@ pub fn core_xreplace_sstr(
   old_expr : @symcore.Expr,
   new_expr : @symcore.Expr,
 ) -> String raise {
-  let globals = @py.PyDict::new()
-  globals.set("expr", @sympy.expr_to_sympy(expr))
-  globals.set("old", @sympy.expr_to_sympy(old_expr))
-  globals.set("new", @sympy.expr_to_sympy(new_expr))
-  py_str_obj(
-    core_eval_with_globals("sympy.sstr(expr.xreplace({old: new}))", globals),
-  )
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let value = encoder.encode(expr)
+  let replacements = builder.dict([
+    (Ref(encoder.encode(old_expr)), Ref(encoder.encode(new_expr))),
+  ])
+  let xreplace = builder.getattr(value, "xreplace")
+  let replaced = call_required(builder, xreplace, [Ref(replacements)])
+  let result = sympy_sstr_value(builder, sympy, replaced)
+  builder.request_str(result)
 }
 
 ///|
 pub fn core_replace_sin_with_cos_sstr(expr : @symcore.Expr) -> String raise {
-  let globals = @py.PyDict::new()
-  globals.set("expr", @sympy.expr_to_sympy(expr))
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let mut scope = builder.sympy_scope()
+  scope = builder.bind(scope, "expr", Ref(encoder.encode(expr)))
   let code = "sympy.sstr(expr.replace(lambda e: e.func == sympy.sin, " +
     "lambda e: sympy.cos(*e.args)))"
-  py_str_obj(core_eval_with_globals(code, globals))
+  let result = builder.require_non_none(
+    builder.eval(scope, code),
+    message="py-eval-none",
+  )
+  builder.request_str(result)
+}
+
+///|
+fn core_subst_sstr(
+  expr : @symcore.Expr,
+  old_expr : @symcore.Expr,
+  new_expr : @symcore.Expr,
+) -> String raise {
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let value = encoder.encode(expr)
+  let subs = builder.getattr(value, "subs")
+  let replaced = call_required(builder, subs, [
+    Ref(encoder.encode(old_expr)),
+    Ref(encoder.encode(new_expr)),
+  ])
+  let result = sympy_sstr_value(builder, sympy, replaced)
+  builder.request_str(result)
 }
 
 ///|
@@ -291,11 +345,7 @@ pub fn core_subst_symbol_sstr(
   symbol_name : String,
   new_expr : @symcore.Expr,
 ) -> String raise {
-  let globals = @py.PyDict::new()
-  globals.set("expr", @sympy.expr_to_sympy(expr))
-  globals.set("old", @sympy.expr_to_sympy(Symbol(symbol_name)))
-  globals.set("new", @sympy.expr_to_sympy(new_expr))
-  py_str_obj(core_eval_with_globals("sympy.sstr(expr.subs(old, new))", globals))
+  core_subst_sstr(expr, Symbol(symbol_name), new_expr)
 }
 
 ///|
@@ -304,34 +354,38 @@ pub fn core_subst_expr_sstr(
   old_expr : @symcore.Expr,
   new_expr : @symcore.Expr,
 ) -> String raise {
-  let globals = @py.PyDict::new()
-  globals.set("expr", @sympy.expr_to_sympy(expr))
-  globals.set("old", @sympy.expr_to_sympy(old_expr))
-  globals.set("new", @sympy.expr_to_sympy(new_expr))
-  py_str_obj(core_eval_with_globals("sympy.sstr(expr.subs(old, new))", globals))
+  core_subst_sstr(expr, old_expr, new_expr)
 }
 
 ///|
 pub fn core_sorted_sstr(exprs : Array[@symcore.Expr]) -> String raise {
-  let list = @py.PyList::new()
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let items : Array[@recipe.RecipeArg] = []
   for expr in exprs {
-    list.append(@sympy.expr_to_sympy(expr))
+    items.push(Ref(encoder.encode(expr)))
   }
-  let globals = @py.PyDict::new()
-  globals.set("exprs", list.obj())
-  py_str_obj(
-    core_eval_with_globals(
-      "tuple(sympy.sstr(v) for v in sorted(exprs, key=sympy.default_sort_key))",
-      globals,
-    ),
-  )
+  let values = builder.list(items)
+  let builtins = builder.import_module("builtins")
+  let sorted_fn = builder.getattr(builtins, "sorted")
+  let sort_key = builder.getattr(sympy, "default_sort_key")
+  let sorted_values = call_required(builder, sorted_fn, [Ref(values)], kwargs={
+    "key": Ref(sort_key),
+  })
+  let result = sstr_tuple_value(builder, sympy, sorted_values)
+  builder.request_str(result)
 }
 
 ///|
 pub fn core_evalf_sstr(expr : @symcore.Expr) -> String raise {
-  let globals = @py.PyDict::new()
-  globals.set("expr", @sympy.expr_to_sympy(expr))
-  py_str_obj(core_eval_with_globals("sympy.sstr(expr.evalf())", globals))
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let evalf = builder.getattr(encoder.encode(expr), "evalf")
+  let value = call_required(builder, evalf, [])
+  let result = sympy_sstr_value(builder, sympy, value)
+  builder.request_str(result)
 }
 
 ///|
@@ -339,37 +393,42 @@ pub fn core_match_sstr(
   pattern : @symcore.Expr,
   expr : @symcore.Expr,
 ) -> String raise {
-  let globals = @py.PyDict::new()
-  globals.set("pattern", @sympy.expr_to_sympy(pattern))
-  globals.set("expr", @sympy.expr_to_sympy(expr))
-  py_str_obj(
-    core_eval_with_globals(
-      "('None' if pattern.matches(expr) is None else '|'.join(" +
-      "f'{sympy.sstr(k)}={sympy.sstr(v)}' " +
-      "for k, v in sorted(pattern.matches(expr).items(), key=lambda kv: sympy.sstr(kv[0]))))",
-      globals,
-    ),
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let mut scope = builder.sympy_scope()
+  scope = builder.bind(scope, "pattern", Ref(encoder.encode(pattern)))
+  scope = builder.bind(scope, "expr", Ref(encoder.encode(expr)))
+  let code = "('None' if pattern.matches(expr) is None else '|'.join(" +
+    "f'{sympy.sstr(k)}={sympy.sstr(v)}' " +
+    "for k, v in sorted(pattern.matches(expr).items(), " +
+    "key=lambda kv: sympy.sstr(kv[0]))))"
+  let result = builder.require_non_none(
+    builder.eval(scope, code),
+    message="py-eval-none",
   )
+  builder.request_str(result)
+}
+
+///|
+fn core_traversal_sstr(
+  traversal_name : String,
+  expr : @symcore.Expr,
+) -> String raise {
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let sympy = builder.import_module("sympy")
+  let traversal = builder.getattr(sympy, traversal_name)
+  let values = call_required(builder, traversal, [Ref(encoder.encode(expr))])
+  let result = sstr_tuple_value(builder, sympy, values)
+  builder.request_str(result)
 }
 
 ///|
 pub fn core_preorder_sstr(expr : @symcore.Expr) -> String raise {
-  let globals = @py.PyDict::new()
-  globals.set("expr", @sympy.expr_to_sympy(expr))
-  py_str_obj(
-    core_eval_with_globals(
-      "tuple(sympy.sstr(v) for v in sympy.preorder_traversal(expr))", globals,
-    ),
-  )
+  core_traversal_sstr("preorder_traversal", expr)
 }
 
 ///|
 pub fn core_postorder_sstr(expr : @symcore.Expr) -> String raise {
-  let globals = @py.PyDict::new()
-  globals.set("expr", @sympy.expr_to_sympy(expr))
-  py_str_obj(
-    core_eval_with_globals(
-      "tuple(sympy.sstr(v) for v in sympy.postorder_traversal(expr))", globals,
-    ),
-  )
+  core_traversal_sstr("postorder_traversal", expr)
 }
