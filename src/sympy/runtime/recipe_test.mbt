@@ -77,6 +77,282 @@ test "oracle recipe imports gets an attribute and calls it" {
 }
 
 ///|
+test "oracle recipe getattr or leaves a crashing fallback unreachable when the attribute exists" {
+  let input = recipe_input(
+    [
+      Json::object({
+        "id": Json::number(0),
+        "op": Json::string("import"),
+        "module": Json::string("operator"),
+      }),
+      Json::object({
+        "id": Json::number(1),
+        "op": Json::string("getattr"),
+        "object": recipe_ref(0),
+        "name": Json::string("truediv"),
+      }),
+      Json::object({
+        "id": Json::number(2),
+        "op": Json::string("const"),
+        "codec": Json::string("int"),
+        "value": Json::string("1"),
+      }),
+      Json::object({
+        "id": Json::number(3),
+        "op": Json::string("const"),
+        "codec": Json::string("int"),
+        "value": Json::string("0"),
+      }),
+      Json::object({
+        "id": Json::number(4),
+        "op": Json::string("call"),
+        "callable": recipe_ref(1),
+        "args": Json::array([recipe_ref(2), recipe_ref(3)]),
+        "kwargs": Json::object({}),
+      }),
+      Json::object({
+        "id": Json::number(5),
+        "op": Json::string("import"),
+        "module": Json::string("builtins"),
+      }),
+      Json::object({
+        "id": Json::number(6),
+        "op": Json::string("getattr_or"),
+        "object": recipe_ref(5),
+        "name": Json::string("len"),
+        "fallback": recipe_ref(4),
+      }),
+    ],
+    6,
+    Json::string("repr"),
+  )
+  assert_eq(
+    @runtime.request("oracle.recipe.v1", input),
+    Json::string("<built-in function len>"),
+  )
+}
+
+///|
+test "oracle recipe getattr or evaluates a missing attribute fallback once" {
+  let input = recipe_input(
+    [
+      Json::object({
+        "id": Json::number(0),
+        "op": Json::string("const"),
+        "codec": Json::string("int"),
+        "value": Json::string("41"),
+      }),
+      Json::object({
+        "id": Json::number(1),
+        "op": Json::string("const"),
+        "codec": Json::string("int"),
+        "value": Json::string("42"),
+      }),
+      Json::object({
+        "id": Json::number(2),
+        "op": Json::string("collection"),
+        "kind": Json::string("list"),
+        "items": Json::array([recipe_ref(0), recipe_ref(1)]),
+      }),
+      Json::object({
+        "id": Json::number(3),
+        "op": Json::string("getattr"),
+        "object": recipe_ref(2),
+        "name": Json::string("pop"),
+      }),
+      Json::object({
+        "id": Json::number(4),
+        "op": Json::string("call"),
+        "callable": recipe_ref(3),
+        "args": Json::array([]),
+        "kwargs": Json::object({}),
+      }),
+      Json::object({
+        "id": Json::number(5),
+        "op": Json::string("import"),
+        "module": Json::string("builtins"),
+      }),
+      Json::object({
+        "id": Json::number(6),
+        "op": Json::string("getattr_or"),
+        "object": recipe_ref(5),
+        "name": Json::string("__symbit_recipe_missing__"),
+        "fallback": recipe_ref(4),
+      }),
+      Json::object({
+        "id": Json::number(7),
+        "op": Json::string("collection"),
+        "kind": Json::string("tuple"),
+        "items": Json::array([recipe_ref(6), recipe_ref(6), recipe_ref(2)]),
+      }),
+    ],
+    7,
+    Json::object({
+      "kind": Json::string("tuple"),
+      "items": Json::array([
+        Json::string("int"),
+        Json::string("int"),
+        Json::object({
+          "kind": Json::string("list"),
+          "item": Json::string("int"),
+        }),
+      ]),
+    }),
+  )
+  assert_eq(
+    @runtime.request("oracle.recipe.v1", input),
+    Json::array([
+      Json::string("42"),
+      Json::string("42"),
+      Json::array([Json::string("41")]),
+    ]),
+  )
+}
+
+///|
+test "oracle recipe getattr or treats a None attribute as present" {
+  let input = recipe_input(
+    [
+      Json::object({
+        "id": Json::number(0),
+        "op": Json::string("import"),
+        "module": Json::string("operator"),
+      }),
+      Json::object({
+        "id": Json::number(1),
+        "op": Json::string("getattr"),
+        "object": recipe_ref(0),
+        "name": Json::string("truediv"),
+      }),
+      Json::object({
+        "id": Json::number(2),
+        "op": Json::string("const"),
+        "codec": Json::string("int"),
+        "value": Json::string("1"),
+      }),
+      Json::object({
+        "id": Json::number(3),
+        "op": Json::string("const"),
+        "codec": Json::string("int"),
+        "value": Json::string("0"),
+      }),
+      Json::object({
+        "id": Json::number(4),
+        "op": Json::string("call"),
+        "callable": recipe_ref(1),
+        "args": Json::array([recipe_ref(2), recipe_ref(3)]),
+        "kwargs": Json::object({}),
+      }),
+      Json::object({
+        "id": Json::number(5),
+        "op": Json::string("import"),
+        "module": Json::string("builtins"),
+      }),
+      Json::object({
+        "id": Json::number(6),
+        "op": Json::string("getattr_or"),
+        "object": recipe_ref(5),
+        "name": Json::string("None"),
+        "fallback": recipe_ref(4),
+      }),
+    ],
+    6,
+    Json::string("none"),
+  )
+  assert_eq(@runtime.request("oracle.recipe.v1", input), Json::null())
+}
+
+///|
+test "oracle recipe getattr or propagates a non AttributeError from the getter" {
+  let input = recipe_input(
+    [
+      Json::object({
+        "id": Json::number(0),
+        "op": Json::string("scope"),
+        "profile": Json::string("sympy.base"),
+      }),
+      Json::object({
+        "id": Json::number(1),
+        "op": Json::string("eval"),
+        "scope": recipe_ref(0),
+        "code": Json::string(
+          "type('Boom', (), {'value': property(lambda self: (_ for _ in ()).throw(ValueError('getter-boom')))})()",
+        ),
+      }),
+      Json::object({
+        "id": Json::number(2),
+        "op": Json::string("const"),
+        "codec": Json::string("str"),
+        "value": Json::string("fallback"),
+      }),
+      Json::object({
+        "id": Json::number(3),
+        "op": Json::string("getattr_or"),
+        "object": recipe_ref(1),
+        "name": Json::string("value"),
+        "fallback": recipe_ref(2),
+      }),
+    ],
+    3,
+    Json::string("str"),
+  )
+  let propagated = try {
+    @runtime.request("oracle.recipe.v1", input) |> ignore
+    false
+  } catch {
+    PythonException(type_name, message, _) =>
+      type_name == "ValueError" && message == "getter-boom"
+    _ => false
+  }
+  assert_true(propagated)
+}
+
+///|
+test "oracle recipe getattr or does not catch AttributeError from object evaluation" {
+  let input = recipe_input(
+    [
+      Json::object({
+        "id": Json::number(0),
+        "op": Json::string("scope"),
+        "profile": Json::string("sympy.base"),
+      }),
+      Json::object({
+        "id": Json::number(1),
+        "op": Json::string("eval"),
+        "scope": recipe_ref(0),
+        "code": Json::string(
+          "(_ for _ in ()).throw(AttributeError('object-boom'))",
+        ),
+      }),
+      Json::object({
+        "id": Json::number(2),
+        "op": Json::string("const"),
+        "codec": Json::string("str"),
+        "value": Json::string("fallback"),
+      }),
+      Json::object({
+        "id": Json::number(3),
+        "op": Json::string("getattr_or"),
+        "object": recipe_ref(1),
+        "name": Json::string("value"),
+        "fallback": recipe_ref(2),
+      }),
+    ],
+    3,
+    Json::string("str"),
+  )
+  let propagated = try {
+    @runtime.request("oracle.recipe.v1", input) |> ignore
+    false
+  } catch {
+    PythonException(type_name, message, _) =>
+      type_name == "AttributeError" && message == "object-boom"
+    _ => false
+  }
+  assert_true(propagated)
+}
+
+///|
 fn collection_length_input(kind : String) -> Json {
   let collection = if kind == "dict" {
     Json::object({
@@ -1029,6 +1305,145 @@ test "oracle recipe fully validates before side effects and stays result reachab
   assert_rejected_before_side_effect(
     side_effect_recipe("codec"),
     "unknown codec",
+  )
+  let getattr_or_extra_field = recipe_input(
+    [
+      Json::object({
+        "id": Json::number(0),
+        "op": Json::string("scope"),
+        "profile": Json::string("sympy.base"),
+      }),
+      Json::object({
+        "id": Json::number(1),
+        "op": Json::string("exec"),
+        "scope": recipe_ref(0),
+        "code": Json::string(
+          "__import__('os').environ['SYMBIT_RECIPE_VALIDATION_PROBE'] = 'dirty'",
+        ),
+      }),
+      Json::object({
+        "id": Json::number(2),
+        "op": Json::string("import"),
+        "module": Json::string("builtins"),
+      }),
+      Json::object({
+        "id": Json::number(3),
+        "op": Json::string("getattr_or"),
+        "object": recipe_ref(2),
+        "name": Json::string("missing"),
+        "fallback": recipe_ref(1),
+        "extra": Json::boolean(true),
+      }),
+    ],
+    3,
+    Json::string("discard"),
+  )
+  assert_rejected_before_side_effect(getattr_or_extra_field, "invalid fields")
+  let getattr_or_bad_name = recipe_input(
+    [
+      Json::object({
+        "id": Json::number(0),
+        "op": Json::string("scope"),
+        "profile": Json::string("sympy.base"),
+      }),
+      Json::object({
+        "id": Json::number(1),
+        "op": Json::string("exec"),
+        "scope": recipe_ref(0),
+        "code": Json::string(
+          "__import__('os').environ['SYMBIT_RECIPE_VALIDATION_PROBE'] = 'dirty'",
+        ),
+      }),
+      Json::object({
+        "id": Json::number(2),
+        "op": Json::string("import"),
+        "module": Json::string("builtins"),
+      }),
+      Json::object({
+        "id": Json::number(3),
+        "op": Json::string("getattr_or"),
+        "object": recipe_ref(2),
+        "name": Json::number(7),
+        "fallback": recipe_ref(1),
+      }),
+    ],
+    3,
+    Json::string("discard"),
+  )
+  assert_rejected_before_side_effect(
+    getattr_or_bad_name, "name must be a string",
+  )
+  let getattr_or_forward_object = recipe_input(
+    [
+      Json::object({
+        "id": Json::number(0),
+        "op": Json::string("scope"),
+        "profile": Json::string("sympy.base"),
+      }),
+      Json::object({
+        "id": Json::number(1),
+        "op": Json::string("exec"),
+        "scope": recipe_ref(0),
+        "code": Json::string(
+          "__import__('os').environ['SYMBIT_RECIPE_VALIDATION_PROBE'] = 'dirty'",
+        ),
+      }),
+      Json::object({
+        "id": Json::number(2),
+        "op": Json::string("getattr_or"),
+        "object": recipe_ref(3),
+        "name": Json::string("len"),
+        "fallback": recipe_ref(1),
+      }),
+      Json::object({
+        "id": Json::number(3),
+        "op": Json::string("import"),
+        "module": Json::string("builtins"),
+      }),
+    ],
+    2,
+    Json::string("discard"),
+  )
+  assert_rejected_before_side_effect(getattr_or_forward_object, "earlier node")
+  let getattr_or_forward_fallback = recipe_input(
+    [
+      Json::object({
+        "id": Json::number(0),
+        "op": Json::string("scope"),
+        "profile": Json::string("sympy.base"),
+      }),
+      Json::object({
+        "id": Json::number(1),
+        "op": Json::string("exec"),
+        "scope": recipe_ref(0),
+        "code": Json::string(
+          "__import__('os').environ['SYMBIT_RECIPE_VALIDATION_PROBE'] = 'dirty'",
+        ),
+      }),
+      Json::object({
+        "id": Json::number(2),
+        "op": Json::string("import"),
+        "module": Json::string("builtins"),
+      }),
+      Json::object({
+        "id": Json::number(3),
+        "op": Json::string("getattr_or"),
+        "object": recipe_ref(2),
+        "name": Json::string("missing"),
+        "fallback": recipe_ref(4),
+      }),
+      Json::object({
+        "id": Json::number(4),
+        "op": Json::string("const"),
+        "codec": Json::string("int"),
+        "value": Json::string("42"),
+      }),
+    ],
+    3,
+    Json::string("discard"),
+  )
+  assert_rejected_before_side_effect(
+    getattr_or_forward_fallback, "earlier node",
   )
   let forward_ref = recipe_input(
     [

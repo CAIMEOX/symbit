@@ -31,6 +31,39 @@ test "recipe imports gets an attribute and calls it" {
 }
 
 ///|
+test "recipe getattr or leaves a crashing fallback unreachable when the attribute exists" {
+  let builder = @recipe.Builder::new()
+  let operator = builder.import_module("operator")
+  let truediv = builder.getattr(operator, "truediv")
+  let crashing = builder.call(truediv, [DecimalInt("1"), DecimalInt("0")])
+  let builtins = builder.import_module("builtins")
+  let value = builder.getattr_or(builtins, "len", crashing)
+  assert_eq(builder.request_repr(value), "<built-in function len>")
+}
+
+///|
+test "recipe getattr or returns the fallback when the attribute is missing" {
+  let builder = @recipe.Builder::new()
+  let fallback = builder.value(Str("fallback"))
+  let builtins = builder.import_module("builtins")
+  let value = builder.getattr_or(
+    builtins, "__symbit_recipe_missing__", fallback,
+  )
+  assert_eq(builder.request_str(value), "fallback")
+}
+
+///|
+test "recipe getattr or treats a None attribute as present" {
+  let builder = @recipe.Builder::new()
+  let operator = builder.import_module("operator")
+  let truediv = builder.getattr(operator, "truediv")
+  let crashing = builder.call(truediv, [DecimalInt("1"), DecimalInt("0")])
+  let builtins = builder.import_module("builtins")
+  let value = builder.getattr_or(builtins, "None", crashing)
+  builder.request_none(value)
+}
+
+///|
 test "recipe indexes an earlier value" {
   let builder = @recipe.Builder::new()
   let values = builder.list([Str("zero"), Str("one")])

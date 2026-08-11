@@ -52,6 +52,80 @@ test "recipe nodes use contiguous ids and backward references" {
 }
 
 ///|
+test "getattr or serializes object name and fallback references" {
+  let builder = Builder::new()
+  let builtins = builder.import_module("builtins")
+  let fallback = builder.value(Str("fallback"))
+  let value = builder.getattr_or(builtins, "missing", fallback)
+  assert_eq(
+    builder.build_request(value, Str),
+    Json::object({
+      "schema": Json::number(1),
+      "nodes": Json::array([
+        Json::object({
+          "id": Json::number(0),
+          "op": Json::string("import"),
+          "module": Json::string("builtins"),
+        }),
+        Json::object({
+          "id": Json::number(1),
+          "op": Json::string("const"),
+          "codec": Json::string("str"),
+          "value": Json::string("fallback"),
+        }),
+        Json::object({
+          "id": Json::number(2),
+          "op": Json::string("getattr_or"),
+          "object": Json::object({ "ref": Json::number(0) }),
+          "name": Json::string("missing"),
+          "fallback": Json::object({ "ref": Json::number(1) }),
+        }),
+      ]),
+      "result": Json::object({
+        "ref": Json::number(2),
+        "codec": Json::string("str"),
+      }),
+    }),
+  )
+}
+
+///|
+test "getattr or rejects a foreign object without appending a node" {
+  let first = Builder::new()
+  let foreign_object = first.import_module("builtins")
+  let second = Builder::new()
+  let fallback = second.value(Str("fallback"))
+  let before = second.nodes.length()
+  let rejected = try {
+    second.getattr_or(foreign_object, "len", fallback) |> ignore
+    false
+  } catch {
+    ForeignReference => true
+    _ => false
+  }
+  assert_true(rejected)
+  assert_eq(second.nodes.length(), before)
+}
+
+///|
+test "getattr or rejects a foreign fallback without appending a node" {
+  let first = Builder::new()
+  let foreign_fallback = first.value(Str("fallback"))
+  let second = Builder::new()
+  let object = second.import_module("builtins")
+  let before = second.nodes.length()
+  let rejected = try {
+    second.getattr_or(object, "len", foreign_fallback) |> ignore
+    false
+  } catch {
+    ForeignReference => true
+    _ => false
+  }
+  assert_true(rejected)
+  assert_eq(second.nodes.length(), before)
+}
+
+///|
 test "building request JSON snapshots the node array" {
   let builder = Builder::new()
   let first = builder.value(Str("first"))

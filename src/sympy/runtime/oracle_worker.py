@@ -417,6 +417,25 @@ def _recipe_v1(recipe: Any) -> Any:
                 raise ProtocolFault(
                     f"recipe node {expected_id} attribute name must be a string"
                 )
+        elif op == "getattr_or":
+            _recipe_exact_fields(
+                node, {"id", "op", "object", "name", "fallback"},
+                context=f"recipe node {expected_id}",
+            )
+            _recipe_ref(
+                node.get("object"),
+                before=expected_id,
+                context=f"recipe node {expected_id} object",
+            )
+            if not isinstance(node.get("name"), str):
+                raise ProtocolFault(
+                    f"recipe node {expected_id} name must be a string"
+                )
+            _recipe_ref(
+                node.get("fallback"),
+                before=expected_id,
+                context=f"recipe node {expected_id} fallback",
+            )
         elif op == "getitem":
             _recipe_exact_fields(
                 node, {"id", "op", "object", "key"},
@@ -606,6 +625,12 @@ def _recipe_v1(recipe: Any) -> Any:
             value = importlib.import_module(node["module"])
         elif op == "getattr":
             value = getattr(evaluate(node["object"]["ref"]), node["name"])
+        elif op == "getattr_or":
+            object_value = evaluate(node["object"]["ref"])
+            try:
+                value = getattr(object_value, node["name"])
+            except AttributeError:
+                value = evaluate(node["fallback"]["ref"])
         elif op == "getitem":
             value = evaluate(node["object"]["ref"])[
                 evaluate(node["key"]["ref"])

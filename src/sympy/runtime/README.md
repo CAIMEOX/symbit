@@ -50,12 +50,15 @@ and invalid references are protocol errors discovered before any node runs.
 Supported nodes are:
 
 - `const` with `none`, `bool`, `str`, decimal-string `int`, or string `float`;
-- `import`, `getattr`, `getitem`, and `call`;
+- `import`, `getattr`, lazy `getattr_or`, `getitem`, and `call`;
 - `collection` with `list`, `tuple`, `set`, `frozenset`, or key/value-pair
   `dict` items;
 - request-local `scope` with the `sympy.base` profile, plus `bind`, `exec`, and
   `eval` returning or using that same scope;
 - `require_non_none` for turning an unexpected `None` into a Python error.
+
+`getattr_or` evaluates its fallback reference only when Python attribute lookup
+raises `AttributeError`; an attribute whose value is `None` is still present.
 
 Scalar result codecs are `discard`, `none`, `str`, `repr`, `srepr`, `bool`,
 decimal-string `int`, string `float`, and `json`. `bool` accepts only Python or

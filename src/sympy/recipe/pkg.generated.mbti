@@ -29,6 +29,7 @@ pub fn Builder::eval(Self, ValueRef, String) -> ValueRef raise RecipeError
 pub fn Builder::exec(Self, ValueRef, String) -> ValueRef raise RecipeError
 pub fn Builder::frozenset(Self, Array[RecipeArg]) -> ValueRef raise RecipeError
 pub fn Builder::getattr(Self, ValueRef, String) -> ValueRef raise RecipeError
+pub fn Builder::getattr_or(Self, ValueRef, String, ValueRef) -> ValueRef raise RecipeError
 pub fn Builder::getitem(Self, ValueRef, RecipeArg) -> ValueRef raise RecipeError
 pub fn Builder::import_module(Self, String) -> ValueRef raise RecipeError
 pub fn Builder::list(Self, Array[RecipeArg]) -> ValueRef raise RecipeError

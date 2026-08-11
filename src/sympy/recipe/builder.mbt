@@ -129,6 +129,25 @@ pub fn Builder::getattr(
 }
 
 ///|
+/// Read a Python attribute or lazily use an earlier fallback value when the
+/// attribute is missing.
+pub fn Builder::getattr_or(
+  self : Builder,
+  object : ValueRef,
+  name : String,
+  fallback : ValueRef,
+) -> ValueRef raise RecipeError {
+  self.ensure_ref(object)
+  self.ensure_ref(fallback)
+  self.push_node({
+    "op": Json::string("getattr_or"),
+    "object": object.to_json(),
+    "name": Json::string(name),
+    "fallback": fallback.to_json(),
+  })
+}
+
+///|
 /// Index an earlier Python value with a scalar or earlier recipe value.
 pub fn Builder::getitem(
   self : Builder,
