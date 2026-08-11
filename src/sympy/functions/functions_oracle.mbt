@@ -2,76 +2,49 @@
 /// Oracle helpers for SymPy functions.
 
 ///|
-pub type OracleArg = @sympy.OracleArg
-
-///|
-fn sympy_call(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum? raise {
-  @sympy.sympy_call(path, args, kwargs~)
+fn sympify_required(
+  builder : @recipe.Builder,
+  sympify : @recipe.ValueRef,
+  expression : String,
+) -> @recipe.ValueRef raise {
+  let value = builder.call(sympify, [Str(expression)])
+  builder.require_non_none(value, message="sympy-call-none:sympy.sympify")
 }
 
 ///|
-fn sympy_call_must(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum raise {
-  match sympy_call(path, args, kwargs~) {
-    Some(obj) => obj
-    None => fail("sympy-call-none:\{path}")
-  }
-}
-
-///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
-}
-
-///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
-}
-
-///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
-}
-
-///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let s = obj.to_string()
-  py_gil_release(state)
-  s
-}
-
-///|
-fn py_str_enum(obj : @py.PyObjectEnum) -> String {
-  py_str_obj(objenum_to_obj(obj))
-}
-
-///|
-fn sympy_sympify_str(expr_str : String) -> @py.PyObjectEnum raise {
-  sympy_call_must("sympy.sympify", [Str(expr_str)])
-}
-
-///|
+/// Sympify an expression and return its Python string representation.
 pub fn sympy_str(expr_str : String) -> String raise {
-  let expr = sympy_sympify_str(expr_str)
-  py_str_enum(expr)
+  let builder = @recipe.Builder::new()
+  let sympy = builder.import_module("sympy")
+  let sympify = builder.getattr(sympy, "sympify")
+  let expression = sympify_required(builder, sympify, expr_str)
+  builder.request_str(expression)
 }
 
 ///|
+/// Sympify an expression and return its SymPy structural representation.
 pub fn sympy_srepr(expr_str : String) -> String raise {
-  let expr = sympy_sympify_str(expr_str)
-  let srepr = sympy_call_must("sympy.srepr", [PyObj(objenum_to_obj(expr))])
-  py_str_enum(srepr)
+  let builder = @recipe.Builder::new()
+  let sympy = builder.import_module("sympy")
+  let sympify = builder.getattr(sympy, "sympify")
+  let expression = sympify_required(builder, sympify, expr_str)
+  builder.request_srepr(expression)
 }
 
 ///|
+/// Compare two expression strings by their independently constructed SymPy
+/// structural representations.
 pub fn expr_str_eq(a : String, b : String) -> Bool raise {
-  sympy_srepr(a) == sympy_srepr(b)
+  let builder = @recipe.Builder::new()
+  let sympy = builder.import_module("sympy")
+  let sympify = builder.getattr(sympy, "sympify")
+  let srepr = builder.getattr(sympy, "srepr")
+  let operator = builder.import_module("operator")
+  let equal = builder.getattr(operator, "eq")
+  let a_expression = sympify_required(builder, sympify, a)
+  let b_expression = sympify_required(builder, sympify, b)
+  let a_repr = builder.call(srepr, [Ref(a_expression)])
+  let b_repr = builder.call(srepr, [Ref(b_expression)])
+  let result = builder.call(equal, [Ref(a_repr), Ref(b_repr)])
+  builder.request_bool(result)
 }

@@ -2,83 +2,63 @@
 /// Oracle helpers for SymPy concrete.
 
 ///|
-pub type OracleArg = @sympy.OracleArg
-
-///|
-fn sympy_call(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum? raise {
-  @sympy.sympy_call(path, args, kwargs~)
+fn sympify_str(
+  builder : @recipe.Builder,
+  callable : @recipe.ValueRef,
+  expr_str : String,
+) -> @recipe.ValueRef raise {
+  let value = builder.call(callable, [Str(expr_str)])
+  builder.require_non_none(value, message="sympy-call-none:sympy.sympify")
 }
 
 ///|
-fn sympy_call_must(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum raise {
-  match sympy_call(path, args, kwargs~) {
-    Some(obj) => obj
-    None => fail("sympy-call-none:\{path}")
-  }
-}
-
-///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
-}
-
-///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
-}
-
-///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
-}
-
-///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let s = obj.to_string()
-  py_gil_release(state)
-  s
-}
-
-///|
-fn py_str_enum(obj : @py.PyObjectEnum) -> String {
-  py_str_obj(objenum_to_obj(obj))
-}
-
-///|
-fn sympy_sympify_str(expr_str : String) -> @py.PyObjectEnum raise {
-  sympy_call_must("sympy.sympify", [Str(expr_str)])
-}
-
-///|
+/// Parse a SymPy expression and return its canonical string form.
 pub fn sympy_str(expr_str : String) -> String raise {
-  let expr = sympy_sympify_str(expr_str)
-  py_str_enum(expr)
+  let builder = @recipe.Builder::new()
+  let sympy = builder.import_module("sympy")
+  let sympify = builder.getattr(sympy, "sympify")
+  let expr = sympify_str(builder, sympify, expr_str)
+  builder.request_str(expr)
 }
 
 ///|
+/// Parse a SymPy expression and return its structural representation.
 pub fn sympy_srepr(expr_str : String) -> String raise {
-  let expr = sympy_sympify_str(expr_str)
-  let srepr = sympy_call_must("sympy.srepr", [PyObj(objenum_to_obj(expr))])
-  py_str_enum(srepr)
+  let builder = @recipe.Builder::new()
+  let sympy = builder.import_module("sympy")
+  let sympify = builder.getattr(sympy, "sympify")
+  let expr = sympify_str(builder, sympify, expr_str)
+  builder.request_srepr(expr)
 }
 
 ///|
+/// Compare the structural representations of two independently parsed expressions.
 pub fn expr_str_eq(a : String, b : String) -> Bool raise {
-  sympy_srepr(a) == sympy_srepr(b)
+  let builder = @recipe.Builder::new()
+  let sympy = builder.import_module("sympy")
+  let sympify_callable = builder.getattr(sympy, "sympify")
+  let a_expr = sympify_str(builder, sympify_callable, a)
+  let b_expr = sympify_str(builder, sympify_callable, b)
+  let srepr_callable = builder.getattr(sympy, "srepr")
+  let a_srepr = builder.call(srepr_callable, [Ref(a_expr)])
+  let b_srepr = builder.call(srepr_callable, [Ref(b_expr)])
+  let operator = builder.import_module("operator")
+  let equal = builder.getattr(operator, "eq")
+  let result = builder.call(equal, [Ref(a_srepr), Ref(b_srepr)])
+  builder.request_bool(result)
 }
 
 ///|
+/// Return whether simplifying the difference of two expression strings yields zero.
 pub fn sympy_equiv_str(a : String, b : String) -> Bool raise {
+  let builder = @recipe.Builder::new()
+  let sympy = builder.import_module("sympy")
+  let simplify = builder.getattr(sympy, "simplify")
   let diff = "(\{a}) - (\{b})"
-  let res = sympy_call_must("sympy.simplify", [Str(diff)])
-  py_str_enum(res) == "0"
+  let simplified = builder.call(simplify, [Str(diff)])
+  let required = builder.require_non_none(
+    simplified,
+    message="sympy-call-none:sympy.simplify",
+  )
+  builder.request_str(required) == "0"
 }
