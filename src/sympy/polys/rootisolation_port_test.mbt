@@ -171,22 +171,23 @@ test "rootisolation: compatibility frontdoor parity" {
   let f = [feqq(1, 1), feqq(0, 1), feqq(-2, 1)] // x^2 - 2
   let s = br_int(1)
   let t = br_int(2)
-  let (a, b) = @sympolys.dup_outer_refine_real_root(f, s, t, QQ, steps=2)
+  let (a, b) = @sympolys.dup_outer_refine_real_root(f, s, t, ZZ, steps=2)
   assert_eq(
     interval_repr(a, b),
-    dup_outer_refine_real_root(dup_to_rats(f), s, t, domain="QQ", steps=2),
+    dup_outer_refine_real_root(dup_to_rats(f), s, t, domain="ZZ", steps=2),
+  )
+  // SymPy 1.15 exposes the internal Mobius representation from this helper.
+  assert_eq(
+    dup_inner_isolate_real_roots(dup_to_rats(f), domain="ZZ"),
+    "[([-1,0,2],(1,2,1,1))]",
   )
   assert_eq(
-    interval_list_repr(@sympolys.dup_inner_isolate_real_roots(f, QQ)),
-    dup_inner_isolate_real_roots(dup_to_rats(f), domain="QQ"),
+    interval_list_repr(@sympolys.dup_inner_isolate_positive_roots(f, ZZ)),
+    dup_inner_isolate_positive_roots(dup_to_rats(f), domain="ZZ"),
   )
   assert_eq(
-    interval_list_repr(@sympolys.dup_inner_isolate_positive_roots(f, QQ)),
-    dup_inner_isolate_positive_roots(dup_to_rats(f), domain="QQ"),
-  )
-  assert_eq(
-    interval_list_repr(@sympolys.dup_inner_isolate_negative_roots(f, QQ)),
-    dup_inner_isolate_negative_roots(dup_to_rats(f), domain="QQ"),
+    interval_list_repr(@sympolys.dup_inner_isolate_negative_roots(f, ZZ)),
+    dup_inner_isolate_negative_roots(dup_to_rats(f), domain="ZZ"),
   )
 }
 
