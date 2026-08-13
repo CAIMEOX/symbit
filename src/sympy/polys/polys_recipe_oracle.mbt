@@ -119,6 +119,313 @@ fn PolysRecipe::expr(
 }
 
 ///|
+fn polys_polyutils_foundation_source() -> String {
+  (
+    #|import operator as _symbit_polys_operator
+    #|
+    #|def _symbit_polys_poly_default_gens(expr, domain, modulus, use_domain, use_modulus):
+    #|    kwargs = {}
+    #|    if use_domain:
+    #|        kwargs["domain"] = domain
+    #|    if use_modulus:
+    #|        kwargs["modulus"] = modulus
+    #|    gens = sorted(expr.free_symbols, key=_symbit_polys_operator.attrgetter("name"))
+    #|    return sympy.Poly(expr, *gens, **kwargs)
+    #|
+    #|def _symbit_polys_monomial_text(exponents):
+    #|    body = ",".join(str(int(exponent)) for exponent in exponents)
+    #|    if len(exponents) == 1:
+    #|        body += ","
+    #|    return "(" + body + ")"
+    #|
+    #|def _symbit_polys_dict_text(rep):
+    #|    entries = sorted(rep.items(), key=lambda item: tuple(item[0]))
+    #|    return "{" + ",".join(
+    #|        _symbit_polys_monomial_text(monomial) + ":" + str(coeff)
+    #|        for monomial, coeff in entries
+    #|    ) + "}"
+    #|
+    #|def _symbit_polys_gens_text(gens):
+    #|    return "[" + ",".join('"' + str(gen) + '"' for gen in gens) + "]"
+    #|
+    #|def _symbit_polys_dict_result(result):
+    #|    rep, gens = result
+    #|    return _symbit_polys_dict_text(rep) + "||" + _symbit_polys_gens_text(gens)
+    #|
+    #|def _symbit_polys_parallel_dict_result(result):
+    #|    reps, gens = result
+    #|    reps_text = "[" + ",".join(_symbit_polys_dict_text(rep) for rep in reps) + "]"
+    #|    return reps_text + "||" + _symbit_polys_gens_text(gens)
+  )
+}
+
+///|
+fn PolysRecipe::foundation_callable(
+  self : PolysRecipe,
+  name : String,
+) -> @recipe.ValueRef raise {
+  let scope = self.builder.exec(
+    self.builder.sympy_scope(),
+    polys_polyutils_foundation_source(),
+  )
+  self.builder.getitem(scope, Str(name))
+}
+
+///|
+fn PolysRecipe::literal_symbol(
+  self : PolysRecipe,
+  name : String,
+) -> @recipe.ValueRef raise {
+  self.call("sympy.Symbol", [Str(name)])
+}
+
+///|
+fn PolysRecipe::literal_symbols(
+  self : PolysRecipe,
+  names : Array[String],
+) -> Array[@recipe.RecipeArg] raise {
+  let result : Array[@recipe.RecipeArg] = []
+  for name in names {
+    result.push(Ref(self.literal_symbol(name)))
+  }
+  result
+}
+
+///|
+fn PolysRecipe::literal_symbol_list(
+  self : PolysRecipe,
+  names : Array[String],
+) -> @recipe.ValueRef raise {
+  self.builder.list(self.literal_symbols(names))
+}
+
+///|
+fn PolysRecipe::expression_list(
+  self : PolysRecipe,
+  expressions : Array[@symcore.Expr],
+) -> @recipe.ValueRef raise {
+  let result : Array[@recipe.RecipeArg] = []
+  for expression in expressions {
+    result.push(Ref(self.expr(expression)))
+  }
+  self.builder.list(result)
+}
+
+///|
+fn PolysRecipe::request_string_array(
+  self : PolysRecipe,
+  value : @recipe.ValueRef,
+) -> Array[String] raise {
+  let builtins = self.builder.import_module("builtins")
+  let list_constructor = self.builder.getattr(builtins, "list")
+  let list_value = self.builder.require_non_none(
+    self.builder.call(list_constructor, [Ref(value)]),
+    message="sympy-polys-string-list-none",
+  )
+  let codec : @recipe.ResultCodec = List(Str)
+  match self.builder.request(list_value, codec) {
+    Array(items) => {
+      let result : Array[String] = []
+      for item in items {
+        match item {
+          String(text) => result.push(text)
+          other => fail("sympy-polys-string-item:" + other.stringify())
+        }
+      }
+      result
+    }
+    other => fail("sympy-polys-string-array:" + other.stringify())
+  }
+}
+
+///|
+pub fn poly_expr(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  let recipe = PolysRecipe::new()
+  let expression = recipe.expr(expr)
+  let polynomial = if gens.is_empty() {
+    let callable = recipe.foundation_callable("_symbit_polys_poly_default_gens")
+    recipe.builder.require_non_none(
+      recipe.builder.call(callable, [
+        Ref(expression),
+        Str(domain),
+        DecimalInt(Show::to_string(modulus)),
+        Bool(domain != ""),
+        Bool(modulus != 0),
+      ]),
+      message="sympy-call-none:sympy.Poly",
+    )
+  } else {
+    let args : Array[@recipe.RecipeArg] = [Ref(expression)]
+    for symbol in recipe.literal_symbols(gens) {
+      args.push(symbol)
+    }
+    let kwargs : Map[String, @recipe.RecipeArg] = Map([])
+    if domain != "" {
+      kwargs["domain"] = Str(domain)
+    }
+    if modulus != 0 {
+      kwargs["modulus"] = DecimalInt(Show::to_string(modulus))
+    }
+    recipe.call("sympy.Poly", args, kwargs~)
+  }
+  let as_expr = recipe.builder.getattr(polynomial, "as_expr")
+  let result = recipe.builder.require_non_none(
+    recipe.builder.call(as_expr, []),
+    message="sympy-polys-poly-as-expr-none",
+  )
+  recipe.builder.request_str(result)
+}
+
+///|
+pub fn mod_rational(num : Int, den : Int, p : Int) -> String raise {
+  let recipe = PolysRecipe::new()
+  let inverse = recipe.call("sympy.mod_inverse", [
+    DecimalInt(Show::to_string(den)),
+    DecimalInt(Show::to_string(p)),
+  ])
+  let numerator = recipe.call("sympy.Integer", [
+    DecimalInt(Show::to_string(num)),
+  ])
+  let product = recipe.call("sympy.Mul", [Ref(numerator), Ref(inverse)])
+  let result = recipe.call("sympy.Mod", [
+    Ref(product),
+    DecimalInt(Show::to_string(p)),
+  ])
+  recipe.builder.request_str(result)
+}
+
+///|
+pub fn dict_from_expr(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let recipe = PolysRecipe::new()
+  let kwargs : Map[String, @recipe.RecipeArg] = Map([])
+  if !gens.is_empty() {
+    kwargs["gens"] = Ref(recipe.literal_symbol_list(gens))
+  }
+  let result = recipe.call(
+    "sympy.polys.polyutils.dict_from_expr",
+    [Ref(recipe.expr(expr))],
+    kwargs~,
+  )
+  let renderer = recipe.foundation_callable("_symbit_polys_dict_result")
+  let rendered = recipe.builder.require_non_none(
+    recipe.builder.call(renderer, [Ref(result)]),
+    message="sympy-polys-dict-render-none",
+  )
+  recipe.builder.request_str(rendered)
+}
+
+///|
+pub fn parallel_dict_from_expr(
+  exprs : Array[@symcore.Expr],
+  gens? : Array[String] = [],
+) -> String raise {
+  let recipe = PolysRecipe::new()
+  let expressions = recipe.expression_list(exprs)
+  let kwargs : Map[String, @recipe.RecipeArg] = Map([])
+  if !gens.is_empty() {
+    kwargs["gens"] = Ref(recipe.literal_symbol_list(gens))
+  }
+  let result = recipe.call(
+    "sympy.polys.polyutils.parallel_dict_from_expr",
+    [Ref(expressions)],
+    kwargs~,
+  )
+  let renderer = recipe.foundation_callable(
+    "_symbit_polys_parallel_dict_result",
+  )
+  let rendered = recipe.builder.require_non_none(
+    recipe.builder.call(renderer, [Ref(result)]),
+    message="sympy-polys-parallel-dict-render-none",
+  )
+  recipe.builder.request_str(rendered)
+}
+
+///|
+pub fn expr_from_dict(rep : String, gens : Array[String]) -> String raise {
+  let recipe = PolysRecipe::new()
+  let representation = recipe.call("sympy.sympify", [Str(rep)])
+  let args : Array[@recipe.RecipeArg] = [Ref(representation)]
+  for symbol in recipe.literal_symbols(gens) {
+    args.push(symbol)
+  }
+  let result = recipe.call("sympy.polys.polyutils.expr_from_dict", args)
+  recipe.builder.request_str(result)
+}
+
+///|
+pub fn sort_gens(
+  gens : Array[String],
+  wrt? : Array[String] = [],
+  sort? : String = "",
+) -> Array[String] raise {
+  let recipe = PolysRecipe::new()
+  let kwargs : Map[String, @recipe.RecipeArg] = Map([])
+  if !wrt.is_empty() {
+    kwargs["wrt"] = Ref(recipe.literal_symbol_list(wrt))
+  }
+  if sort != "" {
+    kwargs["sort"] = Str(sort)
+  }
+  let result = recipe.call(
+    "sympy.polys.polyutils._sort_gens",
+    [Ref(recipe.literal_symbol_list(gens))],
+    kwargs~,
+  )
+  recipe.request_string_array(result)
+}
+
+///|
+pub fn unify_gens(a : Array[String], b : Array[String]) -> Array[String] raise {
+  let recipe = PolysRecipe::new()
+  let result = recipe.call("sympy.polys.polyutils._unify_gens", [
+    Ref(recipe.literal_symbol_list(a)),
+    Ref(recipe.literal_symbol_list(b)),
+  ])
+  recipe.request_string_array(result)
+}
+
+///|
+pub fn analyze_gens(gens : Array[String]) -> Array[String] raise {
+  let recipe = PolysRecipe::new()
+  let result = recipe.call("sympy.polys.polyutils._analyze_gens", [
+    Ref(recipe.literal_symbol_list(gens)),
+  ])
+  recipe.request_string_array(result)
+}
+
+///|
+pub fn analyze_gens_nested(gens : Array[Array[String]]) -> Array[String] raise {
+  let recipe = PolysRecipe::new()
+  let groups : Array[@recipe.RecipeArg] = []
+  for group in gens {
+    groups.push(Ref(recipe.literal_symbol_list(group)))
+  }
+  let outer = recipe.builder.list(groups)
+  let result = recipe.call("sympy.polys.polyutils._analyze_gens", [Ref(outer)])
+  recipe.request_string_array(result)
+}
+
+///|
+pub fn expr_equal(lhs : String, rhs : String) -> Bool raise {
+  let recipe = PolysRecipe::new()
+  let left = recipe.call("sympy.sympify", [Str(lhs)])
+  let right = recipe.call("sympy.sympify", [Str(rhs)])
+  let negative_one = recipe.call("sympy.Integer", [DecimalInt("-1")])
+  let negative_right = recipe.call("sympy.Mul", [Ref(negative_one), Ref(right)])
+  let difference = recipe.call("sympy.Add", [Ref(left), Ref(negative_right)])
+  let result = recipe.call("sympy.simplify", [Ref(difference)])
+  recipe.builder.request_str(result) == "0"
+}
+
+///|
 fn PolysRecipe::stringify_legacy_call_result(
   self : PolysRecipe,
   result : @recipe.ValueRef,
