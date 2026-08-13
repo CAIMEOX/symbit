@@ -2699,9 +2699,6 @@ pub fn sort_factors_multiple(
 }
 
 ///|
-let builtins_cache : Ref[@py.PyModule?] = { val: None }
-
-///|
 let sympy_cache : Ref[@py.PyModule?] = { val: None }
 
 ///|
@@ -2712,27 +2709,6 @@ let domains_cache : Ref[@py.PyModule?] = { val: None }
 ///|
 fn init {
   ensure_python()
-}
-
-///|
-fn ensure_builtins_module() -> @py.PyModule raise {
-  ensure_python()
-  match builtins_cache.val {
-    Some(mod) => mod
-    None => {
-      let state = py_gil_ensure()
-      let mod = match @py.pyimport("builtins") {
-        Some(m) => m
-        None => {
-          py_gil_release(state)
-          fail("builtins-missing")
-        }
-      }
-      py_gil_release(state)
-      builtins_cache.val = Some(mod)
-      mod
-    }
-  }
 }
 
 ///|
@@ -2775,33 +2751,6 @@ fn ensure_domains_module_oracle() -> @py.PyModule raise {
       mod
     }
   }
-}
-
-///|
-fn resolve_callable(mod : @py.PyModule, name : String) -> @py.PyCallable raise {
-  let state = py_gil_ensure()
-  let res = try {
-    match mod.get_attr(name, print_err=false) {
-      Some(PyCallable(callable)) => callable
-      Some(PyClass(obj)) =>
-        @py.PyCallable::create(obj) catch {
-          _ => fail("sympy-oracle-callable")
-        }
-      Some(other) =>
-        @py.PyCallable::create(objenum_to_obj(other)) catch {
-          _ => fail("sympy-oracle-callable")
-        }
-      None => fail("sympy-oracle-missing:\{name}")
-    }
-  } catch {
-    e => {
-      py_gil_release(state)
-      raise e
-    }
-  }
-  @cpython.py_incref(res.obj_ref())
-  py_gil_release(state)
-  res
 }
 
 ///|
@@ -2955,48 +2904,6 @@ fn py_str_enum(obj : @py.PyObjectEnum) -> String {
 }
 
 ///|
-fn py_str_value(obj : @py.PyObject) -> String raise {
-  let builtins = ensure_builtins_module()
-  let str_enum = match builtins.get_attr("str", print_err=false) {
-    Some(v) => v
-    None => fail("builtins-str-missing")
-  }
-  let callable = @py.PyCallable::create(objenum_to_obj(str_enum)) catch {
-    _ => fail("builtins-str-callable")
-  }
-  let res = py_call_one(callable, obj)
-  match res {
-    PyString(s) => @py.PyString::to_string(s)
-    _ => py_str_enum(res)
-  }
-}
-
-///|
-fn py_dense_str(obj : @py.PyObjectEnum) -> String raise {
-  match obj {
-    PyList(_) => {
-      let items = py_list_to_pyobjects(obj)
-      let parts : Array[String] = Array::new()
-      for it in items {
-        parts.push(py_dense_str(@py.PyObjectEnum::create(it)))
-      }
-      let joined = parts.join(",")
-      "[\{joined}]"
-    }
-    PyTuple(_) => {
-      let items = py_list_to_pyobjects(obj)
-      let parts : Array[String] = Array::new()
-      for it in items {
-        parts.push(py_dense_str(@py.PyObjectEnum::create(it)))
-      }
-      let joined = parts.join(",")
-      "(\{joined})"
-    }
-    _ => py_str_value(objenum_to_obj(obj))
-  }
-}
-
-///|
 fn py_sympy_expr_str(obj : @py.PyObject) -> String raise {
   let sympy = ensure_sympy_module_oracle()
   let poly_cls = match sympy.get_attr("Poly", print_err=false) {
@@ -3097,15 +3004,6 @@ fn sympy_sympify_str(expr_str : String) -> @py.PyObject raise {
 fn sympy_symbol_obj(name : String) -> @py.PyObject raise {
   let res = sympy_call_must("sympy.symbols", [Str(name)])
   objenum_to_obj(res)
-}
-
-///|
-fn sympy_symbols_from_names(names : Array[String]) -> Array[@py.PyObject] raise {
-  let out : Array[@py.PyObject] = Array::new()
-  for name in names {
-    out.push(sympy_symbol_obj(name))
-  }
-  out
 }
 
 ///|
