@@ -10,8 +10,12 @@ fn modular_gcd_recipe_source() -> String {
     #|        raise ValueError("modgcd-result-shape")
     #|    rendered = []
     #|    for part in parts:
+    #|        if part is None:
+    #|            raise ValueError("modgcd-result-none")
     #|        if elements_as_expr:
     #|            part = part.as_expr()
+    #|            if part is None:
+    #|                raise ValueError("modgcd-result-none")
     #|        part = sympy.sympify(str(part))
     #|        rendered.append(str(part).replace(" ", ""))
     #|    return "(" + ",".join(rendered) + ")"
