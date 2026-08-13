@@ -5340,19 +5340,6 @@ fn py_list_from_rationals(
 }
 
 ///|
-fn py_list_from_rationals_domain(
-  coeffs : Array[@symnum.BigRational],
-  domain : String,
-) -> @py.PyObject raise {
-  let items : Array[@py.PyObject] = Array::new()
-  for c in coeffs {
-    items.push(sympy_domain_elem(c, domain))
-  }
-  let list = py_list_from_objects(items)
-  list.obj()
-}
-
-///|
 pub fn dup_routh_hurwitz(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "ZZ",
@@ -9055,13 +9042,12 @@ pub fn dup_cauchy_upper_bound(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_cauchy_upper_bound", args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_cauchy_upper_bound",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9069,13 +9055,12 @@ pub fn dup_cauchy_lower_bound(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_cauchy_lower_bound", args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_cauchy_lower_bound",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9083,13 +9068,12 @@ pub fn dup_mignotte_sep_bound_squared(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_mignotte_sep_bound_squared", args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_mignotte_sep_bound_squared",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9097,11 +9081,12 @@ pub fn dup_sturm(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.rootisolation.dup_sturm", args)
-  remove_spaces(py_dense_str(res))
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_sturm",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9109,13 +9094,12 @@ pub fn dup_root_upper_bound(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_root_upper_bound", args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_root_upper_bound",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9123,13 +9107,12 @@ pub fn dup_root_lower_bound(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_root_lower_bound", args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_root_lower_bound",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9142,30 +9125,26 @@ pub fn dup_refine_real_root(
   eps? : @symnum.BigRational,
   disjoint? : @symnum.BigRational,
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_elem(s, domain)))
-  args.push(PyObj(sympy_domain_elem(t, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let kwargs : Map[String, LegacyArg] = Map([])
+  let kwargs : Map[String, DenseCallArg] = Map([])
   match steps {
-    Some(k) => kwargs["steps"] = Int(k)
+    Some(k) => kwargs["steps"] = CallInt(k)
     None => ()
   }
   match eps {
-    Some(e) => kwargs["eps"] = PyObj(sympy_domain_elem(e, domain))
+    Some(e) => kwargs["eps"] = DomainNumber(e)
     None => ()
   }
   match disjoint {
-    Some(d) => kwargs["disjoint"] = PyObj(sympy_domain_elem(d, domain))
+    Some(d) => kwargs["disjoint"] = DomainNumber(d)
     None => ()
   }
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_refine_real_root",
-    args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_refine_real_root",
+    [DupCoeffs(coeffs), DomainNumber(s), DomainNumber(t), DomainObject],
+    domain,
     kwargs~,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9178,30 +9157,26 @@ pub fn dup_outer_refine_real_root(
   eps? : @symnum.BigRational,
   disjoint? : @symnum.BigRational,
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_elem(s, domain)))
-  args.push(PyObj(sympy_domain_elem(t, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let kwargs : Map[String, LegacyArg] = Map([])
+  let kwargs : Map[String, DenseCallArg] = Map([])
   match steps {
-    Some(k) => kwargs["steps"] = Int(k)
+    Some(k) => kwargs["steps"] = CallInt(k)
     None => ()
   }
   match eps {
-    Some(e) => kwargs["eps"] = PyObj(sympy_domain_elem(e, domain))
+    Some(e) => kwargs["eps"] = DomainNumber(e)
     None => ()
   }
   match disjoint {
-    Some(d) => kwargs["disjoint"] = PyObj(sympy_domain_elem(d, domain))
+    Some(d) => kwargs["disjoint"] = DomainNumber(d)
     None => ()
   }
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_outer_refine_real_root",
-    args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_outer_refine_real_root",
+    [DupCoeffs(coeffs), DomainNumber(s), DomainNumber(t), DomainObject],
+    domain,
     kwargs~,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9209,13 +9184,12 @@ pub fn dup_isolate_real_roots_sqf(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_isolate_real_roots_sqf", args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_isolate_real_roots_sqf",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9223,13 +9197,12 @@ pub fn dup_inner_isolate_real_roots(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_inner_isolate_real_roots", args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_inner_isolate_real_roots",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9237,13 +9210,12 @@ pub fn dup_inner_isolate_positive_roots(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_inner_isolate_positive_roots", args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_inner_isolate_positive_roots",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9251,13 +9223,12 @@ pub fn dup_inner_isolate_negative_roots(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_inner_isolate_negative_roots", args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_inner_isolate_negative_roots",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9265,13 +9236,12 @@ pub fn dup_isolate_real_roots(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_isolate_real_roots", args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_isolate_real_roots",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9281,24 +9251,23 @@ pub fn dup_count_real_roots(
   inf? : @symnum.BigRational,
   sup? : @symnum.BigRational,
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let kwargs : Map[String, LegacyArg] = Map([])
+  let kwargs : Map[String, DenseCallArg] = Map([])
   match inf {
-    Some(v) => kwargs["inf"] = PyObj(sympy_domain_elem(v, domain))
+    Some(v) => kwargs["inf"] = DomainNumber(v)
     None => ()
   }
   match sup {
-    Some(v) => kwargs["sup"] = PyObj(sympy_domain_elem(v, domain))
+    Some(v) => kwargs["sup"] = DomainNumber(v)
     None => ()
   }
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_count_real_roots",
-    args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_count_real_roots",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
     kwargs~,
+    result_kind=ScalarResult,
   )
-  py_sympy_enum_str(res)
 }
 
 ///|
@@ -9306,13 +9275,13 @@ pub fn dup_count_complex_roots(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_count_complex_roots", args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_count_complex_roots",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
+    result_kind=ScalarResult,
   )
-  py_sympy_enum_str(res)
 }
 
 ///|
@@ -9320,13 +9289,12 @@ pub fn dup_isolate_complex_roots_sqf(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_isolate_complex_roots_sqf", args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_isolate_complex_roots_sqf",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9334,13 +9302,12 @@ pub fn dup_isolate_all_roots_sqf(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_isolate_all_roots_sqf", args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_isolate_all_roots_sqf",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9348,13 +9315,12 @@ pub fn dup_isolate_all_roots(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootisolation.dup_isolate_all_roots", args,
+  polys_prefix_recipe_call(
+    "rootisolation",
+    "dup_isolate_all_roots",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -10007,33 +9973,31 @@ pub fn fateman_poly_F_3(n : Int) -> Array[String] raise {
 
 ///|
 fn dmp_fateman_poly_tuple(
-  path : String,
+  function_name : String,
   n : Int,
   domain : String,
 ) -> String raise {
-  let res = sympy_call_must(path, [Int(n), PyObj(sympy_domain_obj(domain))])
-  remove_spaces(py_dense_str(res))
+  polys_prefix_recipe_call(
+    "specialpolys",
+    function_name,
+    [CallInt(n), DomainObject],
+    domain,
+  )
 }
 
 ///|
 pub fn dmp_fateman_poly_F_1(n : Int, domain? : String = "ZZ") -> String raise {
-  dmp_fateman_poly_tuple(
-    "sympy.polys.specialpolys.dmp_fateman_poly_F_1", n, domain,
-  )
+  dmp_fateman_poly_tuple("dmp_fateman_poly_F_1", n, domain)
 }
 
 ///|
 pub fn dmp_fateman_poly_F_2(n : Int, domain? : String = "ZZ") -> String raise {
-  dmp_fateman_poly_tuple(
-    "sympy.polys.specialpolys.dmp_fateman_poly_F_2", n, domain,
-  )
+  dmp_fateman_poly_tuple("dmp_fateman_poly_F_2", n, domain)
 }
 
 ///|
 pub fn dmp_fateman_poly_F_3(n : Int, domain? : String = "ZZ") -> String raise {
-  dmp_fateman_poly_tuple(
-    "sympy.polys.specialpolys.dmp_fateman_poly_F_3", n, domain,
-  )
+  dmp_fateman_poly_tuple("dmp_fateman_poly_F_3", n, domain)
 }
 
 ///|
@@ -10064,24 +10028,34 @@ fn named_unary_poly(path : String, n : Int, x : String) -> String raise {
 }
 
 ///|
-fn orth_dup_unary(path : String, n : Int, domain : String) -> String raise {
-  let res = sympy_call_must(path, [Int(n), PyObj(sympy_domain_obj(domain))])
-  remove_spaces(py_dense_str(res))
+fn orth_dup_unary(
+  module_name : String,
+  function_name : String,
+  n : Int,
+  domain : String,
+) -> String raise {
+  polys_prefix_recipe_call(
+    module_name,
+    function_name,
+    [CallInt(n), DomainObject],
+    domain,
+  )
 }
 
 ///|
 fn orth_dup_param(
-  path : String,
+  module_name : String,
+  function_name : String,
   n : Int,
   param : @symnum.BigRational,
   domain : String,
 ) -> String raise {
-  let res = sympy_call_must(path, [
-    Int(n),
-    PyObj(sympy_domain_elem(param, domain)),
-    PyObj(sympy_domain_obj(domain)),
-  ])
-  remove_spaces(py_dense_str(res))
+  polys_prefix_recipe_call(
+    module_name,
+    function_name,
+    [CallInt(n), DomainNumber(param), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -10091,13 +10065,12 @@ pub fn dup_jacobi(
   b : @symnum.BigRational,
   domain? : String = "QQ",
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.orthopolys.dup_jacobi", [
-    Int(n),
-    PyObj(sympy_domain_elem(a, domain)),
-    PyObj(sympy_domain_elem(b, domain)),
-    PyObj(sympy_domain_obj(domain)),
-  ])
-  remove_spaces(py_dense_str(res))
+  polys_prefix_recipe_call(
+    "orthopolys",
+    "dup_jacobi",
+    [CallInt(n), DomainNumber(a), DomainNumber(b), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -10106,32 +10079,32 @@ pub fn dup_gegenbauer(
   a : @symnum.BigRational,
   domain? : String = "QQ",
 ) -> String raise {
-  orth_dup_param("sympy.polys.orthopolys.dup_gegenbauer", n, a, domain)
+  orth_dup_param("orthopolys", "dup_gegenbauer", n, a, domain)
 }
 
 ///|
 pub fn dup_chebyshevt(n : Int, domain? : String = "ZZ") -> String raise {
-  orth_dup_unary("sympy.polys.orthopolys.dup_chebyshevt", n, domain)
+  orth_dup_unary("orthopolys", "dup_chebyshevt", n, domain)
 }
 
 ///|
 pub fn dup_chebyshevu(n : Int, domain? : String = "ZZ") -> String raise {
-  orth_dup_unary("sympy.polys.orthopolys.dup_chebyshevu", n, domain)
+  orth_dup_unary("orthopolys", "dup_chebyshevu", n, domain)
 }
 
 ///|
 pub fn dup_hermite(n : Int, domain? : String = "ZZ") -> String raise {
-  orth_dup_unary("sympy.polys.orthopolys.dup_hermite", n, domain)
+  orth_dup_unary("orthopolys", "dup_hermite", n, domain)
 }
 
 ///|
 pub fn dup_hermite_prob(n : Int, domain? : String = "ZZ") -> String raise {
-  orth_dup_unary("sympy.polys.orthopolys.dup_hermite_prob", n, domain)
+  orth_dup_unary("orthopolys", "dup_hermite_prob", n, domain)
 }
 
 ///|
 pub fn dup_legendre(n : Int, domain? : String = "QQ") -> String raise {
-  orth_dup_unary("sympy.polys.orthopolys.dup_legendre", n, domain)
+  orth_dup_unary("orthopolys", "dup_legendre", n, domain)
 }
 
 ///|
@@ -10140,7 +10113,7 @@ pub fn dup_laguerre(
   alpha : @symnum.BigRational,
   domain? : String = "QQ",
 ) -> String raise {
-  orth_dup_param("sympy.polys.orthopolys.dup_laguerre", n, alpha, domain)
+  orth_dup_param("orthopolys", "dup_laguerre", n, alpha, domain)
 }
 
 ///|
@@ -10148,7 +10121,7 @@ pub fn dup_spherical_bessel_fn(
   n : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  orth_dup_unary("sympy.polys.orthopolys.dup_spherical_bessel_fn", n, domain)
+  orth_dup_unary("orthopolys", "dup_spherical_bessel_fn", n, domain)
 }
 
 ///|
@@ -10156,9 +10129,7 @@ pub fn dup_spherical_bessel_fn_minus(
   n : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  orth_dup_unary(
-    "sympy.polys.orthopolys.dup_spherical_bessel_fn_minus", n, domain,
-  )
+  orth_dup_unary("orthopolys", "dup_spherical_bessel_fn_minus", n, domain)
 }
 
 ///|
@@ -10232,27 +10203,27 @@ pub fn jacobi_poly(
 
 ///|
 pub fn dup_bernoulli(n : Int, domain? : String = "QQ") -> String raise {
-  orth_dup_unary("sympy.polys.appellseqs.dup_bernoulli", n, domain)
+  orth_dup_unary("appellseqs", "dup_bernoulli", n, domain)
 }
 
 ///|
 pub fn dup_bernoulli_c(n : Int, domain? : String = "QQ") -> String raise {
-  orth_dup_unary("sympy.polys.appellseqs.dup_bernoulli_c", n, domain)
+  orth_dup_unary("appellseqs", "dup_bernoulli_c", n, domain)
 }
 
 ///|
 pub fn dup_genocchi(n : Int, domain? : String = "ZZ") -> String raise {
-  orth_dup_unary("sympy.polys.appellseqs.dup_genocchi", n, domain)
+  orth_dup_unary("appellseqs", "dup_genocchi", n, domain)
 }
 
 ///|
 pub fn dup_euler(n : Int, domain? : String = "QQ") -> String raise {
-  orth_dup_unary("sympy.polys.appellseqs.dup_euler", n, domain)
+  orth_dup_unary("appellseqs", "dup_euler", n, domain)
 }
 
 ///|
 pub fn dup_andre(n : Int, domain? : String = "ZZ") -> String raise {
-  orth_dup_unary("sympy.polys.appellseqs.dup_andre", n, domain)
+  orth_dup_unary("appellseqs", "dup_andre", n, domain)
 }
 
 ///|
