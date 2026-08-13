@@ -3,7 +3,6 @@ package "CAIMEOX/symbit/sympy/physics"
 
 import {
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/sympy",
 }
 
 // Values
@@ -280,7 +279,5 @@ pub fn wigner_d_small(@symcore.Expr, @symcore.Expr) -> Array[String] raise
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-
