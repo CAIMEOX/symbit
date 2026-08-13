@@ -14,11 +14,11 @@ fn parsing_scope(builder : @recipe.Builder) -> @recipe.ValueRef raise {
 
 ///|
 fn python_string_literal(value : String) -> String {
-  let escaped_backslashes = value.replace(old="\\", new="\\\\")
-  let escaped_quotes = escaped_backslashes.replace(old="'", new="\\'")
-  let escaped_newlines = escaped_quotes.replace(old="\n", new="\\n")
-  let escaped_returns = escaped_newlines.replace(old="\r", new="\\r")
-  let escaped_tabs = escaped_returns.replace(old="\t", new="\\t")
+  let escaped_backslashes = value.replace_all(old="\\", new="\\\\")
+  let escaped_quotes = escaped_backslashes.replace_all(old="'", new="\\'")
+  let escaped_newlines = escaped_quotes.replace_all(old="\n", new="\\n")
+  let escaped_returns = escaped_newlines.replace_all(old="\r", new="\\r")
+  let escaped_tabs = escaped_returns.replace_all(old="\t", new="\\t")
   "'" + escaped_tabs + "'"
 }
 
