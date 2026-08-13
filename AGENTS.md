@@ -46,16 +46,12 @@ This is a [MoonBit](https://docs.moonbitlang.com) project.
   testing, so when your changes indeed change the behavior of the code, you
   should run `moon test --update` to update the snapshot.
 
-- For native Python oracle/parity packages under `src/sympy/*`, use miniconda
-  Python and force Moon away from `tcc -run`:
+- Python oracle/parity packages under `src/sympy/*` use a persistent subprocess
+  worker. Select the interpreter explicitly when the default `python3` is not
+  the sibling SymPy-compatible environment:
 
   ```bash
-  env -u CC \
-  MallocNanoZone=0 \
-  MOON_CC=/usr/bin/gcc \
-  PATH=$HOME/miniconda3/bin:$PATH \
-  LIBRARY_PATH=$HOME/miniconda3/lib \
-  DYLD_LIBRARY_PATH=$HOME/miniconda3/lib \
+  SYMBIT_PYTHON=$HOME/miniconda3/bin/python \
   moon test --target native <pkg-path>
   ```
 
@@ -63,12 +59,11 @@ This is a [MoonBit](https://docs.moonbitlang.com) project.
   `moon check --target native --deny-warn <pkg-path>` for the oracle warning
   gate.
 
-  `PATH` must put miniconda first so `python3-config` exposes the matching
-  `Python.h` and libpython flags. `MOON_CC=/usr/bin/gcc` is the switch that
-  disables Moon's default `tcc -run`; setting only `CC=gcc` is not enough. On
-  macOS, `/usr/bin/gcc` is usually Apple clang and is fine for this purpose.
-  Keep `MallocNanoZone=0` for native oracle tests; it avoids allocator-level
-  nondeterminism when embedded Python and Moon native code share a process.
+  The MoonBit test process does not embed or link CPython. Each executable
+  lazily starts one worker and exchanges framed JSON over pipes; Python objects
+  must remain request-scoped. Do not add `Python.h`, libpython, GIL wrappers, or
+  remote-object handles back to oracle packages. A broken `PYTHONHOME` must not
+  affect the MoonBit process when `SYMBIT_PYTHON` names a valid interpreter.
 
 - You can run `moon check` to check the code is linted correctly.
 

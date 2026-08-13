@@ -3,8 +3,6 @@ name = "CAIMEOX/symbit"
 version = "0.5.10"
 
 import {
-  "CAIMEOX/qc_pyext@0.1.1",
-  "Kaida-Amethyst/python@0.1.7",
   "moonbitlang/quickcheck@0.9.10",
   "CAIMEOX/moon_floating@0.3.0",
 }
