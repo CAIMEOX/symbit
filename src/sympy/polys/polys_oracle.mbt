@@ -8649,12 +8649,7 @@ pub fn res_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(expr_to_sympy(p)))
-  args.push(PyObj(expr_to_sympy(q)))
-  args.push(PyObj(sympy_symbol_obj(x)))
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.res", args)
-  py_sympy_enum_str(res)
+  subresultants_pair_poly_call("res", p, q, x)
 }
 
 ///|
@@ -8663,12 +8658,7 @@ pub fn res_q_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(expr_to_sympy(p)))
-  args.push(PyObj(expr_to_sympy(q)))
-  args.push(PyObj(sympy_symbol_obj(x)))
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.res_q", args)
-  py_sympy_enum_str(res)
+  subresultants_pair_poly_call("res_q", p, q, x)
 }
 
 ///|
@@ -8677,12 +8667,7 @@ pub fn res_z_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(expr_to_sympy(p)))
-  args.push(PyObj(expr_to_sympy(q)))
-  args.push(PyObj(sympy_symbol_obj(x)))
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.res_z", args)
-  py_sympy_enum_str(res)
+  subresultants_pair_poly_call("res_z", p, q, x)
 }
 
 ///|
@@ -8691,39 +8676,7 @@ pub fn subresultants_rem_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(expr_to_sympy(p)))
-  args.push(PyObj(expr_to_sympy(q)))
-  args.push(PyObj(sympy_symbol_obj(x)))
-  let res = sympy_call_must(
-    "sympy.polys.subresultants_qq_zz.subresultants_rem", args,
-  )
-  let items = py_list_to_pyobjects(res)
-  let parts : Array[String] = Array::new()
-  for item in items {
-    parts.push(py_sympy_expr_str(item))
-  }
-  parts.join(" | ")
-}
-
-///|
-fn subresultants_list_call_qq_zz(
-  name : String,
-  p : @symcore.Expr,
-  q : @symcore.Expr,
-  x : String,
-) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(expr_to_sympy(p)))
-  args.push(PyObj(expr_to_sympy(q)))
-  args.push(PyObj(sympy_symbol_obj(x)))
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.\{name}", args)
-  let items = py_list_to_pyobjects(res)
-  let parts : Array[String] = Array::new()
-  for item in items {
-    parts.push(py_sympy_expr_str(item))
-  }
-  parts.join(" | ")
+  subresultants_pair_sequence_call("subresultants_rem", p, q, x)
 }
 
 ///|
@@ -8732,7 +8685,7 @@ pub fn subresultants_sylv_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  subresultants_list_call_qq_zz("subresultants_sylv", p, q, x)
+  subresultants_pair_sequence_call("subresultants_sylv", p, q, x)
 }
 
 ///|
@@ -8741,7 +8694,7 @@ pub fn subresultants_bezout_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  subresultants_list_call_qq_zz("subresultants_bezout", p, q, x)
+  subresultants_pair_sequence_call("subresultants_bezout", p, q, x)
 }
 
 ///|
@@ -8750,7 +8703,7 @@ pub fn subresultants_amv_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  subresultants_list_call_qq_zz("subresultants_amv", p, q, x)
+  subresultants_pair_sequence_call("subresultants_amv", p, q, x)
 }
 
 ///|
@@ -8759,7 +8712,7 @@ pub fn subresultants_amv_q_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  subresultants_list_call_qq_zz("subresultants_amv_q", p, q, x)
+  subresultants_pair_sequence_call("subresultants_amv_q", p, q, x)
 }
 
 ///|
@@ -8768,7 +8721,7 @@ pub fn subresultants_vv_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  subresultants_list_call_qq_zz("subresultants_vv", p, q, x)
+  subresultants_pair_sequence_call("subresultants_vv", p, q, x)
 }
 
 ///|
@@ -8777,7 +8730,7 @@ pub fn subresultants_vv_2_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  subresultants_list_call_qq_zz("subresultants_vv_2", p, q, x)
+  subresultants_pair_sequence_call("subresultants_vv_2", p, q, x)
 }
 
 ///|
@@ -8786,7 +8739,7 @@ pub fn modified_subresultants_sylv_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  subresultants_list_call_qq_zz("modified_subresultants_sylv", p, q, x)
+  subresultants_pair_sequence_call("modified_subresultants_sylv", p, q, x)
 }
 
 ///|
@@ -8795,7 +8748,7 @@ pub fn modified_subresultants_bezout_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  subresultants_list_call_qq_zz("modified_subresultants_bezout", p, q, x)
+  subresultants_pair_sequence_call("modified_subresultants_bezout", p, q, x)
 }
 
 ///|
@@ -8804,7 +8757,7 @@ pub fn modified_subresultants_amv_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  subresultants_list_call_qq_zz("modified_subresultants_amv", p, q, x)
+  subresultants_pair_sequence_call("modified_subresultants_amv", p, q, x)
 }
 
 ///|
@@ -8813,17 +8766,7 @@ pub fn euclid_q_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(expr_to_sympy(p)))
-  args.push(PyObj(expr_to_sympy(q)))
-  args.push(PyObj(sympy_symbol_obj(x)))
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.euclid_q", args)
-  let items = py_list_to_pyobjects(res)
-  let parts : Array[String] = Array::new()
-  for item in items {
-    parts.push(py_sympy_expr_str(item))
-  }
-  parts.join(" | ")
+  subresultants_pair_sequence_call("euclid_q", p, q, x)
 }
 
 ///|
@@ -8832,7 +8775,7 @@ pub fn euclid_pg_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  subresultants_list_call_qq_zz("euclid_pg", p, q, x)
+  subresultants_pair_sequence_call("euclid_pg", p, q, x)
 }
 
 ///|
@@ -8841,7 +8784,7 @@ pub fn euclid_amv_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  subresultants_list_call_qq_zz("euclid_amv", p, q, x)
+  subresultants_pair_sequence_call("euclid_amv", p, q, x)
 }
 
 ///|
@@ -8850,17 +8793,7 @@ pub fn sturm_q_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(expr_to_sympy(p)))
-  args.push(PyObj(expr_to_sympy(q)))
-  args.push(PyObj(sympy_symbol_obj(x)))
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.sturm_q", args)
-  let items = py_list_to_pyobjects(res)
-  let parts : Array[String] = Array::new()
-  for item in items {
-    parts.push(py_sympy_expr_str(item))
-  }
-  parts.join(" | ")
+  subresultants_pair_sequence_call("sturm_q", p, q, x)
 }
 
 ///|
@@ -8869,7 +8802,7 @@ pub fn sturm_pg_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  subresultants_list_call_qq_zz("sturm_pg", p, q, x)
+  subresultants_pair_sequence_call("sturm_pg", p, q, x)
 }
 
 ///|
@@ -8878,7 +8811,7 @@ pub fn sturm_amv_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  subresultants_list_call_qq_zz("sturm_amv", p, q, x)
+  subresultants_pair_sequence_call("sturm_amv", p, q, x)
 }
 
 ///|
@@ -8886,16 +8819,11 @@ pub fn sign_seq_qq_zz(
   polys : Array[@symcore.Expr],
   x? : String = "x",
 ) -> String raise {
-  let items : Array[@py.PyObject] = Array::new()
-  for p in polys {
-    items.push(expr_to_sympy(p))
-  }
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_objects(items).obj()))
-  args.push(PyObj(sympy_symbol_obj(x)))
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.sign_seq", args)
-  let values = py_list_to_pyobjects(res)
-  values.map(v => py_str_obj(v)).join(",")
+  let recipe = SubresultantsRecipe::new()
+  let expressions = recipe.polys.expression_list(polys)
+  let generator = recipe.polys.literal_symbol(x)
+  let result = recipe.call("sign_seq", [Ref(expressions), Ref(generator)])
+  recipe.request_sequence(result, false)
 }
 
 ///|
@@ -8903,39 +8831,31 @@ pub fn process_matrix_output_qq_zz(
   polys : Array[@symcore.Expr],
   x? : String = "x",
 ) -> String raise {
-  let items : Array[@py.PyObject] = Array::new()
-  for p in polys {
-    items.push(expr_to_sympy(p))
-  }
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_objects(items).obj()))
-  args.push(PyObj(sympy_symbol_obj(x)))
-  let res = sympy_call_must(
-    "sympy.polys.subresultants_qq_zz.process_matrix_output", args,
-  )
-  let values = py_list_to_pyobjects(res)
-  let parts : Array[String] = Array::new()
-  for item in values {
-    parts.push(py_sympy_expr_str(item))
-  }
-  parts.join(" | ")
+  let recipe = SubresultantsRecipe::new()
+  let expressions = recipe.polys.expression_list(polys)
+  let generator = recipe.polys.literal_symbol(x)
+  let result = recipe.call("process_matrix_output", [
+    Ref(expressions),
+    Ref(generator),
+  ])
+  recipe.request_sequence(result, true)
 }
 
 ///|
 pub fn compute_sign_qq_zz(base : Int, expo : Int) -> String raise {
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.compute_sign", [
-    Int(base),
-    Int(expo),
+  let recipe = SubresultantsRecipe::new()
+  let result = recipe.call("compute_sign", [
+    DecimalInt(Show::to_string(base)),
+    DecimalInt(Show::to_string(expo)),
   ])
-  py_str_enum(res)
+  recipe.request_raw(result)
 }
 
 ///|
 pub fn backward_eye_qq_zz(n : Int) -> String raise {
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.backward_eye", [
-    Int(n),
-  ])
-  py_str_enum(res)
+  let recipe = SubresultantsRecipe::new()
+  let result = recipe.call("backward_eye", [DecimalInt(Show::to_string(n))])
+  recipe.request_raw(result)
 }
 
 ///|
@@ -8945,13 +8865,15 @@ pub fn sylvester_qq_zz(
   x? : String = "x",
   kind? : Int = 1,
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(expr_to_sympy(p)))
-  args.push(PyObj(expr_to_sympy(q)))
-  args.push(PyObj(sympy_symbol_obj(x)))
-  args.push(Int(kind))
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.sylvester", args)
-  py_str_enum(res)
+  let recipe = SubresultantsRecipe::new()
+  let (left, right, generator) = recipe.pair(p, q, x)
+  let result = recipe.call("sylvester", [
+    Ref(left),
+    Ref(right),
+    Ref(generator),
+    DecimalInt(Show::to_string(kind)),
+  ])
+  recipe.request_raw(result)
 }
 
 ///|
@@ -8962,48 +8884,34 @@ pub fn correct_sign_qq_zz(
   rdel? : Int = 1,
   cdel? : Int = 0,
 ) -> String raise {
-  let p_obj = expr_to_sympy(p)
-  let q_obj = expr_to_sympy(q)
-  let x_obj = sympy_symbol_obj(x)
-  let s1 = sympy_call_must("sympy.polys.subresultants_qq_zz.sylvester", [
-    PyObj(p_obj),
-    PyObj(q_obj),
-    PyObj(x_obj),
-    Int(1),
+  let recipe = SubresultantsRecipe::new()
+  let (left, right, generator) = recipe.pair(p, q, x)
+  let sylvester = recipe.call("sylvester", [
+    Ref(left),
+    Ref(right),
+    Ref(generator),
+    DecimalInt("1"),
   ])
-  let deg_f = sympy_call_must("sympy.polys.polytools.degree", [
-    PyObj(p_obj),
-    PyObj(x_obj),
+  let degree = recipe_sympy_callable(
+    recipe.polys.builder,
+    "sympy.polys.polytools.degree",
+  )
+  let deg_f = recipe.polys.builder.require_non_none(
+    recipe.polys.builder.call(degree, [Ref(left), Ref(generator)]),
+    message="sympy-call-none:sympy.polys.polytools.degree",
+  )
+  let deg_g = recipe.polys.builder.require_non_none(
+    recipe.polys.builder.call(degree, [Ref(right), Ref(generator)]),
+    message="sympy-call-none:sympy.polys.polytools.degree",
+  )
+  let result = recipe.call("correct_sign", [
+    Ref(deg_f),
+    Ref(deg_g),
+    Ref(sylvester),
+    DecimalInt(Show::to_string(rdel)),
+    DecimalInt(Show::to_string(cdel)),
   ])
-  let deg_g = sympy_call_must("sympy.polys.polytools.degree", [
-    PyObj(q_obj),
-    PyObj(x_obj),
-  ])
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.correct_sign", [
-    PyObj(objenum_to_obj(deg_f)),
-    PyObj(objenum_to_obj(deg_g)),
-    PyObj(objenum_to_obj(s1)),
-    Int(rdel),
-    Int(cdel),
-  ])
-  py_str_enum(res)
-}
-
-///|
-fn subres_oracle_row_matrix(values : Array[Int]) -> @py.PyObject raise {
-  let row = py_list_from_ints(values)
-  let rows = py_list_from_objects([row]).obj()
-  objenum_to_obj(sympy_call_must("sympy.Matrix", [PyObj(rows)]))
-}
-
-///|
-fn subres_oracle_matrix(values : Array[Array[Int]]) -> @py.PyObject raise {
-  let rows : Array[@py.PyObject] = []
-  for row in values {
-    rows.push(py_list_from_ints(row))
-  }
-  let py_rows = py_list_from_objects(rows).obj()
-  objenum_to_obj(sympy_call_must("sympy.Matrix", [PyObj(py_rows)]))
+  recipe.request_raw(result)
 }
 
 ///|
@@ -9014,32 +8922,39 @@ pub fn create_ma_qq_zz(
   row2 : Array[Int],
   col_num : Int,
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.create_ma", [
-    Int(deg_f),
-    Int(deg_g),
-    PyObj(subres_oracle_row_matrix(row1)),
-    PyObj(subres_oracle_row_matrix(row2)),
-    Int(col_num),
+  let recipe = SubresultantsRecipe::new()
+  let first_row = recipe.row_matrix(row1)
+  let second_row = recipe.row_matrix(row2)
+  let result = recipe.call("create_ma", [
+    DecimalInt(Show::to_string(deg_f)),
+    DecimalInt(Show::to_string(deg_g)),
+    Ref(first_row),
+    Ref(second_row),
+    DecimalInt(Show::to_string(col_num)),
   ])
-  py_str_enum(res)
+  recipe.request_raw(result)
 }
 
 ///|
 pub fn rotate_r_qq_zz(row : Array[Int], k : Int) -> String raise {
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.rotate_r", [
-    PyObj(py_list_from_ints(row)),
-    Int(k),
+  let recipe = SubresultantsRecipe::new()
+  let values = recipe.int_list(row)
+  let result = recipe.call("rotate_r", [
+    Ref(values),
+    DecimalInt(Show::to_string(k)),
   ])
-  py_str_enum(res)
+  recipe.request_raw(result)
 }
 
 ///|
 pub fn rotate_l_qq_zz(row : Array[Int], k : Int) -> String raise {
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.rotate_l", [
-    PyObj(py_list_from_ints(row)),
-    Int(k),
+  let recipe = SubresultantsRecipe::new()
+  let values = recipe.int_list(row)
+  let result = recipe.call("rotate_l", [
+    Ref(values),
+    DecimalInt(Show::to_string(k)),
   ])
-  py_str_enum(res)
+  recipe.request_raw(result)
 }
 
 ///|
@@ -9048,14 +8963,20 @@ pub fn row2poly_qq_zz(
   deg : Int,
   x? : String = "x",
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.row2poly", [
-    PyObj(py_list_from_ints(row)),
-    Int(deg),
-    PyObj(sympy_symbol_obj(x)),
+  let recipe = SubresultantsRecipe::new()
+  let values = recipe.int_list(row)
+  let generator = recipe.polys.literal_symbol(x)
+  let result = recipe.call("row2poly", [
+    Ref(values),
+    DecimalInt(Show::to_string(deg)),
+    Ref(generator),
   ])
-  let as_expr = resolve_method_callable(objenum_to_obj(res), "as_expr")
-  let expr = py_call_noargs(as_expr)
-  py_str_enum(expr)
+  let as_expr = recipe.polys.builder.getattr(result, "as_expr")
+  let expression = recipe.polys.builder.require_non_none(
+    recipe.polys.builder.call(as_expr, []),
+    message="sympy-call-none:row2poly.as_expr",
+  )
+  recipe.request_raw(expression)
 }
 
 ///|
@@ -9064,12 +8985,14 @@ pub fn pivot_qq_zz(
   i : Int,
   j : Int,
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.pivot", [
-    PyObj(subres_oracle_matrix(matrix)),
-    Int(i),
-    Int(j),
+  let recipe = SubresultantsRecipe::new()
+  let matrix_value = recipe.matrix(matrix)
+  let result = recipe.call("pivot", [
+    Ref(matrix_value),
+    DecimalInt(Show::to_string(i)),
+    DecimalInt(Show::to_string(j)),
   ])
-  py_str_enum(res)
+  recipe.request_raw(result)
 }
 
 ///|
@@ -9077,11 +9000,13 @@ pub fn find_degree_qq_zz(
   matrix : Array[Array[Int]],
   deg_f : Int,
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.find_degree", [
-    PyObj(subres_oracle_matrix(matrix)),
-    Int(deg_f),
+  let recipe = SubresultantsRecipe::new()
+  let matrix_value = recipe.matrix(matrix)
+  let result = recipe.call("find_degree", [
+    Ref(matrix_value),
+    DecimalInt(Show::to_string(deg_f)),
   ])
-  py_str_enum(res)
+  recipe.request_raw(result)
 }
 
 ///|
@@ -9090,12 +9015,14 @@ pub fn final_touches_qq_zz(
   r : Int,
   deg_g : Int,
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.final_touches", [
-    PyObj(subres_oracle_matrix(matrix)),
-    Int(r),
-    Int(deg_g),
+  let recipe = SubresultantsRecipe::new()
+  let matrix_value = recipe.matrix(matrix)
+  let result = recipe.call("final_touches", [
+    Ref(matrix_value),
+    DecimalInt(Show::to_string(r)),
+    DecimalInt(Show::to_string(deg_g)),
   ])
-  py_str_enum(res)
+  recipe.request_raw(result)
 }
 
 ///|
@@ -9105,13 +9032,15 @@ pub fn bezout_qq_zz(
   x? : String = "x",
   kind? : String = "bz",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(expr_to_sympy(p)))
-  args.push(PyObj(expr_to_sympy(q)))
-  args.push(PyObj(sympy_symbol_obj(x)))
-  args.push(Str(kind))
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.bezout", args)
-  py_str_enum(res)
+  let recipe = SubresultantsRecipe::new()
+  let (left, right, generator) = recipe.pair(p, q, x)
+  let result = recipe.call("bezout", [
+    Ref(left),
+    Ref(right),
+    Ref(generator),
+    Str(kind),
+  ])
+  recipe.request_raw(result)
 }
 
 ///|
@@ -9120,12 +9049,7 @@ pub fn rem_z_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(expr_to_sympy(p)))
-  args.push(PyObj(expr_to_sympy(q)))
-  args.push(PyObj(sympy_symbol_obj(x)))
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.rem_z", args)
-  py_sympy_enum_str(res)
+  subresultants_pair_poly_call("rem_z", p, q, x)
 }
 
 ///|
@@ -9134,12 +9058,7 @@ pub fn quo_z_qq_zz(
   q : @symcore.Expr,
   x? : String = "x",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(expr_to_sympy(p)))
-  args.push(PyObj(expr_to_sympy(q)))
-  args.push(PyObj(sympy_symbol_obj(x)))
-  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.quo_z", args)
-  py_sympy_enum_str(res)
+  subresultants_pair_poly_call("quo_z", p, q, x)
 }
 
 ///|
