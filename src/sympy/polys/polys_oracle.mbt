@@ -11,15 +11,6 @@ fn py_call_object(
 }
 
 ///|
-fn py_call_object_allow_none(
-  callable : @py.PyCallable,
-  args : @py.PyTuple,
-  print_err? : Bool = false,
-) -> @py.PyObjectEnum? {
-  @sympy.py_call_object_allow_none(callable, args, print_err~)
-}
-
-///|
 fn py_call_object_kwargs(
   callable : @py.PyCallable,
   args : @py.PyTuple,
@@ -2714,9 +2705,6 @@ let builtins_cache : Ref[@py.PyModule?] = { val: None }
 let sympy_cache : Ref[@py.PyModule?] = { val: None }
 
 ///|
-let operator_cache : Ref[@py.PyModule?] = { val: None }
-
-///|
 let domains_cache : Ref[@py.PyModule?] = { val: None }
 
 ///|
@@ -2763,27 +2751,6 @@ fn ensure_sympy_module_oracle() -> @py.PyModule raise {
       }
       py_gil_release(state)
       sympy_cache.val = Some(mod)
-      mod
-    }
-  }
-}
-
-///|
-fn ensure_operator_module() -> @py.PyModule raise {
-  ensure_python()
-  match operator_cache.val {
-    Some(mod) => mod
-    None => {
-      let state = py_gil_ensure()
-      let mod = match @py.pyimport("operator") {
-        Some(m) => m
-        None => {
-          py_gil_release(state)
-          fail("operator-missing")
-        }
-      }
-      py_gil_release(state)
-      operator_cache.val = Some(mod)
       mod
     }
   }
@@ -2916,30 +2883,11 @@ fn py_dict_new() -> @py.PyDict {
 }
 
 ///|
-fn py_string_obj(s : String) -> @py.PyObject {
-  let state = py_gil_ensure()
-  let obj = @py.PyString::from(s).obj()
-  py_gil_release(state)
-  obj
-}
-
-///|
 fn py_int_obj(n : Int) -> @py.PyObject {
   let state = py_gil_ensure()
   let obj = @py.PyInteger::from(n.to_int64()).obj()
   py_gil_release(state)
   obj
-}
-
-///|
-fn py_dict_set_obj(
-  dict : @py.PyDict,
-  key : String,
-  value : @py.PyObject,
-) -> Unit {
-  let state = py_gil_ensure()
-  dict.set(key, value)
-  py_gil_release(state)
 }
 
 ///|
@@ -2979,15 +2927,6 @@ fn py_call_one(
   arg : @py.PyObject,
 ) -> @py.PyObjectEnum raise {
   py_call_with_args(callable, [arg], py_dict_new())
-}
-
-///|
-fn py_call_one_kwargs(
-  callable : @py.PyCallable,
-  arg : @py.PyObject,
-  kwargs : @py.PyDict,
-) -> @py.PyObjectEnum raise {
-  py_call_with_args(callable, [arg], kwargs)
 }
 
 ///|
@@ -3184,36 +3123,6 @@ fn sympy_symbols_from_names(names : Array[String]) -> Array[@py.PyObject] raise 
 }
 
 ///|
-
-///|
-fn sympy_default_gens(exprs : Array[@py.PyObject]) -> Array[@py.PyObject] raise {
-  let builtins = ensure_builtins_module()
-  let set_ctor = resolve_callable(builtins, "set")
-  let set_enum = py_call_noargs(set_ctor)
-  let set_obj = objenum_to_obj(set_enum)
-  let update = resolve_method_callable(set_obj, "update")
-  for expr in exprs {
-    match py_get_attr(expr, "free_symbols") {
-      Some(fs) => {
-        let fs_obj = objenum_to_obj(fs)
-        let tup = py_tuple_from_objects([fs_obj])
-        let _ = py_call_object_allow_none(update, tup, print_err=true)
-      }
-      None => ()
-    }
-  }
-  let operator = ensure_operator_module()
-  let attrgetter = resolve_callable(operator, "attrgetter")
-  let key_enum = py_call_one(attrgetter, py_string_obj("name"))
-  let key_obj = objenum_to_obj(key_enum)
-  let sorted = resolve_callable(builtins, "sorted")
-  let kwargs = py_dict_new()
-  py_dict_set_obj(kwargs, "key", key_obj)
-  let list_enum = py_call_one_kwargs(sorted, set_obj, kwargs)
-  py_list_to_pyobjects(list_enum)
-}
-
-///|
 fn nf_anp_oracle_coeffs_obj(
   coeffs : Array[Int],
   domain : String,
@@ -3297,34 +3206,6 @@ pub fn sympy_sort_factor_repr(repr_str : String) -> String raise {
   let factors_str = parts.join(",")
   let content_str = py_str_obj(content_obj)
   "(\{content_str}, [\{factors_str}])"
-}
-
-///|
-fn call_sympy_poly(
-  expr : @py.PyObject,
-  gens : Array[@py.PyObject],
-  domain : String,
-  modulus : Int?,
-  domain_obj? : @py.PyObject? = None,
-) -> @py.PyObject raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(expr))
-  for g in gens {
-    args.push(PyObj(g))
-  }
-  let kwargs : Map[String, LegacyArg] = Map([])
-  match domain_obj {
-    Some(obj) => kwargs["domain"] = PyObj(obj)
-    None => if domain != "" { kwargs["domain"] = Str(domain) }
-  }
-  if domain_obj is None {
-    match modulus {
-      Some(m) => kwargs["modulus"] = Int(m)
-      None => ()
-    }
-  }
-  let res = sympy_call_must("sympy.Poly", args, kwargs~)
-  objenum_to_obj(res)
 }
 
 ///|
@@ -5071,67 +4952,6 @@ pub fn dup_pretty(
     kwargs={ "ascending": CallBool(ascending) },
     result_kind=ScalarResult,
   )
-}
-
-///|
-fn sympy_poly_obj_from_expr_oracle(
-  expr : @symcore.Expr,
-  gens : Array[String],
-) -> @py.PyObject raise {
-  let expr_obj = expr_to_sympy(expr)
-  let gens_list = if gens.is_empty() {
-    sympy_default_gens([expr_obj])
-  } else {
-    sympy_symbols_from_names(gens)
-  }
-  call_sympy_poly(expr_obj, gens_list, "", None)
-}
-
-///|
-pub fn dispersionset_expr(
-  p : @symcore.Expr,
-  q? : @symcore.Expr,
-  gens? : Array[String] = [],
-) -> String raise {
-  let p_obj = sympy_poly_obj_from_expr_oracle(p, gens)
-  let args : Array[LegacyArg] = [PyObj(p_obj)]
-  match q {
-    Some(expr) => {
-      let q_obj = sympy_poly_obj_from_expr_oracle(expr, gens)
-      args.push(PyObj(q_obj))
-    }
-    None => ()
-  }
-  let res = sympy_call_must("sympy.polys.dispersion.dispersionset", args)
-  let builtins = ensure_builtins_module()
-  let sorted_call = resolve_callable(builtins, "sorted")
-  let sorted_res = py_call_one(sorted_call, objenum_to_obj(res))
-  let items = py_list_to_pyobjects(sorted_res)
-  let parts : Array[String] = []
-  for item in items {
-    parts.push(py_obj_to_int(item).to_string())
-  }
-  let body = parts.join(",")
-  "[\{body}]"
-}
-
-///|
-pub fn dispersion_expr(
-  p : @symcore.Expr,
-  q? : @symcore.Expr,
-  gens? : Array[String] = [],
-) -> String raise {
-  let p_obj = sympy_poly_obj_from_expr_oracle(p, gens)
-  let args : Array[LegacyArg] = [PyObj(p_obj)]
-  match q {
-    Some(expr) => {
-      let q_obj = sympy_poly_obj_from_expr_oracle(expr, gens)
-      args.push(PyObj(q_obj))
-    }
-    None => ()
-  }
-  let res = sympy_call_must("sympy.polys.dispersion.dispersion", args)
-  py_str_enum(res)
 }
 
 ///|
