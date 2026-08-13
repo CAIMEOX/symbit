@@ -2521,11 +2521,12 @@ pub fn ddm_add(
   b : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let ddm_a = oracle_ddm_from_ints(a, domain_spec)
-  let ddm_b = oracle_ddm_from_ints(b, domain_spec)
-  let add = resolve_method_callable(ddm_a, "__add__")
-  let res = py_call_one(add, ddm_b)
-  py_str_enum(res)
+  let recipe = DdmRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let left = recipe.ddm(a, domain)
+  let right = recipe.ddm(b, domain)
+  let result = recipe.call_method(left, "__add__", [Ref(right)])
+  recipe.request_str(result)
 }
 
 ///|
@@ -2534,11 +2535,12 @@ pub fn ddm_mul(
   scalar : Int,
   domain_spec : String,
 ) -> String raise {
-  let ddm_a = oracle_ddm_from_ints(a, domain_spec)
-  let mul = resolve_method_callable(ddm_a, "mul")
-  let scalar_obj = oracle_domain_element_from_int(scalar, domain_spec)
-  let res = py_call_one(mul, scalar_obj)
-  py_str_enum(res)
+  let recipe = DdmRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.ddm(a, domain)
+  let scalar_value = recipe.domain_int(domain, scalar)
+  let result = recipe.call_method(matrix, "mul", [Ref(scalar_value)])
+  recipe.request_str(result)
 }
 
 ///|
@@ -2547,52 +2549,47 @@ pub fn ddm_matmul(
   b : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let ddm_a = oracle_ddm_from_ints(a, domain_spec)
-  let ddm_b = oracle_ddm_from_ints(b, domain_spec)
-  let matmul = resolve_method_callable(ddm_a, "matmul")
-  let res = py_call_one(matmul, ddm_b)
-  py_str_enum(res)
+  let recipe = DdmRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let left = recipe.ddm(a, domain)
+  let right = recipe.ddm(b, domain)
+  let result = recipe.call_method(left, "matmul", [Ref(right)])
+  recipe.request_str(result)
 }
 
 ///|
 pub fn ddm_det(a : Array[Array[Int]], domain_spec : String) -> String raise {
-  let ddm = oracle_ddm_from_ints(a, domain_spec)
-  let det = resolve_method_callable(ddm, "det")
-  let res = py_call_noargs(det)
-  py_str_enum(res)
+  let recipe = DdmRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.ddm(a, domain)
+  let result = recipe.call_method(matrix, "det", [])
+  recipe.request_str(result)
 }
 
 ///|
 pub fn ddm_rref(a : Array[Array[Int]], domain_spec : String) -> String raise {
-  let ddm = oracle_ddm_from_ints(a, domain_spec)
-  let rref = resolve_method_callable(ddm, "rref")
-  let res = py_call_noargs(rref)
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else { fail("ddm-rref-tuple") }
-  let mat = py_str_obj(tuple_items[0])
-  let pivots = py_list_to_pyobjects(@py.PyObjectEnum::create(tuple_items[1]))
-  let pivot_vals : Array[String] = Array::new()
-  for p in pivots {
-    pivot_vals.push(py_obj_to_int(p).to_string())
-  }
-  let joined = pivot_vals.join(",")
-  "\{mat}||[\{joined}]"
+  let recipe = DdmRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.ddm(a, domain)
+  let raw_result = recipe.call_method(matrix, "rref", [])
+  let rendered = recipe.render_rref(raw_result)
+  recipe.request_str(rendered)
 }
 
 ///|
 pub fn ddm_rank(a : Array[Array[Int]], _domain_spec : String) -> Int raise {
-  let mat = oracle_matrix_from_ints(a)
-  let rank_call = resolve_method_callable(mat, "rank")
-  let rank = py_call_noargs(rank_call)
-  py_obj_to_int(objenum_to_obj(rank))
+  let recipe = DdmRecipe::new()
+  let matrix = recipe.matrix(a)
+  let result = recipe.call_method(matrix, "rank", [])
+  recipe.request_int(result)
 }
 
 ///|
 pub fn ddm_inv(a : Array[Array[Int]], _domain_spec : String) -> String raise {
-  let mat = oracle_matrix_from_ints(a)
-  let inv_call = resolve_method_callable(mat, "inv")
-  let inv = py_call_noargs(inv_call)
-  py_str_enum(inv)
+  let recipe = DdmRecipe::new()
+  let matrix = recipe.matrix(a)
+  let result = recipe.call_method(matrix, "inv", [])
+  recipe.request_str(result)
 }
 
 ///|
@@ -2600,10 +2597,10 @@ pub fn ddm_nullspace(
   a : Array[Array[Int]],
   _domain_spec : String,
 ) -> String raise {
-  let mat = oracle_matrix_from_ints(a)
-  let nullspace_call = resolve_method_callable(mat, "nullspace")
-  let nullspace = py_call_noargs(nullspace_call)
-  py_str_enum(nullspace)
+  let recipe = DdmRecipe::new()
+  let matrix = recipe.matrix(a)
+  let result = recipe.call_method(matrix, "nullspace", [])
+  recipe.request_str(result)
 }
 
 ///|
@@ -3397,41 +3394,6 @@ fn oracle_domainmatrix_from_exprs(
     PyObj(domain_obj),
   ])
   objenum_to_obj(dm_enum)
-}
-
-///|
-fn oracle_ddm_from_ints(
-  rows : Array[Array[Int]],
-  domain_spec : String,
-) -> @py.PyObject raise {
-  let row_count = rows.length()
-  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
-  for row in rows {
-    if row.length() != col_count {
-      fail("ddm-ragged")
-    }
-  }
-  let domain_obj = oracle_domain_from_spec(domain_spec)
-  let convert = resolve_method_callable(domain_obj, "convert")
-  let py_rows : Array[@py.PyObject] = Array::new()
-  for row in rows {
-    let py_row : Array[@py.PyObject] = Array::new()
-    for v in row {
-      py_row.push(objenum_to_obj(py_call_one(convert, py_int_obj(v))))
-    }
-    py_rows.push(py_list_from_objects(py_row).obj())
-  }
-  let data_obj = py_list_from_objects(py_rows).obj()
-  let shape_obj = py_tuple_from_objects([
-    py_int_obj(row_count),
-    py_int_obj(col_count),
-  ]).obj()
-  let ddm_enum = sympy_call_must("sympy.polys.matrices.ddm.DDM", [
-    PyObj(data_obj),
-    PyObj(shape_obj),
-    PyObj(domain_obj),
-  ])
-  objenum_to_obj(ddm_enum)
 }
 
 ///|
