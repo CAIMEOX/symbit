@@ -105,6 +105,10 @@ fn PolynomialFamiliesRecipe::request_scalar(
   self : PolynomialFamiliesRecipe,
   result : @recipe.ValueRef,
 ) -> String raise {
+  let result = self.polys.builder.require_non_none(
+    result,
+    message="sympy-polys-polynomial-family-result-none",
+  )
   let rendered = self.strict_call(
     self.scalar_renderer,
     [Ref(result)],

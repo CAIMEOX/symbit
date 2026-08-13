@@ -33,3 +33,17 @@ test "polys polynomial-family worker covers default interpolation and recovery" 
   assert_true(rejected)
   assert_eq(cyclotomic_poly(1), "x - 1")
 }
+
+///|
+test "polys polynomial-family worker rejects None scalar results" {
+  let recipe = PolynomialFamiliesRecipe::new()
+  let none = recipe.polys.builder.value(Null)
+  let rejected = try {
+    ignore(recipe.request_scalar(none))
+    false
+  } catch {
+    _ => true
+  }
+  assert_true(rejected)
+  assert_eq(chebyshevt_poly(2), "2*x**2 - 1")
+}
