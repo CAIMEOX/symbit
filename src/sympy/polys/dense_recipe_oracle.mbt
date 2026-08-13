@@ -7,6 +7,39 @@ fn dense_foundation_source() -> String {
     #|    if isinstance(value, tuple):
     #|        return "(" + ",".join(_symbit_dense_text(item) for item in value) + ")"
     #|    return str(value).replace(" ", "")
+    #|
+    #|def _symbit_dense_repr_text(value):
+    #|    if isinstance(value, list):
+    #|        return "[" + ",".join(_symbit_dense_repr_text(item) for item in value) + "]"
+    #|    if isinstance(value, tuple):
+    #|        return "(" + ",".join(_symbit_dense_repr_text(item) for item in value) + ")"
+    #|    return repr(value).replace(" ", "")
+    #|
+    #|def _symbit_algebraic_dense_text(value, domain):
+    #|    if isinstance(value, list):
+    #|        return "[" + ",".join(
+    #|            _symbit_algebraic_dense_text(item, domain) for item in value
+    #|        ) + "]"
+    #|    if isinstance(value, tuple):
+    #|        return "(" + ",".join(
+    #|            _symbit_algebraic_dense_text(item, domain) for item in value
+    #|        ) + ")"
+    #|    try:
+    #|        value = domain.to_sympy(value)
+    #|    except (AttributeError, TypeError, ValueError):
+    #|        pass
+    #|    return str(value).replace(" ", "")
+    #|
+    #|def _symbit_ext_factor_shape(value):
+    #|    coefficient, factor_pairs = value
+    #|    parts = [
+    #|        "(" + str(len(factor)) + "," + str(multiplicity) + ")"
+    #|        for factor, multiplicity in factor_pairs
+    #|    ]
+    #|    return (
+    #|        "(" + str(coefficient).replace(" ", "") + ",[" +
+    #|        ",".join(parts) + "])"
+    #|    )
   )
 }
 
@@ -20,6 +53,8 @@ priv enum DenseCallArg {
   RawDenseValue(DenseData)
   DupCollection(Array[Array[@symnum.BigRational]])
   DenseCollection(Array[DenseData])
+  DenseFactorPairs(Array[(DenseData, Int)])
+  DomainIntCoeffs(Array[Int])
   CallInt(Int)
   CallIntList(Array[Int])
   CallStr(String)
@@ -32,6 +67,9 @@ priv enum DenseCallArg {
 priv enum DenseResultKind {
   DenseResult
   ScalarResult
+  DenseReprResult
+  AlgebraicDenseResult
+  ExtFactorShapeResult
 }
 
 ///|
@@ -41,6 +79,9 @@ priv struct DenseRecipe {
   domain : @recipe.ValueRef
   domain_convert : @recipe.ValueRef
   render_dense : @recipe.ValueRef
+  render_dense_repr : @recipe.ValueRef
+  render_algebraic_dense : @recipe.ValueRef
+  render_ext_factor_shape : @recipe.ValueRef
 }
 
 ///|
@@ -56,7 +97,25 @@ fn DenseRecipe::new(domain_spec : String) -> DenseRecipe raise {
   )
   let domain_convert = builder.getattr(domain, "convert")
   let render_dense = builder.getitem(scope, Str("_symbit_dense_text"))
-  { builder, sympy, domain, domain_convert, render_dense }
+  let render_dense_repr = builder.getitem(scope, Str("_symbit_dense_repr_text"))
+  let render_algebraic_dense = builder.getitem(
+    scope,
+    Str("_symbit_algebraic_dense_text"),
+  )
+  let render_ext_factor_shape = builder.getitem(
+    scope,
+    Str("_symbit_ext_factor_shape"),
+  )
+  {
+    builder,
+    sympy,
+    domain,
+    domain_convert,
+    render_dense,
+    render_dense_repr,
+    render_algebraic_dense,
+    render_ext_factor_shape,
+  }
 }
 
 ///|
@@ -183,6 +242,26 @@ fn DenseRecipe::materialize(
       }
       Ref(self.builder.list(items))
     }
+    DenseFactorPairs(values) => {
+      let items : Array[@recipe.RecipeArg] = []
+      for value in values {
+        let pair = self.builder.tuple([
+          Ref(self.dense_value(value.0)),
+          DecimalInt(Show::to_string(value.1)),
+        ])
+        items.push(Ref(pair))
+      }
+      Ref(self.builder.list(items))
+    }
+    DomainIntCoeffs(values) => {
+      let items : Array[@recipe.RecipeArg] = []
+      for value in values {
+        items.push(
+          Ref(self.domain_number(@symnum.BigRational::from_int(value))),
+        )
+      }
+      Ref(self.builder.list(items))
+    }
     CallInt(value) => DecimalInt(Show::to_string(value))
     CallIntList(values) => {
       let items : Array[@recipe.RecipeArg] = []
@@ -245,5 +324,40 @@ fn dense_recipe_call(
   match result_kind {
     DenseResult => recipe.request_dense(result)
     ScalarResult => recipe.builder.request_str(result)
+    DenseReprResult => {
+      let rendered = recipe.builder.require_non_none(
+        recipe.builder.call(recipe.render_dense_repr, [Ref(result)]),
+        message="sympy-polys-dense-repr-render-none",
+      )
+      recipe.builder.request_str(rendered)
+    }
+    AlgebraicDenseResult => {
+      let rendered = recipe.builder.require_non_none(
+        recipe.builder.call(recipe.render_algebraic_dense, [
+          Ref(result),
+          Ref(recipe.domain),
+        ]),
+        message="sympy-polys-algebraic-dense-render-none",
+      )
+      recipe.builder.request_str(rendered)
+    }
+    ExtFactorShapeResult => {
+      let rendered = recipe.builder.require_non_none(
+        recipe.builder.call(recipe.render_ext_factor_shape, [Ref(result)]),
+        message="sympy-polys-ext-factor-render-none",
+      )
+      recipe.builder.request_str(rendered)
+    }
   }
+}
+
+///|
+fn dense_recipe_bool_call(
+  path : String,
+  args : Array[DenseCallArg],
+  domain : String,
+) -> Bool raise {
+  let recipe = DenseRecipe::new(domain)
+  let result = recipe.call(path, args)
+  recipe.builder.request_bool(result)
 }
