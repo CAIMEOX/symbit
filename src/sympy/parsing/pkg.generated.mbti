@@ -1,10 +1,6 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "CAIMEOX/symbit/sympy/parsing"
 
-import {
-  "Kaida-Amethyst/python",
-}
-
 // Values
 pub fn ast_parse_expr_error_sstr(String, binding_names? : Array[String], binding_exprs? : Array[String]) -> String raise
 
@@ -36,8 +32,6 @@ pub fn parse_expr_sstr_relaxed(String, evaluate? : Bool) -> String raise
 
 pub fn parse_expr_sstr_with(String, String, String, String, Bool) -> String raise
 
-pub fn parsing_eval(String) -> @python.PyObjectEnum raise
-
 pub fn parsing_eval_str(String) -> String raise
 
 // Errors
@@ -47,4 +41,3 @@ pub fn parsing_eval_str(String) -> String raise
 // Type aliases
 
 // Traits
-

@@ -1,55 +1,25 @@
 ///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
-}
-
-///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
-}
-
-///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
-}
-
-///|
-fn py_callable_from_enum(obj : @py.PyObjectEnum) -> @py.PyCallable raise {
-  match obj {
-    PyCallable(callable) => callable
-    PyClass(obj0) =>
-      @py.PyCallable::create(obj0) catch {
-        _ => fail("py-callable")
-      }
-    _ =>
-      @py.PyCallable::create(objenum_to_obj(obj)) catch {
-        _ => fail("py-callable")
-      }
-  }
-}
-
-///|
-fn py_call_object(
-  callable : @py.PyCallable,
-  args : @py.PyTuple,
-  print_err? : Bool = false,
-) -> @py.PyObjectEnum? {
-  @sympy.py_call_object(callable, args, print_err~)
-}
-
-///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let s = obj.to_string()
-  py_gil_release(state)
-  s
+/// Construct the deliberately narrow globals dictionary used by the former
+/// embedded-Python oracle.  Public SymPy names are not injected implicitly;
+/// dynamic snippets must access them through `sympy` unless they import names
+/// themselves.
+fn parsing_scope(builder : @recipe.Builder) -> @recipe.ValueRef raise {
+  let builtins = builder.import_module("builtins")
+  let sympy = builder.import_module("sympy")
+  builder.dict([
+    (Str("__builtins__"), Ref(builtins)),
+    (Str("sympy"), Ref(sympy)),
+  ])
 }
 
 ///|
 fn python_string_literal(value : String) -> String {
   let escaped_backslashes = value.replace(old="\\", new="\\\\")
   let escaped_quotes = escaped_backslashes.replace(old="'", new="\\'")
-  "'" + escaped_quotes + "'"
+  let escaped_newlines = escaped_quotes.replace(old="\n", new="\\n")
+  let escaped_returns = escaped_newlines.replace(old="\r", new="\\r")
+  let escaped_tabs = escaped_returns.replace(old="\t", new="\\t")
+  "'" + escaped_tabs + "'"
 }
 
 ///|
@@ -66,97 +36,18 @@ fn relaxed_transformations_text() -> String {
 }
 
 ///|
-pub fn parsing_eval(expr : String) -> @py.PyObjectEnum raise {
-  let state = py_gil_ensure()
-  let res = try {
-    let builtins = match @py.pyimport("builtins") {
-      Some(mod) => mod
-      None => fail("py-builtins-missing")
-    }
-    let eval_obj = match builtins.get_attr("eval", print_err=true) {
-      Some(obj) => obj
-      None => fail("py-eval-missing")
-    }
-    let eval_callable = py_callable_from_enum(eval_obj)
-    let globals = @py.PyDict::new()
-    globals.set("__builtins__", builtins.obj())
-    let sympy_mod = match @py.pyimport("sympy") {
-      Some(mod) => mod.obj()
-      None => fail("py-sympy-missing")
-    }
-    globals.set("sympy", sympy_mod)
-    let args = @sympy.py_pack_args([
-      Str(expr),
-      PyObj(globals.obj()),
-      PyObj(globals.obj()),
-    ])
-    match py_call_object(eval_callable, args, print_err=true) {
-      Some(obj) => obj
-      None => fail("py-eval-none")
-    }
-  } catch {
-    err => {
-      py_gil_release(state)
-      raise err
-    }
-  }
-  py_gil_release(state)
-  res
-}
-
-///|
 pub fn parsing_eval_str(expr : String) -> String raise {
-  py_str_obj(objenum_to_obj(parsing_eval(expr)))
+  let builder = @recipe.Builder::new()
+  let value = builder.eval(parsing_scope(builder), expr)
+  builder.request_str(value)
 }
 
 ///|
 fn parsing_exec_result_str(script : String) -> String raise {
-  let state = py_gil_ensure()
-  let res = try {
-    let builtins = match @py.pyimport("builtins") {
-      Some(mod) => mod
-      None => fail("py-builtins-missing")
-    }
-    let exec_obj = match builtins.get_attr("exec", print_err=true) {
-      Some(obj) => obj
-      None => fail("py-exec-missing")
-    }
-    let eval_obj = match builtins.get_attr("eval", print_err=true) {
-      Some(obj) => obj
-      None => fail("py-eval-missing")
-    }
-    let exec_callable = py_callable_from_enum(exec_obj)
-    let eval_callable = py_callable_from_enum(eval_obj)
-    let globals = @py.PyDict::new()
-    globals.set("__builtins__", builtins.obj())
-    let sympy_mod = match @py.pyimport("sympy") {
-      Some(mod) => mod.obj()
-      None => fail("py-sympy-missing")
-    }
-    globals.set("sympy", sympy_mod)
-    let exec_args = @sympy.py_pack_args([
-      Str(script),
-      PyObj(globals.obj()),
-      PyObj(globals.obj()),
-    ])
-    ignore(py_call_object(exec_callable, exec_args, print_err=true))
-    let eval_args = @sympy.py_pack_args([
-      Str("__result__"),
-      PyObj(globals.obj()),
-      PyObj(globals.obj()),
-    ])
-    match py_call_object(eval_callable, eval_args, print_err=true) {
-      Some(obj) => py_str_obj(objenum_to_obj(obj))
-      None => fail("py-eval-result-none")
-    }
-  } catch {
-    err => {
-      py_gil_release(state)
-      raise err
-    }
-  }
-  py_gil_release(state)
-  res
+  let builder = @recipe.Builder::new()
+  let executed = builder.exec(parsing_scope(builder), script)
+  let result = builder.getitem(executed, Str("__result__"))
+  builder.request_str(result)
 }
 
 ///|
