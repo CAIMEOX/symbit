@@ -2955,20 +2955,6 @@ fn py_str_enum(obj : @py.PyObjectEnum) -> String {
 }
 
 ///|
-fn sorted_py_iter_str(obj : @py.PyObjectEnum) -> String raise {
-  let builtins = ensure_builtins_module()
-  let list_ctor = resolve_callable(builtins, "list")
-  let list_enum = py_call_one(list_ctor, objenum_to_obj(obj))
-  let items = py_list_to_pyobjects(list_enum)
-  let parts : Array[String] = []
-  for item in items {
-    parts.push(py_str_obj(item))
-  }
-  parts.sort()
-  parts.join(" | ")
-}
-
-///|
 fn py_str_value(obj : @py.PyObject) -> String raise {
   let builtins = ensure_builtins_module()
   let str_enum = match builtins.get_attr("str", print_err=false) {
@@ -6216,29 +6202,17 @@ pub fn dup_cyclotomic_p(
 
 ///|
 pub fn python_gcd(a : Int, b : Int) -> String raise {
-  let res = sympy_call_must("sympy.polys.domains.groundtypes.python_gcd", [
-    Int(a),
-    Int(b),
-  ])
-  remove_spaces(py_sympy_enum_str(res))
+  p6e_python_gcd(a, b)
 }
 
 ///|
 pub fn python_lcm(a : Int, b : Int) -> String raise {
-  let res = sympy_call_must("sympy.polys.domains.groundtypes.python_lcm", [
-    Int(a),
-    Int(b),
-  ])
-  remove_spaces(py_sympy_enum_str(res))
+  p6e_python_lcm(a, b)
 }
 
 ///|
 pub fn python_gcdex(a : Int, b : Int) -> String raise {
-  let res = sympy_call_must("sympy.polys.domains.groundtypes.python_gcdex", [
-    Int(a),
-    Int(b),
-  ])
-  remove_spaces(py_sympy_enum_str(res))
+  p6e_python_gcdex(a, b)
 }
 
 ///|
@@ -6803,22 +6777,12 @@ pub fn gf_value(f : Array[Int], a : Int) -> Int raise {
 
 ///|
 pub fn linear_congruence(a : Int, b : Int, m : Int) -> String raise {
-  let res = sympy_call_must("sympy.polys.galoistools.linear_congruence", [
-    Int(a),
-    Int(b),
-    Int(m),
-  ])
-  remove_spaces(py_dense_str(res))
+  p6e_linear_congruence(a, b, m)
 }
 
 ///|
 pub fn csolve_prime(f : Array[Int], p : Int, e? : Int = 1) -> String raise {
-  let res = sympy_call_must("sympy.polys.galoistools.csolve_prime", [
-    IntList(f),
-    Int(p),
-    Int(e),
-  ])
-  remove_spaces(py_dense_str(res))
+  p6e_csolve_prime(f, p, e)
 }
 
 ///|
@@ -7536,13 +7500,7 @@ pub fn itermonomials_total(
   max_degree : Int,
   min_degree? : Int = 0,
 ) -> String raise {
-  let vars = py_list_from_objects(sympy_symbols_from_names(variables)).obj()
-  let res = sympy_call_must("sympy.polys.monomials.itermonomials", [
-    PyObj(vars),
-    Int(max_degree),
-    Int(min_degree),
-  ])
-  sorted_py_iter_str(res)
+  p6e_itermonomials_total(variables, max_degree, min_degree)
 }
 
 ///|
@@ -7551,30 +7509,17 @@ pub fn itermonomials_bounded(
   max_degrees : Array[Int],
   min_degrees : Array[Int],
 ) -> String raise {
-  let vars = py_list_from_objects(sympy_symbols_from_names(variables)).obj()
-  let res = sympy_call_must("sympy.polys.monomials.itermonomials", [
-    PyObj(vars),
-    PyObj(py_list_from_ints(max_degrees)),
-    PyObj(py_list_from_ints(min_degrees)),
-  ])
-  sorted_py_iter_str(res)
+  p6e_itermonomials_bounded(variables, max_degrees, min_degrees)
 }
 
 ///|
 pub fn monomial_ldiv(a : Array[Int], b : Array[Int]) -> String raise {
-  let res = sympy_call_must("sympy.polys.monomials.monomial_ldiv", [
-    PyObj(py_list_from_ints(a)),
-    PyObj(py_list_from_ints(b)),
-  ])
-  py_sympy_enum_str(res)
+  p6e_monomial_ldiv(a, b)
 }
 
 ///|
 pub fn monomial_deg(a : Array[Int]) -> String raise {
-  let res = sympy_call_must("sympy.polys.monomials.monomial_deg", [
-    PyObj(py_list_from_ints(a)),
-  ])
-  py_sympy_enum_str(res)
+  p6e_monomial_deg(a)
 }
 
 ///|
@@ -7584,20 +7529,7 @@ pub fn term_div_zz(
   b_monom : Array[Int],
   b_coeff : Int,
 ) -> String raise {
-  let a_term = py_tuple_from_objects([
-    py_list_from_ints(a_monom),
-    py_int_obj(a_coeff),
-  ]).obj()
-  let b_term = py_tuple_from_objects([
-    py_list_from_ints(b_monom),
-    py_int_obj(b_coeff),
-  ]).obj()
-  let res = sympy_call_must("sympy.polys.monomials.term_div", [
-    PyObj(a_term),
-    PyObj(b_term),
-    PyObj(oracle_domain_from_spec("ZZ")),
-  ])
-  py_sympy_enum_str(res)
+  p6e_term_div_zz(a_monom, a_coeff, b_monom, b_coeff)
 }
 
 ///|

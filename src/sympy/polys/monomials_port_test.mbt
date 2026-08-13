@@ -66,10 +66,14 @@ test "monomial checked division helpers match sympy" {
     (m([1, 1]), @sympolys.fe_from_int(3, ZZ)),
     ZZ,
   )
-  assert_eq(
-    remove_spaces(term_text(inexact)),
-    remove_spaces(term_div_zz([3, 2], 5, [1, 1], 3)),
-  )
+  assert_true(inexact is None)
+  let oracle_rejected_none = try {
+    term_div_zz([3, 2], 5, [1, 1], 3) |> ignore
+    false
+  } catch {
+    _ => true
+  }
+  assert_true(oracle_rejected_none)
 }
 
 ///|
