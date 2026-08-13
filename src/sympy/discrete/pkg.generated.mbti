@@ -3,7 +3,6 @@ package "CAIMEOX/symbit/sympy/discrete"
 
 import {
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/sympy",
 }
 
 // Values
@@ -46,7 +45,5 @@ pub fn ntt_equiv(Array[@symcore.Expr], Array[@symcore.Expr], Int) -> Bool raise
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-

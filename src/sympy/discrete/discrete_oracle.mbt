@@ -1,253 +1,123 @@
 ///|
-/// Oracle helpers for SymPy discrete algorithms.
+/// Request-scoped oracle helpers for SymPy discrete algorithms.
 
 ///|
-pub type OracleArg = @sympy.OracleArg
-
-///|
-fn sympy_call(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum? raise {
-  @sympy.sympy_call(path, args, kwargs~)
+fn required_module_call(
+  builder : @recipe.Builder,
+  module_name : String,
+  function_name : String,
+  arguments : Array[@recipe.RecipeArg],
+  kwargs? : Map[String, @recipe.RecipeArg] = {},
+) -> @recipe.ValueRef raise {
+  let module_value = builder.import_module(module_name)
+  let callable = builder.getattr(module_value, function_name)
+  builder.require_non_none(
+    builder.call(callable, arguments, kwargs~),
+    message="sympy-call-none:\{module_name}.\{function_name}",
+  )
 }
 
 ///|
-fn sympy_call_must(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum raise {
-  match sympy_call(path, args, kwargs~) {
-    Some(obj) => obj
-    None => fail("sympy-call-none:\{path}")
+fn encode_expr_list(
+  builder : @recipe.Builder,
+  encoder : @exprcodec.Encoder,
+  values : Array[@symcore.Expr],
+) -> @recipe.ValueRef raise {
+  let encoded : Array[@recipe.RecipeArg] = []
+  for value in values {
+    encoded.push(Ref(encoder.encode(value)))
   }
+  builder.list(encoded)
 }
 
 ///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
-}
-
-///|
-fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
-  @sympy.expr_to_sympy(expr)
-}
-
-///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
-}
-
-///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
-}
-
-///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let s = obj.to_string()
-  py_gil_release(state)
-  s
-}
-
-///|
-fn py_str_enum(obj : @py.PyObjectEnum) -> String {
-  py_str_obj(objenum_to_obj(obj))
-}
-
-///|
-fn py_list_from_objects(values : Array[@py.PyObject]) -> @py.PyList {
-  let state = py_gil_ensure()
-  let list = @py.PyList::new()
-  for v in values {
-    list.append(v)
-  }
-  py_gil_release(state)
-  list
-}
-
-///|
-fn py_list_to_pyobjects(value : @py.PyObjectEnum) -> Array[@py.PyObject] raise {
-  let state = py_gil_ensure()
-  let res = try {
-    let out : Array[@py.PyObject] = Array::new()
-    match value {
-      PyList(list) => {
-        let len = list.len()
-        for i in 0..<len {
-          match list.get(i) {
-            Some(item) => out.push(objenum_to_obj(item))
-            None => ()
-          }
-        }
-        out
-      }
-      PyTuple(tup) => {
-        let len = tup.len().to_int()
-        for i in 0..<len {
-          match tup.get(i) {
-            Some(item) => out.push(objenum_to_obj(item))
-            None => ()
-          }
-        }
-        out
-      }
-      _ => fail("expected list/tuple")
-    }
-  } catch {
-    e => {
-      py_gil_release(state)
-      raise e
-    }
-  }
-  py_gil_release(state)
-  res
-}
-
-///|
-fn resolve_method_callable(
-  obj : @py.PyObject,
-  name : String,
-) -> @py.PyCallable raise {
-  let state = py_gil_ensure()
-  let res = try {
-    match obj.get_attr(name, print_err=false) {
-      Some(PyCallable(callable)) => callable
-      Some(PyClass(obj0)) =>
-        @py.PyCallable::create(obj0) catch {
-          _ => fail("py-callable")
-        }
-      Some(other) =>
-        @py.PyCallable::create(objenum_to_obj(other)) catch {
-          _ => fail("py-callable")
-        }
-      None => fail("py-callable-missing")
-    }
-  } catch {
-    e => {
-      py_gil_release(state)
-      raise e
-    }
-  }
-  py_gil_release(state)
-  res
-}
-
-///|
-fn py_call_with_args(
-  callable : @py.PyCallable,
-  args : Array[OracleArg],
-) -> @py.PyObjectEnum raise {
-  let tup = @sympy.py_pack_args(args)
-  match @sympy.py_call_object(callable, tup, print_err=true) {
-    Some(obj) => obj
-    None => fail("py-call-none")
-  }
-}
-
-///|
-fn sympy_call_obj(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObject raise {
-  objenum_to_obj(sympy_call_must(path, args, kwargs~))
-}
-
-///|
-fn sympy_sub_obj(a : @py.PyObject, b : @py.PyObject) -> @py.PyObject raise {
-  let neg = sympy_call_obj("sympy.Mul", [Int(-1), PyObj(b)])
-  sympy_call_obj("sympy.Add", [PyObj(a), PyObj(neg)])
-}
-
-///|
-fn sympy_is_zero(obj : @py.PyObject) -> Bool raise {
-  let simp = sympy_call_obj("sympy.simplify", [PyObj(obj)])
-  let eq = resolve_method_callable(simp, "equals")
-  let zero = sympy_call_obj("sympy.Integer", [Str("0")])
-  let res = py_call_with_args(eq, [PyObj(zero)])
-  py_str_enum(res) == "True"
-}
-
-///|
-fn sympy_is_zero_tol(obj : @py.PyObject, dps : Int) -> Bool raise {
-  let abs_obj = sympy_call_obj("sympy.Abs", [PyObj(obj)])
-  let abs_eval = sympy_call_obj("sympy.N", [PyObj(abs_obj), Int(dps)])
-  let exp = -dps + 2
-  let thresh_str = "1e\{exp}"
-  let thresh = sympy_call_obj("sympy.Float", [Str(thresh_str)])
-  let lt = sympy_call_obj("sympy.Lt", [PyObj(abs_eval), PyObj(thresh)])
-  py_str_obj(lt) == "True"
-}
-
-///|
-fn expr_equiv_pyobj(
-  expr : @symcore.Expr,
-  other : @py.PyObject,
+fn request_expr_list_equiv(
+  builder : @recipe.Builder,
+  actual : @recipe.ValueRef,
+  expected : @recipe.ValueRef,
   dps? : Int,
 ) -> Bool raise {
-  match dps {
-    Some(v) => {
-      let a_obj = expr_to_sympy(expr)
-      let a_eval = sympy_call_obj("sympy.N", [PyObj(a_obj), Int(v)])
-      let b_eval = sympy_call_obj("sympy.N", [PyObj(other), Int(v)])
-      let diff = sympy_sub_obj(a_eval, b_eval)
-      sympy_is_zero_tol(diff, v)
-    }
-    None => {
-      let a_obj = expr_to_sympy(expr)
-      let diff = sympy_sub_obj(a_obj, other)
-      sympy_is_zero(diff)
-    }
-  }
-}
-
-///|
-fn list_equiv(
-  ours : Array[@symcore.Expr],
-  sympy_items : Array[@py.PyObject],
-  dps? : Int,
-) -> Bool raise {
-  if ours.length() != sympy_items.length() {
-    return false
-  }
-  match dps {
-    Some(v) =>
-      for i in 0..<ours.length() {
-        if !expr_equiv_pyobj(ours[i], sympy_items[i], dps=v) {
-          return false
-        }
-      }
+  let scope = builder.sympy_scope()
+  let comparator = match dps {
+    Some(_) =>
+      builder.eval(
+        scope, "lambda actual, expected, dps: len(actual) == len(expected) and all(str(sympy.Lt(sympy.N(sympy.Abs(sympy.Add(sympy.N(a, dps), sympy.Mul(-1, sympy.N(b, dps)))), dps), sympy.Float('1e' + str(-dps + 2)))) == 'True' for a, b in zip(actual, expected))",
+      )
     None =>
-      for i in 0..<ours.length() {
-        if !expr_equiv_pyobj(ours[i], sympy_items[i]) {
-          return false
-        }
-      }
+      builder.eval(
+        scope, "lambda actual, expected: len(actual) == len(expected) and all(str(sympy.simplify(sympy.Add(a, sympy.Mul(-1, b))).equals(sympy.Integer(0))) == 'True' for a, b in zip(actual, expected))",
+      )
   }
-  true
+  let result = match dps {
+    Some(value) =>
+      builder.call(comparator, [
+        Ref(actual),
+        Ref(expected),
+        DecimalInt(Show::to_string(value)),
+      ])
+    None => builder.call(comparator, [Ref(actual), Ref(expected)])
+  }
+  builder.request_bool(result)
 }
 
 ///|
-fn py_list_from_exprs(exprs : Array[@symcore.Expr]) -> @py.PyList raise {
-  let items : Array[@py.PyObject] = Array::new()
-  for expr in exprs {
-    items.push(expr_to_sympy(expr))
+fn unary_transform_equiv(
+  function_name : String,
+  seq : Array[@symcore.Expr],
+  ours : Array[@symcore.Expr],
+  positional_tail? : Array[@recipe.RecipeArg] = [],
+  kwargs? : Map[String, @recipe.RecipeArg] = {},
+  dps? : Int,
+) -> Bool raise {
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let arguments : Array[@recipe.RecipeArg] = [
+    Ref(encode_expr_list(builder, encoder, seq)),
+  ]
+  arguments.append(positional_tail)
+  let expected = required_module_call(
+    builder,
+    "sympy.discrete.transforms",
+    function_name,
+    arguments,
+    kwargs~,
+  )
+  let actual = encode_expr_list(builder, encoder, ours)
+  match dps {
+    Some(value) => request_expr_list_equiv(builder, actual, expected, dps=value)
+    None => request_expr_list_equiv(builder, actual, expected)
   }
-  py_list_from_objects(items)
 }
 
 ///|
-fn sympy_list_call(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> Array[@py.PyObject] raise {
-  let res = sympy_call_must(path, args, kwargs~)
-  py_list_to_pyobjects(res)
+fn binary_convolution_equiv(
+  function_name : String,
+  a : Array[@symcore.Expr],
+  b : Array[@symcore.Expr],
+  ours : Array[@symcore.Expr],
+  positional_tail? : Array[@recipe.RecipeArg] = [],
+  kwargs? : Map[String, @recipe.RecipeArg] = {},
+  dps? : Int,
+) -> Bool raise {
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let arguments : Array[@recipe.RecipeArg] = [
+    Ref(encode_expr_list(builder, encoder, a)),
+    Ref(encode_expr_list(builder, encoder, b)),
+  ]
+  arguments.append(positional_tail)
+  let expected = required_module_call(
+    builder,
+    "sympy.discrete.convolutions",
+    function_name,
+    arguments,
+    kwargs~,
+  )
+  let actual = encode_expr_list(builder, encoder, ours)
+  match dps {
+    Some(value) => request_expr_list_equiv(builder, actual, expected, dps=value)
+    None => request_expr_list_equiv(builder, actual, expected)
+  }
 }
 
 ///|
@@ -256,17 +126,14 @@ pub fn fft_equiv(
   ours : Array[@symcore.Expr],
   dps? : Int,
 ) -> Bool raise {
-  let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [PyObj(list_obj.obj())]
-  let kwargs : Map[String, OracleArg] = Map([])
+  let kwargs : Map[String, @recipe.RecipeArg] = Map([])
   match dps {
-    Some(v) => kwargs["dps"] = Int(v)
+    Some(value) => kwargs["dps"] = DecimalInt(Show::to_string(value))
     None => ()
   }
-  let items = sympy_list_call("sympy.discrete.transforms.fft", args, kwargs~)
   match dps {
-    Some(v) => list_equiv(ours, items, dps=v)
-    None => list_equiv(ours, items)
+    Some(value) => unary_transform_equiv("fft", seq, ours, kwargs~, dps=value)
+    None => unary_transform_equiv("fft", seq, ours, kwargs~)
   }
 }
 
@@ -276,17 +143,14 @@ pub fn ifft_equiv(
   ours : Array[@symcore.Expr],
   dps? : Int,
 ) -> Bool raise {
-  let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [PyObj(list_obj.obj())]
-  let kwargs : Map[String, OracleArg] = Map([])
+  let kwargs : Map[String, @recipe.RecipeArg] = Map([])
   match dps {
-    Some(v) => kwargs["dps"] = Int(v)
+    Some(value) => kwargs["dps"] = DecimalInt(Show::to_string(value))
     None => ()
   }
-  let items = sympy_list_call("sympy.discrete.transforms.ifft", args, kwargs~)
   match dps {
-    Some(v) => list_equiv(ours, items, dps=v)
-    None => list_equiv(ours, items)
+    Some(value) => unary_transform_equiv("ifft", seq, ours, kwargs~, dps=value)
+    None => unary_transform_equiv("ifft", seq, ours, kwargs~)
   }
 }
 
@@ -296,10 +160,9 @@ pub fn ntt_equiv(
   ours : Array[@symcore.Expr],
   prime : Int,
 ) -> Bool raise {
-  let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [PyObj(list_obj.obj()), Int(prime)]
-  let items = sympy_list_call("sympy.discrete.transforms.ntt", args)
-  list_equiv(ours, items)
+  unary_transform_equiv("ntt", seq, ours, positional_tail=[
+    DecimalInt(Show::to_string(prime)),
+  ])
 }
 
 ///|
@@ -308,10 +171,9 @@ pub fn intt_equiv(
   ours : Array[@symcore.Expr],
   prime : Int,
 ) -> Bool raise {
-  let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [PyObj(list_obj.obj()), Int(prime)]
-  let items = sympy_list_call("sympy.discrete.transforms.intt", args)
-  list_equiv(ours, items)
+  unary_transform_equiv("intt", seq, ours, positional_tail=[
+    DecimalInt(Show::to_string(prime)),
+  ])
 }
 
 ///|
@@ -319,10 +181,7 @@ pub fn fwht_equiv(
   seq : Array[@symcore.Expr],
   ours : Array[@symcore.Expr],
 ) -> Bool raise {
-  let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [PyObj(list_obj.obj())]
-  let items = sympy_list_call("sympy.discrete.transforms.fwht", args)
-  list_equiv(ours, items)
+  unary_transform_equiv("fwht", seq, ours)
 }
 
 ///|
@@ -330,10 +189,7 @@ pub fn ifwht_equiv(
   seq : Array[@symcore.Expr],
   ours : Array[@symcore.Expr],
 ) -> Bool raise {
-  let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [PyObj(list_obj.obj())]
-  let items = sympy_list_call("sympy.discrete.transforms.ifwht", args)
-  list_equiv(ours, items)
+  unary_transform_equiv("ifwht", seq, ours)
 }
 
 ///|
@@ -342,16 +198,9 @@ pub fn mobius_transform_equiv(
   ours : Array[@symcore.Expr],
   subset? : Bool = true,
 ) -> Bool raise {
-  let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [PyObj(list_obj.obj())]
-  let kwargs : Map[String, OracleArg] = Map([])
-  kwargs["subset"] = Bool(subset)
-  let items = sympy_list_call(
-    "sympy.discrete.transforms.mobius_transform",
-    args,
-    kwargs~,
-  )
-  list_equiv(ours, items)
+  unary_transform_equiv("mobius_transform", seq, ours, kwargs={
+    "subset": Bool(subset),
+  })
 }
 
 ///|
@@ -360,16 +209,9 @@ pub fn inverse_mobius_transform_equiv(
   ours : Array[@symcore.Expr],
   subset? : Bool = true,
 ) -> Bool raise {
-  let list_obj = py_list_from_exprs(seq)
-  let args : Array[OracleArg] = [PyObj(list_obj.obj())]
-  let kwargs : Map[String, OracleArg] = Map([])
-  kwargs["subset"] = Bool(subset)
-  let items = sympy_list_call(
-    "sympy.discrete.transforms.inverse_mobius_transform",
-    args,
-    kwargs~,
-  )
-  list_equiv(ours, items)
+  unary_transform_equiv("inverse_mobius_transform", seq, ours, kwargs={
+    "subset": Bool(subset),
+  })
 }
 
 ///|
@@ -379,22 +221,22 @@ pub fn convolution_fft_equiv(
   ours : Array[@symcore.Expr],
   dps? : Int,
 ) -> Bool raise {
-  let a_obj = py_list_from_exprs(a)
-  let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [PyObj(a_obj.obj()), PyObj(b_obj.obj())]
-  let kwargs : Map[String, OracleArg] = Map([])
+  let kwargs : Map[String, @recipe.RecipeArg] = Map([])
   match dps {
-    Some(v) => kwargs["dps"] = Int(v)
+    Some(value) => kwargs["dps"] = DecimalInt(Show::to_string(value))
     None => ()
   }
-  let items = sympy_list_call(
-    "sympy.discrete.convolutions.convolution_fft",
-    args,
-    kwargs~,
-  )
   match dps {
-    Some(v) => list_equiv(ours, items, dps=v)
-    None => list_equiv(ours, items)
+    Some(value) =>
+      binary_convolution_equiv(
+        "convolution_fft",
+        a,
+        b,
+        ours,
+        kwargs~,
+        dps=value,
+      )
+    None => binary_convolution_equiv("convolution_fft", a, b, ours, kwargs~)
   }
 }
 
@@ -405,17 +247,9 @@ pub fn convolution_ntt_equiv(
   ours : Array[@symcore.Expr],
   prime : Int,
 ) -> Bool raise {
-  let a_obj = py_list_from_exprs(a)
-  let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [
-    PyObj(a_obj.obj()),
-    PyObj(b_obj.obj()),
-    Int(prime),
-  ]
-  let items = sympy_list_call(
-    "sympy.discrete.convolutions.convolution_ntt", args,
-  )
-  list_equiv(ours, items)
+  binary_convolution_equiv("convolution_ntt", a, b, ours, positional_tail=[
+    DecimalInt(Show::to_string(prime)),
+  ])
 }
 
 ///|
@@ -424,13 +258,7 @@ pub fn convolution_fwht_equiv(
   b : Array[@symcore.Expr],
   ours : Array[@symcore.Expr],
 ) -> Bool raise {
-  let a_obj = py_list_from_exprs(a)
-  let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [PyObj(a_obj.obj()), PyObj(b_obj.obj())]
-  let items = sympy_list_call(
-    "sympy.discrete.convolutions.convolution_fwht", args,
-  )
-  list_equiv(ours, items)
+  binary_convolution_equiv("convolution_fwht", a, b, ours)
 }
 
 ///|
@@ -439,13 +267,7 @@ pub fn convolution_subset_equiv(
   b : Array[@symcore.Expr],
   ours : Array[@symcore.Expr],
 ) -> Bool raise {
-  let a_obj = py_list_from_exprs(a)
-  let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [PyObj(a_obj.obj()), PyObj(b_obj.obj())]
-  let items = sympy_list_call(
-    "sympy.discrete.convolutions.convolution_subset", args,
-  )
-  list_equiv(ours, items)
+  binary_convolution_equiv("convolution_subset", a, b, ours)
 }
 
 ///|
@@ -454,13 +276,7 @@ pub fn covering_product_equiv(
   b : Array[@symcore.Expr],
   ours : Array[@symcore.Expr],
 ) -> Bool raise {
-  let a_obj = py_list_from_exprs(a)
-  let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [PyObj(a_obj.obj()), PyObj(b_obj.obj())]
-  let items = sympy_list_call(
-    "sympy.discrete.convolutions.covering_product", args,
-  )
-  list_equiv(ours, items)
+  binary_convolution_equiv("covering_product", a, b, ours)
 }
 
 ///|
@@ -469,13 +285,7 @@ pub fn intersecting_product_equiv(
   b : Array[@symcore.Expr],
   ours : Array[@symcore.Expr],
 ) -> Bool raise {
-  let a_obj = py_list_from_exprs(a)
-  let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [PyObj(a_obj.obj()), PyObj(b_obj.obj())]
-  let items = sympy_list_call(
-    "sympy.discrete.convolutions.intersecting_product", args,
-  )
-  list_equiv(ours, items)
+  binary_convolution_equiv("intersecting_product", a, b, ours)
 }
 
 ///|
@@ -489,37 +299,30 @@ pub fn convolution_equiv(
   dyadic? : Bool,
   subset? : Bool,
 ) -> Bool raise {
-  let a_obj = py_list_from_exprs(a)
-  let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [PyObj(a_obj.obj()), PyObj(b_obj.obj())]
-  let kwargs : Map[String, OracleArg] = Map([])
+  let kwargs : Map[String, @recipe.RecipeArg] = Map([])
   if cycle != 0 {
-    kwargs["cycle"] = Int(cycle)
+    kwargs["cycle"] = DecimalInt(Show::to_string(cycle))
   }
   match dps {
-    Some(v) => kwargs["dps"] = Int(v)
+    Some(value) => kwargs["dps"] = DecimalInt(Show::to_string(value))
     None => ()
   }
   match prime {
-    Some(p) => kwargs["prime"] = Int(p)
+    Some(value) => kwargs["prime"] = DecimalInt(Show::to_string(value))
     None => ()
   }
   match dyadic {
-    Some(v) => kwargs["dyadic"] = Bool(v)
+    Some(value) => kwargs["dyadic"] = Bool(value)
     None => ()
   }
   match subset {
-    Some(v) => kwargs["subset"] = Bool(v)
+    Some(value) => kwargs["subset"] = Bool(value)
     None => ()
   }
-  let items = sympy_list_call(
-    "sympy.discrete.convolutions.convolution",
-    args,
-    kwargs~,
-  )
   match dps {
-    Some(v) => list_equiv(ours, items, dps=v)
-    None => list_equiv(ours, items)
+    Some(value) =>
+      binary_convolution_equiv("convolution", a, b, ours, kwargs~, dps=value)
+    None => binary_convolution_equiv("convolution", a, b, ours, kwargs~)
   }
 }
 
@@ -529,23 +332,26 @@ pub fn convolution_int_equiv(
   b : Array[Int],
   ours : Array[Int],
 ) -> Bool raise {
-  let args : Array[OracleArg] = [IntList(a), IntList(b)]
-  let items = sympy_list_call(
-    "sympy.discrete.convolutions.convolution_int", args,
-  )
-  let strs : Array[String] = Array::new()
-  for item in items {
-    strs.push(py_str_obj(item))
-  }
-  if ours.length() != strs.length() {
-    return false
-  }
-  for i in 0..<ours.length() {
-    if strs[i] != ours[i].to_string() {
-      return false
+  let builder = @recipe.Builder::new()
+  let encode_ints = fn(values : Array[Int]) -> @recipe.ValueRef raise {
+    let items : Array[@recipe.RecipeArg] = []
+    for value in values {
+      items.push(DecimalInt(Show::to_string(value)))
     }
+    builder.list(items)
   }
-  true
+  let expected = required_module_call(
+    builder,
+    "sympy.discrete.convolutions",
+    "convolution_int",
+    [Ref(encode_ints(a)), Ref(encode_ints(b))],
+  )
+  let actual = encode_ints(ours)
+  let comparator = builder.eval(
+    builder.sympy_scope(),
+    "lambda actual, expected: actual == expected",
+  )
+  builder.request_bool(builder.call(comparator, [Ref(actual), Ref(expected)]))
 }
 
 ///|
@@ -555,9 +361,22 @@ pub fn linrec_equiv(
   n : Int,
   ours : @symcore.Expr,
 ) -> Bool raise {
-  let c_obj = py_list_from_exprs(coeffs)
-  let b_obj = py_list_from_exprs(init)
-  let args : Array[OracleArg] = [PyObj(c_obj.obj()), PyObj(b_obj.obj()), Int(n)]
-  let sympy_obj = sympy_call_obj("sympy.discrete.recurrences.linrec", args)
-  expr_equiv_pyobj(ours, sympy_obj)
+  let builder = @recipe.Builder::new()
+  let encoder = @exprcodec.Encoder::new(builder)
+  let expected = required_module_call(
+    builder,
+    "sympy.discrete.recurrences",
+    "linrec",
+    [
+      Ref(encode_expr_list(builder, encoder, coeffs)),
+      Ref(encode_expr_list(builder, encoder, init)),
+      DecimalInt(Show::to_string(n)),
+    ],
+  )
+  let actual = encoder.encode(ours)
+  let comparator = builder.eval(
+    builder.sympy_scope(),
+    "lambda actual, expected: str(sympy.simplify(sympy.Add(actual, sympy.Mul(-1, expected))).equals(sympy.Integer(0))) == 'True'",
+  )
+  builder.request_bool(builder.call(comparator, [Ref(actual), Ref(expected)]))
 }
