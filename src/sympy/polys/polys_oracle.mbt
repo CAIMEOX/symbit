@@ -2292,13 +2292,6 @@ pub fn solvers_solve_lin_sys_summary(
 }
 
 ///|
-fn oracle_domainmatrix_to_matrix_str(dm_obj : @py.PyObject) -> String raise {
-  let to_matrix = resolve_method_callable(dm_obj, "to_Matrix")
-  let mat_enum = py_call_noargs(to_matrix)
-  py_str_enum(mat_enum)
-}
-
-///|
 fn matrix_obj_to_int_code(mat_obj : @py.PyObject) -> String raise {
   let tolist = resolve_method_callable(mat_obj, "tolist")
   let list_enum = py_call_noargs(tolist)
@@ -3275,44 +3268,6 @@ pub fn init_normal_ANP(
 }
 
 ///|
-pub fn groebner(
-  exprs : Array[@symcore.Expr],
-  order? : String = "lex",
-) -> String raise {
-  let expr_objs : Array[@py.PyObject] = Array::new()
-  for expr in exprs {
-    expr_objs.push(expr_to_sympy(expr))
-  }
-  let gens = sympy_default_gens(expr_objs)
-  let args0 : Array[LegacyArg] = Array::new()
-  let py_polys = py_list_from_objects(expr_objs)
-  args0.push(PyObj(py_polys.obj()))
-  for g in gens {
-    args0.push(PyObj(g))
-  }
-  let kwargs : Map[String, LegacyArg] = Map([])
-  if order != "" {
-    kwargs["order"] = Str(order)
-  }
-  let res = sympy_call_must("sympy.groebner", args0, kwargs~)
-  let res_obj = objenum_to_obj(res)
-  let polys_enum = match py_get_attr(res_obj, "polys") {
-    Some(v) => v
-    None => fail("groebner.polys missing")
-  }
-  let polys = py_list_to_pyobjects(polys_enum)
-  let basis : Array[String] = Array::new()
-  for poly in polys {
-    let monic = resolve_method_callable(poly, "monic")
-    let monic_enum = py_call_noargs(monic)
-    let monic_obj = objenum_to_obj(monic_enum)
-    let as_expr = resolve_method_callable(monic_obj, "as_expr")
-    let expr_enum = py_call_noargs(as_expr)
-    basis.push(py_str_enum(expr_enum))
-  }
-  basis.sort()
-  basis.join(" | ")
-}
 
 ///|
 fn groebner_ring_polys(
@@ -3380,52 +3335,6 @@ fn py_bool_text(value : @py.PyObjectEnum) -> String {
   } else {
     "false"
   }
-}
-
-///|
-pub fn groebnertools_spoly(
-  f : @symcore.Expr,
-  g : @symcore.Expr,
-  gens? : Array[String] = ["x", "y"],
-  order? : String = "lex",
-) -> String raise {
-  let (ring, polys) = groebner_ring_polys([f, g], gens, order)
-  let res = sympy_call_must("sympy.polys.groebnertools.spoly", [
-    PyObj(polys[0]),
-    PyObj(polys[1]),
-    PyObj(ring),
-  ])
-  py_str_enum(res)
-}
-
-///|
-pub fn groebnertools_gcd(
-  f : @symcore.Expr,
-  g : @symcore.Expr,
-  gens? : Array[String] = ["x"],
-  order? : String = "lex",
-) -> String raise {
-  let (_, polys) = groebner_ring_polys([f, g], gens, order)
-  let res = sympy_call_must("sympy.polys.groebnertools.groebner_gcd", [
-    PyObj(polys[0]),
-    PyObj(polys[1]),
-  ])
-  py_str_enum(res)
-}
-
-///|
-pub fn groebnertools_lcm(
-  f : @symcore.Expr,
-  g : @symcore.Expr,
-  gens? : Array[String] = ["x"],
-  order? : String = "lex",
-) -> String raise {
-  let (_, polys) = groebner_ring_polys([f, g], gens, order)
-  let res = sympy_call_must("sympy.polys.groebnertools.groebner_lcm", [
-    PyObj(polys[0]),
-    PyObj(polys[1]),
-  ])
-  py_str_enum(res)
 }
 
 ///|
@@ -3688,62 +3597,6 @@ pub fn groebnertools_f5_reduce_one(
     PyObj(py_list_from_objects([h]).obj()),
   ])
   groebner_lbp_result_string(res)
-}
-
-///|
-pub fn red_groebner(
-  exprs : Array[@symcore.Expr],
-  gens? : Array[String] = ["x", "y"],
-  order? : String = "lex",
-) -> String raise {
-  let (ring, polys) = groebner_ring_polys(exprs, gens, order)
-  let res = sympy_call_must("sympy.polys.groebnertools.red_groebner", [
-    PyObj(py_list_from_objects(polys).obj()),
-    PyObj(ring),
-  ])
-  groebner_ring_list_string(res)
-}
-
-///|
-pub fn is_groebner(
-  exprs : Array[@symcore.Expr],
-  gens? : Array[String] = ["x", "y"],
-  order? : String = "lex",
-) -> String raise {
-  let (ring, polys) = groebner_ring_polys(exprs, gens, order)
-  let res = sympy_call_must("sympy.polys.groebnertools.is_groebner", [
-    PyObj(py_list_from_objects(polys).obj()),
-    PyObj(ring),
-  ])
-  py_bool_text(res)
-}
-
-///|
-pub fn is_minimal(
-  exprs : Array[@symcore.Expr],
-  gens? : Array[String] = ["x", "y"],
-  order? : String = "lex",
-) -> String raise {
-  let (ring, polys) = groebner_ring_polys(exprs, gens, order)
-  let res = sympy_call_must("sympy.polys.groebnertools.is_minimal", [
-    PyObj(py_list_from_objects(polys).obj()),
-    PyObj(ring),
-  ])
-  py_bool_text(res)
-}
-
-///|
-pub fn is_reduced(
-  exprs : Array[@symcore.Expr],
-  gens? : Array[String] = ["x", "y"],
-  order? : String = "lex",
-) -> String raise {
-  let (ring, polys) = groebner_ring_polys(exprs, gens, order)
-  let res = sympy_call_must("sympy.polys.groebnertools.is_reduced", [
-    PyObj(py_list_from_objects(polys).obj()),
-    PyObj(ring),
-  ])
-  py_bool_text(res)
 }
 
 ///|
