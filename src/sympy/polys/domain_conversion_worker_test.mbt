@@ -1,11 +1,41 @@
 ///|
-test "polys domain conversion worker maps malformed sources and recovers" {
-  assert_false(domain_contains_expr("ZZ", "@@@"))
+test "polys domain conversion worker rejects malformed sources and recovers" {
+  let malformed_contains = try {
+    domain_contains_expr("ZZ", "@@@") |> ignore
+    false
+  } catch {
+    _ => true
+  }
+  let malformed_from_sympy = try {
+    domain_from_sympy_expr("ZZ", "@@@") |> ignore
+    false
+  } catch {
+    _ => true
+  }
+  let malformed_to_sympy = try {
+    domain_to_sympy_expr("ZZ", "@@@") |> ignore
+    false
+  } catch {
+    _ => true
+  }
+  let malformed_convert = try {
+    domain_convert_expr("ZZ", "@@@") |> ignore
+    false
+  } catch {
+    _ => true
+  }
+  let malformed_hook = try {
+    domain_from_zz_expr("QQ", "@@@", "ZZ") |> ignore
+    false
+  } catch {
+    _ => true
+  }
+  assert_true(malformed_contains)
+  assert_true(malformed_from_sympy)
+  assert_true(malformed_to_sympy)
+  assert_true(malformed_convert)
+  assert_true(malformed_hook)
   assert_false(domain_contains_expr("IntegerRing", "1"))
-  assert_eq(domain_from_sympy_expr("ZZ", "@@@"), "ERROR")
-  assert_eq(domain_to_sympy_expr("ZZ", "@@@"), "ERROR")
-  assert_eq(domain_convert_expr("ZZ", "@@@"), "ERROR")
-  assert_eq(domain_from_zz_expr("QQ", "@@@", "ZZ"), "ERROR")
   assert_eq(domain_from_sympy_expr("ZZ", "1/2"), "ERROR")
   assert_eq(domain_to_sympy_expr("ZZ", "1/2"), "ERROR")
   assert_eq(domain_convert_expr("ZZ", "1/2"), "ERROR")

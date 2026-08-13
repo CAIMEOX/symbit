@@ -94,17 +94,12 @@ fn domain_foundation_source() -> String {
     #|def _symbit_attr_is_true(value):
     #|    return str(value).strip() == "True"
     #|
-    #|def _symbit_try_sympify(source):
-    #|    try:
-    #|        return sympy.sympify(source)
-    #|    except Exception:
-    #|        return _symbit_sentinel
-    #|
     #|def _symbit_try_method(object_value, method_name, args, failure):
+    #|    callable_value = getattr(object_value, method_name)
     #|    if any(arg is _symbit_sentinel for arg in args):
     #|        return _symbit_sentinel
     #|    try:
-    #|        value = getattr(object_value, method_name)(*args)
+    #|        value = callable_value(*args)
     #|    except Exception:
     #|        return failure
     #|    if value is None:
@@ -138,17 +133,75 @@ fn domain_foundation_source() -> String {
     #|        object_value, "sum", (elements,), _symbit_sentinel
     #|    )
     #|
-    #|def _symbit_render_domain_result(object_value, value):
-    #|    if value is _symbit_sentinel:
-    #|        return "ERROR"
-    #|    if value is _symbit_none_sentinel:
-    #|        return "NONE"
+    #|def _symbit_try_attr(object_value, attr_name):
+    #|    try:
+    #|        value = getattr(object_value, attr_name)
+    #|    except Exception:
+    #|        return _symbit_sentinel
+    #|    if value is None:
+    #|        return _symbit_sentinel
+    #|    return value
+    #|
+    #|def _symbit_domain_value_text(object_value, value):
     #|    rendered = _symbit_try_method(
     #|        object_value, "to_sympy", (value,), _symbit_sentinel
     #|    )
     #|    if rendered is _symbit_sentinel:
     #|        rendered = value
     #|    return str(rendered)
+    #|
+    #|def _symbit_render_domain_result(object_value, value):
+    #|    if value is _symbit_sentinel:
+    #|        return "ERROR"
+    #|    if value is _symbit_none_sentinel:
+    #|        return "NONE"
+    #|    return _symbit_domain_value_text(object_value, value)
+    #|
+    #|def _symbit_render_tuple_result(
+    #|    object_value, value, indexes, required_length, exact, tuple_only
+    #|):
+    #|    if value is _symbit_sentinel or value is _symbit_none_sentinel:
+    #|        return "ERROR"
+    #|    allowed = isinstance(value, tuple) if tuple_only else isinstance(value, (list, tuple))
+    #|    if not allowed:
+    #|        return "ERROR"
+    #|    if exact:
+    #|        if len(value) != required_length:
+    #|            return "ERROR"
+    #|    elif len(value) < required_length:
+    #|        return "ERROR"
+    #|    return "(" + ",".join(
+    #|        _symbit_domain_value_text(object_value, value[index])
+    #|        for index in indexes
+    #|    ) + ")"
+    #|
+    #|def _symbit_half_gcdex(object_value, left, right):
+    #|    if left is _symbit_sentinel or right is _symbit_sentinel:
+    #|        return "ERROR"
+    #|    direct = _symbit_try_method(
+    #|        object_value, "half_gcdex", (left, right), _symbit_sentinel
+    #|    )
+    #|    rendered = _symbit_render_tuple_result(
+    #|        object_value, direct, (0, 1), 2, True, True
+    #|    )
+    #|    if rendered != "ERROR":
+    #|        return rendered
+    #|    fallback = _symbit_try_method(
+    #|        object_value, "gcdex", (left, right), _symbit_sentinel
+    #|    )
+    #|    return _symbit_render_tuple_result(
+    #|        object_value, fallback, (0, 2), 3, True, True
+    #|    )
+    #|
+    #|def _symbit_evalf(object_value, element):
+    #|    if element is _symbit_sentinel:
+    #|        return "ERROR"
+    #|    value = _symbit_try_method(
+    #|        object_value, "evalf", (element,), _symbit_sentinel
+    #|    )
+    #|    if value is _symbit_sentinel:
+    #|        return "ERROR"
+    #|    return str(sympy.nsimplify(value))
     #|
     #|def _symbit_capture(callable_value, args, kwargs):
     #|    try:
@@ -230,15 +283,6 @@ fn DomainRecipe::sympify(
 }
 
 ///|
-fn DomainRecipe::try_sympify(
-  self : DomainRecipe,
-  source : String,
-) -> @recipe.ValueRef raise {
-  let helper = self.builder.getitem(self.scope, Str("_symbit_try_sympify"))
-  self.builder.call(helper, [Str(source)])
-}
-
-///|
 fn DomainRecipe::try_method(
   self : DomainRecipe,
   object : @recipe.ValueRef,
@@ -254,6 +298,126 @@ fn DomainRecipe::try_method(
     Ref(arguments),
     Ref(failure),
   ])
+}
+
+///|
+fn DomainRecipe::element(
+  self : DomainRecipe,
+  domain : @recipe.ValueRef,
+  source : String,
+) -> @recipe.ValueRef raise {
+  // The legacy front doors sympified source text strictly before entering
+  // their ERROR/false domain-operation boundary.
+  let expression = self.sympify(source)
+  self.try_method(domain, "from_sympy", [Ref(expression)], self.error_sentinel)
+}
+
+///|
+fn DomainRecipe::try_attr(
+  self : DomainRecipe,
+  object : @recipe.ValueRef,
+  attr_name : String,
+) -> @recipe.ValueRef raise {
+  let helper = self.builder.getitem(self.scope, Str("_symbit_try_attr"))
+  self.builder.call(helper, [Ref(object), Str(attr_name)])
+}
+
+///|
+fn DomainRecipe::unary_element_method(
+  self : DomainRecipe,
+  domain : @recipe.ValueRef,
+  method_name : String,
+  source : String,
+) -> @recipe.ValueRef raise {
+  let element = self.element(domain, source)
+  self.try_method(domain, method_name, [Ref(element)], self.error_sentinel)
+}
+
+///|
+fn DomainRecipe::binary_element_method(
+  self : DomainRecipe,
+  domain : @recipe.ValueRef,
+  method_name : String,
+  left : String,
+  right : String,
+) -> @recipe.ValueRef raise {
+  let lhs = self.element(domain, left)
+  let rhs = self.element(domain, right)
+  self.try_method(
+    domain,
+    method_name,
+    [Ref(lhs), Ref(rhs)],
+    self.error_sentinel,
+  )
+}
+
+///|
+fn DomainRecipe::element_predicate(
+  self : DomainRecipe,
+  domain : @recipe.ValueRef,
+  method_name : String,
+  source : String,
+) -> @recipe.ValueRef raise {
+  let result = self.unary_element_method(domain, method_name, source)
+  self.attr_is_true(result)
+}
+
+///|
+fn DomainRecipe::binary_element_predicate(
+  self : DomainRecipe,
+  domain : @recipe.ValueRef,
+  method_name : String,
+  left : String,
+  right : String,
+) -> @recipe.ValueRef raise {
+  let result = self.binary_element_method(domain, method_name, left, right)
+  self.attr_is_true(result)
+}
+
+///|
+fn DomainRecipe::render_tuple_result(
+  self : DomainRecipe,
+  domain : @recipe.ValueRef,
+  result : @recipe.ValueRef,
+  indexes : Array[@recipe.RecipeArg],
+  required_length : Int,
+  exact : Bool,
+  tuple_only : Bool,
+) -> @recipe.ValueRef raise {
+  let helper = self.builder.getitem(
+    self.scope,
+    Str("_symbit_render_tuple_result"),
+  )
+  let index_tuple = self.builder.tuple(indexes)
+  self.builder.call(helper, [
+    Ref(domain),
+    Ref(result),
+    Ref(index_tuple),
+    DecimalInt(Show::to_string(required_length)),
+    Bool(exact),
+    Bool(tuple_only),
+  ])
+}
+
+///|
+fn DomainRecipe::half_gcdex(
+  self : DomainRecipe,
+  domain : @recipe.ValueRef,
+  left : @recipe.ValueRef,
+  right : @recipe.ValueRef,
+) -> @recipe.ValueRef raise {
+  let helper = self.builder.getitem(self.scope, Str("_symbit_half_gcdex"))
+  self.builder.call(helper, [Ref(domain), Ref(left), Ref(right)])
+}
+
+///|
+fn DomainRecipe::evalf(
+  self : DomainRecipe,
+  domain : @recipe.ValueRef,
+  element : @recipe.ValueRef,
+) -> @recipe.ValueRef raise {
+  let helper = self.builder.getitem(self.scope, Str("_symbit_evalf"))
+  self.builder.call(helper, [Ref(domain), Ref(element)])
 }
 
 ///|

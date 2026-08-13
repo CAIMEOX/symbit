@@ -36,3 +36,54 @@ test "polys domain conversion rendering falls back to the raw value" {
   let raw = recipe.builder.value(Str("raw-value"))
   assert_eq(recipe.request_domain_str(domain, raw), "raw-value")
 }
+
+///|
+test "polys domain half gcdex falls back to gcdex fields zero and two" {
+  let recipe = DomainRecipe::new()
+  let scope = recipe.builder.exec(
+    recipe.scope,
+    (
+      #|class _SymbitHalfGcdexFallback:
+      #|    def half_gcdex(self, left, right):
+      #|        raise ValueError("intentional half_gcdex failure")
+      #|    def gcdex(self, left, right):
+      #|        return (left, "ignored", right)
+      #|    def to_sympy(self, value):
+      #|        return value
+      #|_symbit_half_gcdex_fallback = _SymbitHalfGcdexFallback()
+    ),
+  )
+  let domain = recipe.builder.getitem(scope, Str("_symbit_half_gcdex_fallback"))
+  let left = recipe.builder.value(DecimalInt("3"))
+  let right = recipe.builder.value(DecimalInt("5"))
+  let result = recipe.half_gcdex(domain, left, right)
+  assert_eq(recipe.builder.request_str(result), "(3,5)")
+}
+
+///|
+test "polys domain evalf keeps nsimplify strict and worker recovery" {
+  let recipe = DomainRecipe::new()
+  let scope = recipe.builder.exec(
+    recipe.scope,
+    (
+      #|class _SymbitUnsimplifiableEvalf:
+      #|    def evalf(self, value):
+      #|        return object()
+      #|_symbit_unsimplifiable_evalf = _SymbitUnsimplifiableEvalf()
+    ),
+  )
+  let domain = recipe.builder.getitem(
+    scope,
+    Str("_symbit_unsimplifiable_evalf"),
+  )
+  let element = recipe.builder.value(DecimalInt("1"))
+  let result = recipe.evalf(domain, element)
+  let rejected = try {
+    recipe.builder.request_str(result) |> ignore
+    false
+  } catch {
+    _ => true
+  }
+  assert_true(rejected)
+  assert_eq(domain_evalf_expr("QQ", "1/2"), "1/2")
+}
