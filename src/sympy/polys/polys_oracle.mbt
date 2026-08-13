@@ -2128,27 +2128,13 @@ pub fn domainmatrix_clear_denoms(
   domain_spec : String,
   convert? : Bool = false,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let clear_denoms = resolve_method_callable(dm, "clear_denoms")
-  let kwargs = py_dict_new()
-  py_dict_set_obj(kwargs, "convert", py_bool_obj(convert))
-  let res = py_call_with_args(clear_denoms, [], kwargs)
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else {
-    fail("domainmatrix-clear-denoms-tuple")
-  }
-  let den_obj = tuple_items[0]
-  let num_obj = tuple_items[1]
-  let den_domain = match py_get_attr(den_obj, "domain") {
-    Some(obj) => py_str_enum(obj)
-    None => fail("domainmatrix-clear-denoms-domain")
-  }
-  let num_domain = match py_get_attr(num_obj, "domain") {
-    Some(obj) => py_str_enum(obj)
-    None => fail("domainmatrix-clear-denoms-num-domain")
-  }
-  let matrix = oracle_domainmatrix_to_matrix_str(num_obj)
-  "\{py_str_value(den_obj)}@\{den_domain}||\{matrix}@\{num_domain}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "clear_denoms", [], kwargs={
+    "convert": Bool(convert),
+  })
+  recipe.request_str(recipe.render_advanced("clear_denoms", result))
 }
 
 ///|
@@ -2157,27 +2143,13 @@ pub fn domainmatrix_clear_denoms_expr(
   domain_spec : String,
   convert? : Bool = false,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_exprs(a, domain_spec)
-  let clear_denoms = resolve_method_callable(dm, "clear_denoms")
-  let kwargs = py_dict_new()
-  py_dict_set_obj(kwargs, "convert", py_bool_obj(convert))
-  let res = py_call_with_args(clear_denoms, [], kwargs)
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else {
-    fail("domainmatrix-clear-denoms-expr-tuple")
-  }
-  let den_obj = tuple_items[0]
-  let num_obj = tuple_items[1]
-  let den_domain = match py_get_attr(den_obj, "domain") {
-    Some(obj) => py_str_enum(obj)
-    None => fail("domainmatrix-clear-denoms-expr-domain")
-  }
-  let num_domain = match py_get_attr(num_obj, "domain") {
-    Some(obj) => py_str_enum(obj)
-    None => fail("domainmatrix-clear-denoms-expr-num-domain")
-  }
-  let matrix = oracle_domainmatrix_to_matrix_str(num_obj)
-  "\{py_str_value(den_obj)}@\{den_domain}||\{matrix}@\{num_domain}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix_expr(a, domain)
+  let result = recipe.call_method(matrix, "clear_denoms", [], kwargs={
+    "convert": Bool(convert),
+  })
+  recipe.request_str(recipe.render_advanced("clear_denoms_expr", result))
 }
 
 ///|
@@ -2186,28 +2158,15 @@ pub fn domainmatrix_clear_denoms_rowwise_expr(
   domain_spec : String,
   convert? : Bool = false,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_exprs(a, domain_spec)
-  let clear_denoms_rowwise = resolve_method_callable(dm, "clear_denoms_rowwise")
-  let kwargs = py_dict_new()
-  py_dict_set_obj(kwargs, "convert", py_bool_obj(convert))
-  let res = py_call_with_args(clear_denoms_rowwise, [], kwargs)
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else {
-    fail("domainmatrix-clear-denoms-rowwise-tuple")
-  }
-  let den_obj = tuple_items[0]
-  let num_obj = tuple_items[1]
-  let den_domain = match py_get_attr(den_obj, "domain") {
-    Some(obj) => py_str_enum(obj)
-    None => fail("domainmatrix-clear-denoms-rowwise-domain")
-  }
-  let num_domain = match py_get_attr(num_obj, "domain") {
-    Some(obj) => py_str_enum(obj)
-    None => fail("domainmatrix-clear-denoms-rowwise-num-domain")
-  }
-  let den_matrix = oracle_domainmatrix_to_matrix_str(den_obj)
-  let num_matrix = oracle_domainmatrix_to_matrix_str(num_obj)
-  "\{den_matrix}@\{den_domain}||\{num_matrix}@\{num_domain}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix_expr(a, domain)
+  let result = recipe.call_method(matrix, "clear_denoms_rowwise", [], kwargs={
+    "convert": Bool(convert),
+  })
+  recipe.request_str(
+    recipe.render_advanced("clear_denoms_rowwise_expr", result),
+  )
 }
 
 ///|
@@ -2215,14 +2174,11 @@ pub fn domainmatrix_adj_det(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let adj_det = resolve_method_callable(dm, "adj_det")
-  let res = py_call_noargs(adj_det)
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else { fail("domainmatrix-adj-det-tuple") }
-  let adj = oracle_domainmatrix_to_matrix_str(tuple_items[0])
-  let det = py_str_value(tuple_items[1])
-  "\{adj}||\{det}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "adj_det", [])
+  recipe.request_str(recipe.render_advanced("adj_det", result))
 }
 
 ///|
@@ -2230,10 +2186,11 @@ pub fn domainmatrix_adjugate(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let adjugate = resolve_method_callable(dm, "adjugate")
-  let res = py_call_noargs(adjugate)
-  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "adjugate", [])
+  recipe.request_str(recipe.render_matrix(result))
 }
 
 ///|
@@ -2241,14 +2198,11 @@ pub fn domainmatrix_inv_den(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let inv_den = resolve_method_callable(dm, "inv_den")
-  let res = py_call_noargs(inv_den)
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else { fail("domainmatrix-inv-den-tuple") }
-  let inv = oracle_domainmatrix_to_matrix_str(tuple_items[0])
-  let den = py_str_value(tuple_items[1])
-  "\{inv}||\{den}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "inv_den", [])
+  recipe.request_str(recipe.render_advanced("inv_den", result))
 }
 
 ///|
@@ -2257,15 +2211,12 @@ pub fn domainmatrix_solve_den(
   b : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm_a = oracle_domainmatrix_from_ints(a, domain_spec)
-  let dm_b = oracle_domainmatrix_from_ints(b, domain_spec)
-  let solve_den = resolve_method_callable(dm_a, "solve_den")
-  let res = py_call_one(solve_den, dm_b)
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else { fail("domainmatrix-solve-den-tuple") }
-  let num = oracle_domainmatrix_to_matrix_str(tuple_items[0])
-  let den = py_str_value(tuple_items[1])
-  "\{num}||\{den}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let left = recipe.domainmatrix(a, domain)
+  let right = recipe.domainmatrix(b, domain)
+  let result = recipe.call_method(left, "solve_den", [Ref(right)])
+  recipe.request_str(recipe.render_advanced("solve_den", result))
 }
 
 ///|
@@ -2274,17 +2225,12 @@ pub fn domainmatrix_solve_den_rref(
   b : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm_a = oracle_domainmatrix_from_ints(a, domain_spec)
-  let dm_b = oracle_domainmatrix_from_ints(b, domain_spec)
-  let solve_den_rref = resolve_method_callable(dm_a, "solve_den_rref")
-  let res = py_call_one(solve_den_rref, dm_b)
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else {
-    fail("domainmatrix-solve-den-rref-tuple")
-  }
-  let num = oracle_domainmatrix_to_matrix_str(tuple_items[0])
-  let den = py_str_value(tuple_items[1])
-  "\{num}||\{den}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let left = recipe.domainmatrix(a, domain)
+  let right = recipe.domainmatrix(b, domain)
+  let result = recipe.call_method(left, "solve_den_rref", [Ref(right)])
+  recipe.request_str(recipe.render_advanced("solve_den_rref", result))
 }
 
 ///|
@@ -2292,9 +2238,11 @@ pub fn domainmatrix_content_expr(
   a : Array[Array[String]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_exprs(a, domain_spec)
-  let content = resolve_method_callable(dm, "content")
-  py_str_enum(py_call_noargs(content))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix_expr(a, domain)
+  let result = recipe.call_method(matrix, "content", [])
+  recipe.request_str(recipe.render_text(result))
 }
 
 ///|
@@ -2302,12 +2250,11 @@ pub fn domainmatrix_primitive_expr(
   a : Array[Array[String]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_exprs(a, domain_spec)
-  let primitive = resolve_method_callable(dm, "primitive")
-  let res = py_call_noargs(primitive)
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else { fail("domainmatrix-primitive-tuple") }
-  "\{py_str_value(tuple_items[0])}||\{oracle_domainmatrix_to_matrix_str(tuple_items[1])}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix_expr(a, domain)
+  let result = recipe.call_method(matrix, "primitive", [])
+  recipe.request_str(recipe.render_advanced("primitive", result))
 }
 
 ///|
@@ -2316,21 +2263,12 @@ pub fn domainmatrix_cancel_denom_expr(
   denom_expr : String,
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_exprs(a, domain_spec)
-  let cancel = resolve_method_callable(dm, "cancel_denom")
-  let convert = resolve_method_callable(
-    oracle_domain_from_spec(domain_spec),
-    "convert",
-  )
-  let denom_obj = objenum_to_obj(
-    py_call_one(convert, sympy_sympify_str(denom_expr)),
-  )
-  let res = py_call_one(cancel, denom_obj)
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else {
-    fail("domainmatrix-cancel-denom-tuple")
-  }
-  "\{oracle_domainmatrix_to_matrix_str(tuple_items[0])}||\{py_str_value(tuple_items[1])}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix_expr(a, domain)
+  let denominator = recipe.domain_expr(domain, denom_expr)
+  let result = recipe.call_method(matrix, "cancel_denom", [Ref(denominator)])
+  recipe.request_str(recipe.render_advanced("cancel_denom", result))
 }
 
 ///|
@@ -2339,21 +2277,14 @@ pub fn domainmatrix_cancel_denom_elementwise_expr(
   denom_expr : String,
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_exprs(a, domain_spec)
-  let cancel = resolve_method_callable(dm, "cancel_denom_elementwise")
-  let convert = resolve_method_callable(
-    oracle_domain_from_spec(domain_spec),
-    "convert",
-  )
-  let denom_obj = objenum_to_obj(
-    py_call_one(convert, sympy_sympify_str(denom_expr)),
-  )
-  let res = py_call_one(cancel, denom_obj)
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else {
-    fail("domainmatrix-cancel-denom-elementwise-tuple")
-  }
-  "\{oracle_domainmatrix_to_matrix_str(tuple_items[0])}||\{oracle_domainmatrix_to_matrix_str(tuple_items[1])}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix_expr(a, domain)
+  let denominator = recipe.domain_expr(domain, denom_expr)
+  let result = recipe.call_method(matrix, "cancel_denom_elementwise", [
+    Ref(denominator),
+  ])
+  recipe.request_str(recipe.render_advanced("cancel_denom_elementwise", result))
 }
 
 ///|
@@ -2361,14 +2292,11 @@ pub fn domainmatrix_adj_poly_det(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let adj_poly_det = resolve_method_callable(dm, "adj_poly_det")
-  let res = py_call_noargs(adj_poly_det)
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else {
-    fail("domainmatrix-adj-poly-det-tuple")
-  }
-  "\{py_str_value(tuple_items[0])}||\{py_str_value(tuple_items[1])}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "adj_poly_det", [])
+  recipe.request_str(recipe.render_advanced("adj_poly_det", result))
 }
 
 ///|
@@ -2377,20 +2305,12 @@ pub fn domainmatrix_eval_poly(
   coeffs : Array[String],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let eval_poly = resolve_method_callable(dm, "eval_poly")
-  let convert = resolve_method_callable(
-    oracle_domain_from_spec(domain_spec),
-    "convert",
-  )
-  let coeff_objs : Array[@py.PyObject] = Array::new()
-  for coeff in coeffs {
-    coeff_objs.push(
-      objenum_to_obj(py_call_one(convert, sympy_sympify_str(coeff))),
-    )
-  }
-  let res = py_call_one(eval_poly, py_list_from_objects(coeff_objs).obj())
-  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let coefficients = recipe.domain_expr_list(coeffs, domain)
+  let result = recipe.call_method(matrix, "eval_poly", [Ref(coefficients)])
+  recipe.request_str(recipe.render_matrix(result))
 }
 
 ///|
@@ -2400,25 +2320,16 @@ pub fn domainmatrix_eval_poly_mul(
   b : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm_a = oracle_domainmatrix_from_ints(a, domain_spec)
-  let dm_b = oracle_domainmatrix_from_ints(b, domain_spec)
-  let eval_poly_mul = resolve_method_callable(dm_a, "eval_poly_mul")
-  let convert = resolve_method_callable(
-    oracle_domain_from_spec(domain_spec),
-    "convert",
-  )
-  let coeff_objs : Array[@py.PyObject] = Array::new()
-  for coeff in coeffs {
-    coeff_objs.push(
-      objenum_to_obj(py_call_one(convert, sympy_sympify_str(coeff))),
-    )
-  }
-  let res = py_call_two(
-    eval_poly_mul,
-    py_list_from_objects(coeff_objs).obj(),
-    dm_b,
-  )
-  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let left = recipe.domainmatrix(a, domain)
+  let right = recipe.domainmatrix(b, domain)
+  let coefficients = recipe.domain_expr_list(coeffs, domain)
+  let result = recipe.call_method(left, "eval_poly_mul", [
+    Ref(coefficients),
+    Ref(right),
+  ])
+  recipe.request_str(recipe.render_matrix(result))
 }
 
 ///|
@@ -2427,15 +2338,12 @@ pub fn domainmatrix_solve_den_charpoly(
   b : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm_a = oracle_domainmatrix_from_ints(a, domain_spec)
-  let dm_b = oracle_domainmatrix_from_ints(b, domain_spec)
-  let solve = resolve_method_callable(dm_a, "solve_den_charpoly")
-  let res = py_call_one(solve, dm_b)
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else {
-    fail("domainmatrix-solve-den-charpoly-tuple")
-  }
-  "\{oracle_domainmatrix_to_matrix_str(tuple_items[0])}||\{py_str_value(tuple_items[1])}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let left = recipe.domainmatrix(a, domain)
+  let right = recipe.domainmatrix(b, domain)
+  let result = recipe.call_method(left, "solve_den_charpoly", [Ref(right)])
+  recipe.request_str(recipe.render_advanced("solve_den_charpoly", result))
 }
 
 ///|
@@ -2528,22 +2436,20 @@ pub fn ddm_nullspace(
 
 ///|
 pub fn domainmatrix_lll(a : Array[Array[Int]]) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, "ZZ")
-  let lll = resolve_method_callable(dm, "lll")
-  let reduced = py_call_noargs(lll)
-  oracle_domainmatrix_to_matrix_str(objenum_to_obj(reduced))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain("ZZ")
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "lll", [])
+  recipe.request_str(recipe.render_matrix(result))
 }
 
 ///|
 pub fn domainmatrix_lll_transform(a : Array[Array[Int]]) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, "ZZ")
-  let lll_transform = resolve_method_callable(dm, "lll_transform")
-  let res = py_call_noargs(lll_transform)
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else { fail("domainmatrix-lll-transform") }
-  let reduced = oracle_domainmatrix_to_matrix_str(tuple_items[0])
-  let transform = oracle_domainmatrix_to_matrix_str(tuple_items[1])
-  "\{reduced}||\{transform}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain("ZZ")
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "lll_transform", [])
+  recipe.request_str(recipe.render_advanced("lll_transform", result))
 }
 
 ///|
@@ -2560,15 +2466,14 @@ pub fn domainmatrix_invariant_factors(
   rows : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(rows, domain_spec)
-  let smf = sympy_call_must(
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(rows, domain)
+  let smith = recipe.call_path(
     "sympy.polys.matrices.normalforms.smith_normal_form",
-    [PyObj(dm)],
+    [Ref(matrix)],
   )
-  let smf_rows = normalize_smith_int_rows(
-    oracle_domainmatrix_to_int_rows(objenum_to_obj(smf)),
-  )
-  int_tuple_text(diagonal_ints(smf_rows))
+  recipe.request_str(recipe.render_smith("invariant_factors", matrix, smith))
 }
 
 ///|
@@ -2576,16 +2481,16 @@ pub fn domainmatrix_is_smith_normal_form(
   rows : Array[Array[Int]],
   domain_spec : String,
 ) -> Bool raise {
-  let dm = oracle_domainmatrix_from_ints(rows, domain_spec)
-  let smf = sympy_call_must(
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(rows, domain)
+  let smith = recipe.call_path(
     "sympy.polys.matrices.normalforms.smith_normal_form",
-    [PyObj(dm)],
+    [Ref(matrix)],
   )
-  let lhs = normalize_smith_int_rows(oracle_domainmatrix_to_int_rows(dm))
-  let rhs = normalize_smith_int_rows(
-    oracle_domainmatrix_to_int_rows(objenum_to_obj(smf)),
+  recipe.request_bool(
+    recipe.render_smith("is_smith_normal_form", matrix, smith),
   )
-  lhs == rhs
 }
 
 ///|
@@ -2593,15 +2498,14 @@ pub fn domainmatrix_smith_normal_form(
   rows : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(rows, domain_spec)
-  let smf = sympy_call_must(
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(rows, domain)
+  let smith = recipe.call_path(
     "sympy.polys.matrices.normalforms.smith_normal_form",
-    [PyObj(dm)],
+    [Ref(matrix)],
   )
-  let normalized = normalize_smith_int_rows(
-    oracle_domainmatrix_to_int_rows(objenum_to_obj(smf)),
-  )
-  py_str_obj(oracle_matrix_from_ints(normalized))
+  recipe.request_str(recipe.render_smith("smith_normal_form", matrix, smith))
 }
 
 ///|
@@ -2609,16 +2513,11 @@ pub fn domainmatrix_smith_normal_decomp(
   rows : Array[Array[Int]],
   _domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(rows, "ZZ")
-  let decomp = sympy_call_must("sympy.matrices.normalforms._snd", [PyObj(dm)])
-  let tuple_items = py_list_to_pyobjects(decomp)
-  guard tuple_items.length() >= 3 else {
-    fail("domainmatrix-smith-normal-decomp")
-  }
-  let smf = oracle_domainmatrix_to_matrix_str(tuple_items[0])
-  let s = oracle_domainmatrix_to_matrix_str(tuple_items[1])
-  let t = oracle_domainmatrix_to_matrix_str(tuple_items[2])
-  "\{smf}||\{s}||\{t}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain("ZZ")
+  let matrix = recipe.domainmatrix(rows, domain)
+  let result = recipe.call_path("sympy.matrices.normalforms._snd", [Ref(matrix)])
+  recipe.request_str(recipe.render_advanced("smith_normal_decomp", result))
 }
 
 ///|
@@ -2626,37 +2525,13 @@ pub fn domainmatrix_dom_eigenvects_summary(
   rows : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(rows, domain_spec)
-  let res = sympy_call_must("sympy.polys.matrices.eigen.dom_eigenvects", [
-    PyObj(dm),
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(rows, domain)
+  let result = recipe.call_path("sympy.polys.matrices.eigen.dom_eigenvects", [
+    Ref(matrix),
   ])
-  let groups = py_list_to_pyobjects(res)
-  guard groups.length() >= 2 else { fail("domainmatrix-dom-eigenvects") }
-  let parts : Array[String] = Array::new()
-  let rational = py_list_to_pyobjects(@py.PyObjectEnum::create(groups[0]))
-  for item in rational {
-    let tup = py_list_to_pyobjects(@py.PyObjectEnum::create(item))
-    guard tup.length() >= 4 else {
-      fail("domainmatrix-dom-eigenvects-rational")
-    }
-    let eigenval = py_str_obj(tup[1])
-    let multiplicity = py_obj_to_int(tup[2]).to_string()
-    let basis = oracle_domainmatrix_to_matrix_str(tup[3])
-    parts.push("r:\{eigenval}:\{multiplicity}:\{basis}")
-  }
-  let algebraic = py_list_to_pyobjects(@py.PyObjectEnum::create(groups[1]))
-  for item in algebraic {
-    let tup = py_list_to_pyobjects(@py.PyObjectEnum::create(item))
-    guard tup.length() >= 4 else {
-      fail("domainmatrix-dom-eigenvects-algebraic")
-    }
-    let coeffs = poly_obj_expr_text(tup[1])
-    let multiplicity = py_obj_to_int(tup[2]).to_string()
-    let basis = oracle_domainmatrix_to_matrix_str(tup[3])
-    parts.push("a:\{coeffs}:\{multiplicity}:\{basis}")
-  }
-  parts.sort()
-  parts.join("||")
+  recipe.request_str(recipe.render_eigen(result))
 }
 
 ///|
@@ -2665,15 +2540,12 @@ pub fn domainmatrix_internal_solve_summary(
   b_rows : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm_a = oracle_domainmatrix_from_ints(a_rows, domain_spec)
-  let dm_b = oracle_domainmatrix_from_ints(b_rows, domain_spec)
-  let solve = resolve_method_callable(dm_a, "_solve")
-  let result = py_call_one(solve, dm_b)
-  let parts = py_list_to_pyobjects(result)
-  guard parts.length() >= 2 else { fail("domainmatrix-_solve") }
-  let particular = oracle_domainmatrix_to_matrix_str(parts[0])
-  let nullspace = oracle_domainmatrix_to_matrix_str(parts[1])
-  "\{particular}||\{nullspace}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let left = recipe.domainmatrix(a_rows, domain)
+  let right = recipe.domainmatrix(b_rows, domain)
+  let result = recipe.call_method(left, "_solve", [Ref(right)])
+  recipe.request_str(recipe.render_advanced("internal_solve", result))
 }
 
 ///|
@@ -3000,83 +2872,6 @@ fn matrix_obj_to_int_code(mat_obj : @py.PyObject) -> String raise {
 }
 
 ///|
-fn oracle_domainmatrix_to_int_rows(
-  dm_obj : @py.PyObject,
-) -> Array[Array[Int]] raise {
-  let to_matrix = resolve_method_callable(dm_obj, "to_Matrix")
-  let mat_enum = py_call_noargs(to_matrix)
-  matrix_obj_to_int_rows(objenum_to_obj(mat_enum))
-}
-
-///|
-fn matrix_obj_to_int_rows(mat_obj : @py.PyObject) -> Array[Array[Int]] raise {
-  let tolist = resolve_method_callable(mat_obj, "tolist")
-  let list_enum = py_call_noargs(tolist)
-  let row_objs = py_list_to_pyobjects(list_enum)
-  let rows : Array[Array[Int]] = Array::new()
-  for row_obj in row_objs {
-    let cell_objs = py_list_to_pyobjects(@py.PyObjectEnum::create(row_obj))
-    let cols : Array[Int] = Array::new()
-    for cell in cell_objs {
-      cols.push(py_obj_to_int(cell))
-    }
-    rows.push(cols)
-  }
-  rows
-}
-
-///|
-fn diagonal_ints(rows : Array[Array[Int]]) -> Array[Int] {
-  let out : Array[Int] = Array::new()
-  let row_count = rows.length()
-  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
-  let limit = if row_count < col_count { row_count } else { col_count }
-  for i in 0..<limit {
-    out.push(rows[i][i])
-  }
-  out
-}
-
-///|
-fn normalize_smith_int_rows(rows : Array[Array[Int]]) -> Array[Array[Int]] {
-  let out : Array[Array[Int]] = Array::new()
-  for row in rows {
-    let row_copy : Array[Int] = Array::new()
-    for value in row {
-      row_copy.push(value)
-    }
-    out.push(row_copy)
-  }
-  let row_count = out.length()
-  let col_count = if row_count == 0 { 0 } else { out[0].length() }
-  let limit = if row_count < col_count { row_count } else { col_count }
-  for i in 0..<limit {
-    if out[i][i] < 0 {
-      out[i].set(i, -out[i][i])
-    }
-  }
-  out
-}
-
-///|
-fn int_tuple_text(values : Array[Int]) -> String {
-  if values.is_empty() {
-    return "()"
-  }
-  if values.length() == 1 {
-    return "(\{values[0]},)"
-  }
-  let joined = values.map(v => v.to_string()).join(", ")
-  "(\{joined})"
-}
-
-///|
-fn poly_obj_expr_text(poly_obj : @py.PyObject) -> String raise {
-  let as_expr = resolve_method_callable(poly_obj, "as_expr")
-  py_str_enum(py_call_noargs(as_expr))
-}
-
-///|
 fn oracle_matrix_from_ints(rows : Array[Array[Int]]) -> @py.PyObject raise {
   let row_count = rows.length()
   let col_count = if row_count == 0 { 0 } else { rows[0].length() }
@@ -3264,42 +3059,6 @@ pub fn sdm_berk_summary(
     PyObj(domain_obj),
   ])
   remove_spaces(py_str_enum(res))
-}
-
-///|
-fn oracle_domainmatrix_from_exprs(
-  rows : Array[Array[String]],
-  domain_spec : String,
-) -> @py.PyObject raise {
-  let row_count = rows.length()
-  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
-  for row in rows {
-    if row.length() != col_count {
-      fail("domainmatrix-expr-ragged")
-    }
-  }
-  let domain_obj = oracle_domain_from_spec(domain_spec)
-  let convert = resolve_method_callable(domain_obj, "convert")
-  let py_rows : Array[@py.PyObject] = Array::new()
-  for row in rows {
-    let py_row : Array[@py.PyObject] = Array::new()
-    for value in row {
-      let expr_obj = sympy_sympify_str(value)
-      py_row.push(objenum_to_obj(py_call_one(convert, expr_obj)))
-    }
-    py_rows.push(py_list_from_objects(py_row).obj())
-  }
-  let data_obj = py_list_from_objects(py_rows).obj()
-  let shape_obj = py_tuple_from_objects([
-    py_int_obj(row_count),
-    py_int_obj(col_count),
-  ]).obj()
-  let dm_enum = sympy_call_must("sympy.polys.matrices.DomainMatrix", [
-    PyObj(data_obj),
-    PyObj(shape_obj),
-    PyObj(domain_obj),
-  ])
-  objenum_to_obj(dm_enum)
 }
 
 ///|
