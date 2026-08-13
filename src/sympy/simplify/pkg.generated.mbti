@@ -3,7 +3,6 @@ package "CAIMEOX/symbit/sympy/simplify"
 
 import {
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/sympy",
 }
 
 // Values
@@ -122,7 +121,5 @@ pub fn trigsimp_srepr(@symcore.Expr) -> String raise
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-

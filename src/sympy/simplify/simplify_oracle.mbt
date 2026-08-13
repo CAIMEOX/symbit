@@ -1,70 +1,146 @@
 ///|
-pub type OracleArg = @sympy.OracleArg
-
-///|
-fn sympy_call(
-  path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum? raise {
-  @sympy.sympy_call(path, args, kwargs~)
+priv struct SimplifyRecipe {
+  builder : @recipe.Builder
+  encoder : @exprcodec.Encoder
 }
 
 ///|
-fn sympy_call_must(
+fn SimplifyRecipe::new() -> SimplifyRecipe raise {
+  let builder = @recipe.Builder::new()
+  { builder, encoder: @exprcodec.Encoder::new(builder) }
+}
+
+///|
+fn recipe_callable(
+  builder : @recipe.Builder,
   path : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum raise {
-  match sympy_call(path, args, kwargs~) {
-    Some(obj) => obj
-    None => fail("sympy-call-none:\{path}")
+) -> @recipe.ValueRef raise {
+  let parts : Array[String] = []
+  for part in path.trim().split(".") {
+    parts.push(part.to_owned())
   }
+  guard parts.length() >= 2 && parts[0] == "sympy" else {
+    fail("sympy-call-invalid:\{path}")
+  }
+  let module_name = parts[0:parts.length() - 1].join(".")
+  let module_obj = builder.import_module(module_name)
+  builder.getattr(module_obj, parts[parts.length() - 1])
 }
 
 ///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  @sympy.objenum_to_obj(obj)
+fn SimplifyRecipe::call(
+  self : SimplifyRecipe,
+  path : String,
+  args : Array[@recipe.RecipeArg],
+  kwargs? : Map[String, @recipe.RecipeArg] = {},
+) -> @recipe.ValueRef raise {
+  let callable = recipe_callable(self.builder, path)
+  let result = self.builder.call(callable, args, kwargs~)
+  self.builder.require_non_none(result, message="sympy-call-none:\{path}")
 }
 
 ///|
-fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
-  @sympy.expr_to_sympy(expr)
+fn SimplifyRecipe::expr(
+  self : SimplifyRecipe,
+  expression : @symcore.Expr,
+) -> @recipe.ValueRef raise {
+  self.encoder.encode(expression)
 }
 
 ///|
-fn py_gil_ensure() -> Int {
-  @sympy.py_gil_ensure()
+fn SimplifyRecipe::expr_list(
+  self : SimplifyRecipe,
+  expressions : Array[@symcore.Expr],
+) -> @recipe.ValueRef raise {
+  let items : Array[@recipe.RecipeArg] = []
+  for expression in expressions {
+    items.push(Ref(self.expr(expression)))
+  }
+  self.builder.list(items)
 }
 
 ///|
-fn py_gil_release(state : Int) -> Unit {
-  @sympy.py_gil_release(state)
+fn SimplifyRecipe::unary(
+  self : SimplifyRecipe,
+  path : String,
+  expression : @symcore.Expr,
+) -> @recipe.ValueRef raise {
+  self.call(path, [Ref(self.expr(expression))])
 }
 
 ///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let out = obj.to_string()
-  py_gil_release(state)
-  out
+fn unary_simplify_srepr(
+  path : String,
+  expression : @symcore.Expr,
+) -> String raise {
+  let recipe = SimplifyRecipe::new()
+  let result = recipe.unary(path, expression)
+  recipe.builder.request_srepr(result)
 }
 
 ///|
-fn srepr_obj(obj : @py.PyObject) -> String raise {
-  let rep = sympy_call_must("sympy.srepr", [PyObj(obj)])
-  py_str_obj(objenum_to_obj(rep))
+fn SimplifyRecipe::equivalent_result(
+  self : SimplifyRecipe,
+  oracle : @recipe.ValueRef,
+  candidate : @symcore.Expr,
+) -> @recipe.ValueRef raise {
+  let candidate = self.expr(candidate)
+  let negative = self.call("sympy.Mul", [DecimalInt("-1"), Ref(oracle)])
+  let difference = self.call("sympy.Add", [Ref(candidate), Ref(negative)])
+  self.call("sympy.simplify", [Ref(difference)])
+}
+
+///|
+fn unary_equivalent(
+  path : String,
+  input_expr : @symcore.Expr,
+  candidate : @symcore.Expr,
+) -> Bool raise {
+  let recipe = SimplifyRecipe::new()
+  let oracle = recipe.unary(path, input_expr)
+  let result = recipe.equivalent_result(oracle, candidate)
+  recipe.builder.request_srepr(result) == "Integer(0)"
+}
+
+///|
+fn SimplifyRecipe::ratsimpmodprime_result(
+  self : SimplifyRecipe,
+  expression : @symcore.Expr,
+  basis : Array[@symcore.Expr],
+  gens : Array[@symcore.Expr],
+  quick : Bool,
+  polynomial : Bool,
+) -> @recipe.ValueRef raise {
+  let args : Array[@recipe.RecipeArg] = [
+    Ref(self.expr(expression)),
+    Ref(self.expr_list(basis)),
+  ]
+  for gen in gens {
+    args.push(Ref(self.expr(gen)))
+  }
+  self.call("sympy.ratsimpmodprime", args, kwargs={
+    "quick": Bool(quick),
+    "polynomial": Bool(polynomial),
+  })
+}
+
+///|
+fn SimplifyRecipe::nsimplify_with_constants_result(
+  self : SimplifyRecipe,
+  expression : @symcore.Expr,
+  constants : Array[@symcore.Expr],
+) -> @recipe.ValueRef raise {
+  self.call("sympy.nsimplify", [
+    Ref(self.expr(expression)),
+    Ref(self.expr_list(constants)),
+  ])
 }
 
 ///|
 pub fn expr_srepr(expr : @symcore.Expr) -> String raise {
-  srepr_obj(expr_to_sympy(expr))
-}
-
-///|
-fn unary_simplify_srepr(path : String, expr : @symcore.Expr) -> String raise {
-  let out = sympy_call_must(path, [PyObj(expr_to_sympy(expr))])
-  srepr_obj(objenum_to_obj(out))
+  let recipe = SimplifyRecipe::new()
+  let expression = recipe.expr(expr)
+  recipe.builder.request_srepr(expression)
 }
 
 ///|
@@ -98,15 +174,6 @@ pub fn ratsimp_srepr(expr : @symcore.Expr) -> String raise {
 }
 
 ///|
-fn expr_list_arg(exprs : Array[@symcore.Expr]) -> OracleArg raise {
-  let items : Array[OracleArg] = Array::new()
-  for expr in exprs {
-    items.push(PyObj(expr_to_sympy(expr)))
-  }
-  List(items)
-}
-
-///|
 pub fn ratsimpmodprime_srepr(
   expr : @symcore.Expr,
   basis : Array[@symcore.Expr],
@@ -114,18 +181,11 @@ pub fn ratsimpmodprime_srepr(
   quick? : Bool = true,
   polynomial? : Bool = false,
 ) -> String raise {
-  let args : Array[OracleArg] = [
-    PyObj(expr_to_sympy(expr)),
-    expr_list_arg(basis),
-  ]
-  for gen in gens {
-    args.push(PyObj(expr_to_sympy(gen)))
-  }
-  let out = sympy_call_must("sympy.ratsimpmodprime", args, kwargs={
-    "quick": Bool(quick),
-    "polynomial": Bool(polynomial),
-  })
-  srepr_obj(objenum_to_obj(out))
+  let recipe = SimplifyRecipe::new()
+  let result = recipe.ratsimpmodprime_result(
+    expr, basis, gens, quick, polynomial,
+  )
+  recipe.builder.request_srepr(result)
 }
 
 ///|
@@ -141,24 +201,6 @@ pub fn combsimp_srepr(expr : @symcore.Expr) -> String raise {
 ///|
 pub fn hyperexpand_srepr(expr : @symcore.Expr) -> String raise {
   unary_simplify_srepr("sympy.hyperexpand", expr)
-}
-
-///|
-fn unary_equivalent(
-  path : String,
-  input_expr : @symcore.Expr,
-  candidate : @symcore.Expr,
-) -> Bool raise {
-  let oracle_enum = sympy_call_must(path, [PyObj(expr_to_sympy(input_expr))])
-  let oracle_obj = objenum_to_obj(oracle_enum)
-  let cand_obj = expr_to_sympy(candidate)
-  let neg_oracle = sympy_call_must("sympy.Mul", [Int(-1), PyObj(oracle_obj)])
-  let diff = sympy_call_must("sympy.Add", [
-    PyObj(cand_obj),
-    PyObj(objenum_to_obj(neg_oracle)),
-  ])
-  let simp = sympy_call_must("sympy.simplify", [PyObj(objenum_to_obj(diff))])
-  srepr_obj(objenum_to_obj(simp)) == "Integer(0)"
 }
 
 ///|
@@ -186,26 +228,12 @@ pub fn ratsimpmodprime_equivalent(
   quick? : Bool = true,
   polynomial? : Bool = false,
 ) -> Bool raise {
-  let args : Array[OracleArg] = [
-    PyObj(expr_to_sympy(input_expr)),
-    expr_list_arg(basis),
-  ]
-  for gen in gens {
-    args.push(PyObj(expr_to_sympy(gen)))
-  }
-  let oracle_enum = sympy_call_must("sympy.ratsimpmodprime", args, kwargs={
-    "quick": Bool(quick),
-    "polynomial": Bool(polynomial),
-  })
-  let oracle_obj = objenum_to_obj(oracle_enum)
-  let cand_obj = expr_to_sympy(candidate)
-  let neg_oracle = sympy_call_must("sympy.Mul", [Int(-1), PyObj(oracle_obj)])
-  let diff = sympy_call_must("sympy.Add", [
-    PyObj(cand_obj),
-    PyObj(objenum_to_obj(neg_oracle)),
-  ])
-  let simp = sympy_call_must("sympy.simplify", [PyObj(objenum_to_obj(diff))])
-  srepr_obj(objenum_to_obj(simp)) == "Integer(0)"
+  let recipe = SimplifyRecipe::new()
+  let oracle = recipe.ratsimpmodprime_result(
+    input_expr, basis, gens, quick, polynomial,
+  )
+  let result = recipe.equivalent_result(oracle, candidate)
+  recipe.builder.request_srepr(result) == "Integer(0)"
 }
 
 ///|
@@ -272,11 +300,9 @@ pub fn nsimplify_with_constants_srepr(
   expr : @symcore.Expr,
   constants : Array[@symcore.Expr],
 ) -> String raise {
-  let out = sympy_call_must("sympy.nsimplify", [
-    PyObj(expr_to_sympy(expr)),
-    expr_list_arg(constants),
-  ])
-  srepr_obj(objenum_to_obj(out))
+  let recipe = SimplifyRecipe::new()
+  let result = recipe.nsimplify_with_constants_result(expr, constants)
+  recipe.builder.request_srepr(result)
 }
 
 ///|
@@ -366,19 +392,10 @@ pub fn nsimplify_equivalent_with_constants(
   constants : Array[@symcore.Expr],
   candidate : @symcore.Expr,
 ) -> Bool raise {
-  let oracle_enum = sympy_call_must("sympy.nsimplify", [
-    PyObj(expr_to_sympy(input_expr)),
-    expr_list_arg(constants),
-  ])
-  let oracle_obj = objenum_to_obj(oracle_enum)
-  let cand_obj = expr_to_sympy(candidate)
-  let neg_oracle = sympy_call_must("sympy.Mul", [Int(-1), PyObj(oracle_obj)])
-  let diff = sympy_call_must("sympy.Add", [
-    PyObj(cand_obj),
-    PyObj(objenum_to_obj(neg_oracle)),
-  ])
-  let simp = sympy_call_must("sympy.simplify", [PyObj(objenum_to_obj(diff))])
-  srepr_obj(objenum_to_obj(simp)) == "Integer(0)"
+  let recipe = SimplifyRecipe::new()
+  let oracle = recipe.nsimplify_with_constants_result(input_expr, constants)
+  let result = recipe.equivalent_result(oracle, candidate)
+  recipe.builder.request_srepr(result) == "Integer(0)"
 }
 
 ///|
@@ -428,21 +445,21 @@ pub fn separatevars_srepr(
   expr : @symcore.Expr,
   force? : Bool = false,
 ) -> String raise {
-  let out = sympy_call_must(
-    "sympy.separatevars",
-    [PyObj(expr_to_sympy(expr))],
-    kwargs={ "force": Bool(force) },
-  )
-  srepr_obj(objenum_to_obj(out))
+  let recipe = SimplifyRecipe::new()
+  let result = recipe.call("sympy.separatevars", [Ref(recipe.expr(expr))], kwargs={
+    "force": Bool(force),
+  })
+  recipe.builder.request_srepr(result)
 }
 
 ///|
 pub fn hypersimp_srepr(f : @symcore.Expr, k : @symcore.Expr) -> String raise {
-  let out = sympy_call_must("sympy.hypersimp", [
-    PyObj(expr_to_sympy(f)),
-    PyObj(expr_to_sympy(k)),
+  let recipe = SimplifyRecipe::new()
+  let result = recipe.call("sympy.hypersimp", [
+    Ref(recipe.expr(f)),
+    Ref(recipe.expr(k)),
   ])
-  srepr_obj(objenum_to_obj(out))
+  recipe.builder.request_srepr(result)
 }
 
 ///|
@@ -451,18 +468,13 @@ pub fn hypersimilar_bool(
   g : @symcore.Expr,
   k : @symcore.Expr,
 ) -> Bool raise {
-  let out = sympy_call_must("sympy.hypersimilar", [
-    PyObj(expr_to_sympy(f)),
-    PyObj(expr_to_sympy(g)),
-    PyObj(expr_to_sympy(k)),
+  let recipe = SimplifyRecipe::new()
+  let result = recipe.call("sympy.hypersimilar", [
+    Ref(recipe.expr(f)),
+    Ref(recipe.expr(g)),
+    Ref(recipe.expr(k)),
   ])
-  match out {
-    PyBool(v) => {
-      let s = py_str_obj(v.obj())
-      s == "True"
-    }
-    _ => false
-  }
+  recipe.builder.request_bool(result)
 }
 
 ///|
@@ -479,11 +491,6 @@ pub fn fu_equivalent(
 }
 
 ///|
-fn fu_rule_path(rule : String) -> String {
-  "sympy.simplify.fu.\{rule}"
-}
-
-///|
 pub fn futrig_srepr(expr : @symcore.Expr) -> String raise {
   unary_simplify_srepr("sympy.simplify.trigsimp.futrig", expr)
 }
@@ -494,6 +501,11 @@ pub fn futrig_equivalent(
   candidate : @symcore.Expr,
 ) -> Bool raise {
   unary_equivalent("sympy.simplify.trigsimp.futrig", input_expr, candidate)
+}
+
+///|
+fn fu_rule_path(rule : String) -> String {
+  "sympy.simplify.fu.\{rule}"
 }
 
 ///|
