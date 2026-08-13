@@ -3409,23 +3409,6 @@ fn ensure_domains_module_oracle() -> @py.PyModule raise {
 }
 
 ///|
-fn ensure_distributedmodules_module_oracle() -> @py.PyModule raise {
-  ensure_python()
-  let state = py_gil_ensure()
-  let mod = match @py.pyimport("sympy.polys.distributedmodules") {
-    Some(m) => m
-    None => {
-      py_gil_release(state)
-      fail("sympy-polys-distributedmodules-missing")
-    }
-  }
-  py_gil_release(state)
-  mod
-}
-
-///|
-
-///|
 fn resolve_callable(mod : @py.PyModule, name : String) -> @py.PyCallable raise {
   let state = py_gil_ensure()
   let res = try {
@@ -4953,132 +4936,40 @@ fn sympy_domain_elem(
 }
 
 ///|
-fn sdm_oracle_tuple_obj(values : Array[Int]) -> @py.PyObject {
-  let items : Array[@py.PyObject] = []
-  for value in values {
-    items.push(py_int_obj(value))
-  }
-  py_tuple_from_objects(items).obj()
-}
-
-///|
-fn sdm_oracle_coeff_obj(value : Int, domain : String) -> @py.PyObject raise {
-  sympy_domain_elem(@symnum.BigRational::from_int(value), domain)
-}
-
-///|
-fn sdm_oracle_term_obj(
-  term : (Array[Int], Int),
-  domain : String,
-) -> @py.PyObject raise {
-  py_tuple_from_objects([
-    sdm_oracle_tuple_obj(term.0),
-    sdm_oracle_coeff_obj(term.1, domain),
-  ]).obj()
-}
-
-///|
-fn sdm_oracle_terms_obj(
-  terms : Array[(Array[Int], Int)],
-  domain : String,
-) -> @py.PyObject raise {
-  let items : Array[@py.PyObject] = []
-  for term in terms {
-    items.push(sdm_oracle_term_obj(term, domain))
-  }
-  py_list_from_objects(items).obj()
-}
-
-///|
-fn sdm_oracle_basis_obj(
-  basis : Array[Array[(Array[Int], Int)]],
-  domain : String,
-) -> @py.PyObject raise {
-  let items : Array[@py.PyObject] = []
-  for term_list in basis {
-    items.push(sdm_oracle_terms_obj(term_list, domain))
-  }
-  py_list_from_objects(items).obj()
-}
-
-///|
-fn sdm_oracle_dict_obj(
-  terms : Array[(Array[Int], Int)],
-  domain : String,
-) -> @py.PyObject raise {
-  let dict = py_dict_new()
-  let setitem = resolve_method_callable(dict.obj(), "__setitem__")
-  for term in terms {
-    let key = sdm_oracle_tuple_obj(term.0)
-    let value = sdm_oracle_coeff_obj(term.1, domain)
-    let pair = py_tuple_from_objects([key, value])
-    let _ = py_call_object_allow_none(setitem, pair, print_err=true)
-  }
-  dict.obj()
-}
-
-///|
-fn sdm_oracle_order_obj(name : String) -> @py.PyObject raise {
-  let sympy = ensure_sympy_module_oracle()
-  match sympy.get_attr(name, print_err=false) {
-    Some(obj) => objenum_to_obj(obj)
-    None => fail("sympy-order-missing:\{name}")
-  }
-}
-
-///|
-fn sdm_oracle_nf_obj(name : String) -> @py.PyObject raise {
-  let dm_mod = ensure_distributedmodules_module_oracle()
-  let function_name = match name {
-    "buchberger" => "sdm_nf_buchberger"
-    "reduced" | "buchberger_reduced" => "sdm_nf_buchberger_reduced"
-    _ => "sdm_nf_mora"
-  }
-  resolve_callable(dm_mod, function_name).obj()
-}
-
-///|
-fn sdm_oracle_call(
-  name : String,
-  args : Array[LegacyArg],
-) -> @py.PyObjectEnum raise {
-  sympy_call_must("sympy.polys.distributedmodules.\{name}", args)
-}
-
-///|
-fn sdm_oracle_compact(name : String, args : Array[LegacyArg]) -> String raise {
-  remove_spaces(py_dense_str(sdm_oracle_call(name, args)))
-}
-
-///|
 pub fn sdm_monomial_mul(m : Array[Int], x : Array[Int]) -> String raise {
-  sdm_oracle_compact("sdm_monomial_mul", [
-    PyObj(sdm_oracle_tuple_obj(m)),
-    PyObj(sdm_oracle_tuple_obj(x)),
+  let recipe = DistributedSdmRecipe::new()
+  let result = recipe.call("sdm_monomial_mul", [
+    Ref(recipe.monomial(m)),
+    Ref(recipe.monomial(x)),
   ])
+  recipe.request_compact(result)
 }
 
 ///|
 pub fn sdm_monomial_deg(m : Array[Int]) -> Int raise {
-  let res = sdm_oracle_call("sdm_monomial_deg", [PyObj(sdm_oracle_tuple_obj(m))])
-  py_obj_to_int(objenum_to_obj(res))
+  let recipe = DistributedSdmRecipe::new()
+  let result = recipe.call("sdm_monomial_deg", [Ref(recipe.monomial(m))])
+  recipe.request_int(result)
 }
 
 ///|
 pub fn sdm_monomial_lcm(a : Array[Int], b : Array[Int]) -> String raise {
-  sdm_oracle_compact("sdm_monomial_lcm", [
-    PyObj(sdm_oracle_tuple_obj(a)),
-    PyObj(sdm_oracle_tuple_obj(b)),
+  let recipe = DistributedSdmRecipe::new()
+  let result = recipe.call("sdm_monomial_lcm", [
+    Ref(recipe.monomial(a)),
+    Ref(recipe.monomial(b)),
   ])
+  recipe.request_compact(result)
 }
 
 ///|
 pub fn sdm_monomial_divides(a : Array[Int], b : Array[Int]) -> Bool raise {
-  let res = sdm_oracle_call("sdm_monomial_divides", [
-    PyObj(sdm_oracle_tuple_obj(a)),
-    PyObj(sdm_oracle_tuple_obj(b)),
+  let recipe = DistributedSdmRecipe::new()
+  let result = recipe.call("sdm_monomial_divides", [
+    Ref(recipe.monomial(a)),
+    Ref(recipe.monomial(b)),
   ])
-  py_str_enum(res) == "True"
+  recipe.request_bool(result)
 }
 
 ///|
@@ -5086,10 +4977,13 @@ pub fn sdm_LC(
   f : Array[(Array[Int], Int)],
   domain? : String = "QQ",
 ) -> String raise {
-  sdm_oracle_compact("sdm_LC", [
-    PyObj(sdm_oracle_terms_obj(f, domain)),
-    PyObj(sympy_domain_obj(domain)),
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_LC", [
+    Ref(recipe.terms(f, domain_value)),
+    Ref(domain_value),
   ])
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5097,7 +4991,10 @@ pub fn sdm_LM(
   f : Array[(Array[Int], Int)],
   domain? : String = "QQ",
 ) -> String raise {
-  sdm_oracle_compact("sdm_LM", [PyObj(sdm_oracle_terms_obj(f, domain))])
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_LM", [Ref(recipe.terms(f, domain_value))])
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5105,7 +5002,10 @@ pub fn sdm_LT(
   f : Array[(Array[Int], Int)],
   domain? : String = "QQ",
 ) -> String raise {
-  sdm_oracle_compact("sdm_LT", [PyObj(sdm_oracle_terms_obj(f, domain))])
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_LT", [Ref(recipe.terms(f, domain_value))])
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5113,7 +5013,10 @@ pub fn sdm_to_dict(
   f : Array[(Array[Int], Int)],
   domain? : String = "QQ",
 ) -> String raise {
-  sdm_oracle_compact("sdm_to_dict", [PyObj(sdm_oracle_terms_obj(f, domain))])
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_to_dict", [Ref(recipe.terms(f, domain_value))])
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5121,7 +5024,10 @@ pub fn sdm_strip(
   f : Array[(Array[Int], Int)],
   domain? : String = "QQ",
 ) -> String raise {
-  sdm_oracle_compact("sdm_strip", [PyObj(sdm_oracle_terms_obj(f, domain))])
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_strip", [Ref(recipe.terms(f, domain_value))])
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5130,10 +5036,13 @@ pub fn sdm_sort(
   order? : String = "lex",
   domain? : String = "QQ",
 ) -> String raise {
-  sdm_oracle_compact("sdm_sort", [
-    PyObj(sdm_oracle_terms_obj(f, domain)),
-    PyObj(sdm_oracle_order_obj(order)),
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_sort", [
+    Ref(recipe.terms(f, domain_value)),
+    Ref(recipe.order(order)),
   ])
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5142,10 +5051,13 @@ pub fn sdm_from_dict(
   order? : String = "lex",
   domain? : String = "QQ",
 ) -> String raise {
-  sdm_oracle_compact("sdm_from_dict", [
-    PyObj(sdm_oracle_dict_obj(f, domain)),
-    PyObj(sdm_oracle_order_obj(order)),
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_from_dict", [
+    Ref(recipe.term_dict(f, domain_value)),
+    Ref(recipe.order(order)),
   ])
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5155,20 +5067,20 @@ pub fn sdm_from_vector(
   order? : String = "lex",
   domain? : String = "QQ",
 ) -> String raise {
-  let kwargs : Map[String, LegacyArg] = Map([])
-  kwargs["gens"] = PyObj(
-    py_list_from_objects(sympy_symbols_from_names(gens)).obj(),
-  )
-  let res = sympy_call_must(
-    "sympy.polys.distributedmodules.sdm_from_vector",
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let kwargs : Map[String, @recipe.RecipeArg] = Map([])
+  kwargs["gens"] = Ref(recipe.symbols(gens))
+  let result = recipe.call(
+    "sdm_from_vector",
     [
-      PyObj(py_list_from_objects(sympy_exprs_from_texts(exprs)).obj()),
-      PyObj(sdm_oracle_order_obj(order)),
-      PyObj(sympy_domain_obj(domain)),
+      Ref(recipe.expressions(exprs)),
+      Ref(recipe.order(order)),
+      Ref(domain_value),
     ],
     kwargs~,
   )
-  remove_spaces(py_dense_str(res))
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5178,18 +5090,18 @@ pub fn sdm_to_vector(
   n? : Int = 0,
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = [
-    PyObj(sdm_oracle_terms_obj(f, domain)),
-    PyObj(py_list_from_objects(sympy_symbols_from_names(gens)).obj()),
-    PyObj(sympy_domain_obj(domain)),
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let args : Array[@recipe.RecipeArg] = [
+    Ref(recipe.terms(f, domain_value)),
+    Ref(recipe.symbols(gens)),
+    Ref(domain_value),
   ]
   if n != 0 {
-    args.push(Int(n))
+    args.push(DecimalInt(Show::to_string(n)))
   }
-  let res = sympy_call_must(
-    "sympy.polys.distributedmodules.sdm_to_vector", args,
-  )
-  remove_spaces(py_dense_str(res))
+  let result = recipe.call("sdm_to_vector", args)
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5199,17 +5111,22 @@ pub fn sdm_add(
   order? : String = "lex",
   domain? : String = "QQ",
 ) -> String raise {
-  sdm_oracle_compact("sdm_add", [
-    PyObj(sdm_oracle_terms_obj(f, domain)),
-    PyObj(sdm_oracle_terms_obj(g, domain)),
-    PyObj(sdm_oracle_order_obj(order)),
-    PyObj(sympy_domain_obj(domain)),
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_add", [
+    Ref(recipe.terms(f, domain_value)),
+    Ref(recipe.terms(g, domain_value)),
+    Ref(recipe.order(order)),
+    Ref(domain_value),
   ])
+  recipe.request_compact(result)
 }
 
 ///|
 pub fn sdm_zero() -> String raise {
-  sdm_oracle_compact("sdm_zero", [])
+  let recipe = DistributedSdmRecipe::new()
+  let result = recipe.call("sdm_zero", [])
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5220,16 +5137,15 @@ pub fn sdm_mul_term(
   order? : String = "lex",
   domain? : String = "QQ",
 ) -> String raise {
-  let term = py_tuple_from_objects([
-    sdm_oracle_tuple_obj(monom),
-    sdm_oracle_coeff_obj(coeff, domain),
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_mul_term", [
+    Ref(recipe.terms(f, domain_value)),
+    Ref(recipe.term((monom, coeff), domain_value)),
+    Ref(recipe.order(order)),
+    Ref(domain_value),
   ])
-  sdm_oracle_compact("sdm_mul_term", [
-    PyObj(sdm_oracle_terms_obj(f, domain)),
-    PyObj(term.obj()),
-    PyObj(sdm_oracle_order_obj(order)),
-    PyObj(sympy_domain_obj(domain)),
-  ])
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5239,12 +5155,15 @@ pub fn sdm_spoly(
   order? : String = "lex",
   domain? : String = "QQ",
 ) -> String raise {
-  sdm_oracle_compact("sdm_spoly", [
-    PyObj(sdm_oracle_terms_obj(f, domain)),
-    PyObj(sdm_oracle_terms_obj(g, domain)),
-    PyObj(sdm_oracle_order_obj(order)),
-    PyObj(sympy_domain_obj(domain)),
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_spoly", [
+    Ref(recipe.terms(f, domain_value)),
+    Ref(recipe.terms(g, domain_value)),
+    Ref(recipe.order(order)),
+    Ref(domain_value),
   ])
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5254,12 +5173,15 @@ pub fn sdm_nf_mora(
   order? : String = "lex",
   domain? : String = "QQ",
 ) -> String raise {
-  sdm_oracle_compact("sdm_nf_mora", [
-    PyObj(sdm_oracle_terms_obj(f, domain)),
-    PyObj(sdm_oracle_basis_obj(basis, domain)),
-    PyObj(sdm_oracle_order_obj(order)),
-    PyObj(sympy_domain_obj(domain)),
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_nf_mora", [
+    Ref(recipe.terms(f, domain_value)),
+    Ref(recipe.basis(basis, domain_value)),
+    Ref(recipe.order(order)),
+    Ref(domain_value),
   ])
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5269,12 +5191,15 @@ pub fn sdm_nf_buchberger(
   order? : String = "lex",
   domain? : String = "QQ",
 ) -> String raise {
-  sdm_oracle_compact("sdm_nf_buchberger", [
-    PyObj(sdm_oracle_terms_obj(f, domain)),
-    PyObj(sdm_oracle_basis_obj(basis, domain)),
-    PyObj(sdm_oracle_order_obj(order)),
-    PyObj(sympy_domain_obj(domain)),
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_nf_buchberger", [
+    Ref(recipe.terms(f, domain_value)),
+    Ref(recipe.basis(basis, domain_value)),
+    Ref(recipe.order(order)),
+    Ref(domain_value),
   ])
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5284,12 +5209,15 @@ pub fn sdm_nf_buchberger_reduced(
   order? : String = "lex",
   domain? : String = "QQ",
 ) -> String raise {
-  sdm_oracle_compact("sdm_nf_buchberger_reduced", [
-    PyObj(sdm_oracle_terms_obj(f, domain)),
-    PyObj(sdm_oracle_basis_obj(basis, domain)),
-    PyObj(sdm_oracle_order_obj(order)),
-    PyObj(sympy_domain_obj(domain)),
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_nf_buchberger_reduced", [
+    Ref(recipe.terms(f, domain_value)),
+    Ref(recipe.basis(basis, domain_value)),
+    Ref(recipe.order(order)),
+    Ref(domain_value),
   ])
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5299,12 +5227,15 @@ pub fn sdm_groebner(
   order? : String = "lex",
   domain? : String = "QQ",
 ) -> String raise {
-  sdm_oracle_compact("sdm_groebner", [
-    PyObj(sdm_oracle_basis_obj(generators, domain)),
-    PyObj(sdm_oracle_nf_obj(normal_form)),
-    PyObj(sdm_oracle_order_obj(order)),
-    PyObj(sympy_domain_obj(domain)),
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_groebner", [
+    Ref(recipe.basis(generators, domain_value)),
+    Ref(recipe.normal_form(normal_form)),
+    Ref(recipe.order(order)),
+    Ref(domain_value),
   ])
+  recipe.request_compact(result)
 }
 
 ///|
@@ -5312,8 +5243,10 @@ pub fn sdm_deg(
   f : Array[(Array[Int], Int)],
   domain? : String = "QQ",
 ) -> Int raise {
-  let res = sdm_oracle_call("sdm_deg", [PyObj(sdm_oracle_terms_obj(f, domain))])
-  py_obj_to_int(objenum_to_obj(res))
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_deg", [Ref(recipe.terms(f, domain_value))])
+  recipe.request_int(result)
 }
 
 ///|
@@ -5321,10 +5254,10 @@ pub fn sdm_ecart(
   f : Array[(Array[Int], Int)],
   domain? : String = "QQ",
 ) -> Int raise {
-  let res = sdm_oracle_call("sdm_ecart", [
-    PyObj(sdm_oracle_terms_obj(f, domain)),
-  ])
-  py_obj_to_int(objenum_to_obj(res))
+  let recipe = DistributedSdmRecipe::new()
+  let domain_value = recipe.domain(domain)
+  let result = recipe.call("sdm_ecart", [Ref(recipe.terms(f, domain_value))])
+  recipe.request_int(result)
 }
 
 ///|
