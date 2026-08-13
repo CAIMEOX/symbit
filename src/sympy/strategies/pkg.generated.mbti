@@ -3,7 +3,6 @@ package "CAIMEOX/symbit/sympy/strategies"
 
 import {
   "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/sympy",
 }
 
 // Values
@@ -130,7 +129,5 @@ pub fn tree_treeapply_strategies_2() -> Int raise
 // Types and methods
 
 // Type aliases
-pub using @sympy {type OracleArg}
 
 // Traits
-
