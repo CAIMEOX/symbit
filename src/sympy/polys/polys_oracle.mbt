@@ -2930,83 +2930,18 @@ fn oracle_domainmatrix_from_ints(
 }
 
 ///|
-fn oracle_sdm_from_ints(
-  rows : Array[Array[Int]],
-  domain_spec : String,
-) -> @py.PyObject raise {
-  let row_count = rows.length()
-  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
-  for row in rows {
-    if row.length() != col_count {
-      fail("sdm-ragged")
-    }
-  }
-  let domain_obj = oracle_domain_from_spec(domain_spec)
-  let convert = resolve_method_callable(domain_obj, "convert")
-  let py_rows : Array[@py.PyObject] = Array::new()
-  for row in rows {
-    let py_row : Array[@py.PyObject] = Array::new()
-    for v in row {
-      py_row.push(objenum_to_obj(py_call_one(convert, py_int_obj(v))))
-    }
-    py_rows.push(py_list_from_objects(py_row).obj())
-  }
-  let shape_obj = py_tuple_from_objects([
-    py_int_obj(row_count),
-    py_int_obj(col_count),
-  ]).obj()
-  let sdm = sympy_call_must("sympy.polys.matrices.sdm.SDM.from_list", [
-    PyObj(py_list_from_objects(py_rows).obj()),
-    PyObj(shape_obj),
-    PyObj(domain_obj),
-  ])
-  objenum_to_obj(sdm)
-}
-
-///|
-fn oracle_sdm_from_raw(
-  raw : @py.PyObject,
-  shape : (Int, Int),
-  domain_obj : @py.PyObject,
-) -> @py.PyObject raise {
-  let shape_obj = py_tuple_from_objects([
-    py_int_obj(shape.0),
-    py_int_obj(shape.1),
-  ]).obj()
-  let sdm = sympy_call_must("sympy.polys.matrices.sdm.SDM", [
-    PyObj(raw),
-    PyObj(shape_obj),
-    PyObj(domain_obj),
-  ])
-  objenum_to_obj(sdm)
-}
-
-///|
-fn oracle_sdm_dense_summary(
-  sdm_obj : @py.PyObject,
-  domain_spec : String,
-) -> String raise {
-  let to_ddm = resolve_method_callable(sdm_obj, "to_ddm")
-  let dense = py_str_enum(py_call_noargs(to_ddm))
-  "\{dense}@\{domain_spec}|sparse"
-}
-
-///|
 pub fn sdm_transpose_summary(
   rows : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let a = oracle_sdm_from_ints(rows, domain_spec)
-  let raw = sympy_call_must("sympy.polys.matrices.sdm.sdm_transpose", [PyObj(a)])
-  let row_count = rows.length()
-  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
-  let domain_obj = oracle_domain_from_spec(domain_spec)
-  let sdm = oracle_sdm_from_raw(
-    objenum_to_obj(raw),
-    (col_count, row_count),
-    domain_obj,
-  )
-  oracle_sdm_dense_summary(sdm, domain_spec)
+  let recipe = MatrixSdmRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let (matrix, row_count, column_count) = recipe.sdm(rows, domain)
+  let raw = recipe.call_path("sympy.polys.matrices.sdm.sdm_transpose", [
+    Ref(matrix),
+  ])
+  let result = recipe.sdm_from_raw(raw, column_count, row_count, domain)
+  recipe.request_str(recipe.render_dense_summary(result, domain_spec))
 }
 
 ///|
@@ -3015,20 +2950,19 @@ pub fn sdm_matmul_summary(
   b_rows : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let a = oracle_sdm_from_ints(a_rows, domain_spec)
-  let b = oracle_sdm_from_ints(b_rows, domain_spec)
-  let m = a_rows.length()
-  let o = if b_rows.length() == 0 { 0 } else { b_rows[0].length() }
-  let domain_obj = oracle_domain_from_spec(domain_spec)
-  let raw = sympy_call_must("sympy.polys.matrices.sdm.sdm_matmul", [
-    PyObj(a),
-    PyObj(b),
-    PyObj(domain_obj),
-    Int(m),
-    Int(o),
+  let recipe = MatrixSdmRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let (left, row_count, _) = recipe.sdm(a_rows, domain)
+  let (right, _, column_count) = recipe.sdm(b_rows, domain)
+  let raw = recipe.call_path("sympy.polys.matrices.sdm.sdm_matmul", [
+    Ref(left),
+    Ref(right),
+    Ref(domain),
+    DecimalInt(Show::to_string(row_count)),
+    DecimalInt(Show::to_string(column_count)),
   ])
-  let sdm = oracle_sdm_from_raw(objenum_to_obj(raw), (m, o), domain_obj)
-  oracle_sdm_dense_summary(sdm, domain_spec)
+  let result = recipe.sdm_from_raw(raw, row_count, column_count, domain)
+  recipe.request_str(recipe.render_dense_summary(result, domain_spec))
 }
 
 ///|
@@ -3036,13 +2970,14 @@ pub fn sdm_rref_den_summary(
   rows : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let a = oracle_sdm_from_ints(rows, domain_spec)
-  let domain_obj = oracle_domain_from_spec(domain_spec)
-  let res = sympy_call_must("sympy.polys.matrices.sdm.sdm_rref_den", [
-    PyObj(a),
-    PyObj(domain_obj),
+  let recipe = MatrixSdmRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let (matrix, _, _) = recipe.sdm(rows, domain)
+  let result = recipe.call_path("sympy.polys.matrices.sdm.sdm_rref_den", [
+    Ref(matrix),
+    Ref(domain),
   ])
-  remove_spaces(py_str_enum(res))
+  recipe.request_str(recipe.render_compact(result))
 }
 
 ///|
@@ -3050,15 +2985,15 @@ pub fn sdm_berk_summary(
   rows : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let a = oracle_sdm_from_ints(rows, domain_spec)
-  let domain_obj = oracle_domain_from_spec(domain_spec)
-  let n = rows.length()
-  let res = sympy_call_must("sympy.polys.matrices.sdm.sdm_berk", [
-    PyObj(a),
-    Int(n),
-    PyObj(domain_obj),
+  let recipe = MatrixSdmRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let (matrix, row_count, _) = recipe.sdm(rows, domain)
+  let result = recipe.call_path("sympy.polys.matrices.sdm.sdm_berk", [
+    Ref(matrix),
+    DecimalInt(Show::to_string(row_count)),
+    Ref(domain),
   ])
-  remove_spaces(py_str_enum(res))
+  recipe.request_str(recipe.render_compact(result))
 }
 
 ///|
@@ -3607,14 +3542,6 @@ fn py_string_obj(s : String) -> @py.PyObject {
 fn py_int_obj(n : Int) -> @py.PyObject {
   let state = py_gil_ensure()
   let obj = @py.PyInteger::from(n.to_int64()).obj()
-  py_gil_release(state)
-  obj
-}
-
-///|
-fn py_bool_obj(value : Bool) -> @py.PyObject {
-  let state = py_gil_ensure()
-  let obj = @py.PyBool::from(value).obj()
   py_gil_release(state)
   obj
 }
