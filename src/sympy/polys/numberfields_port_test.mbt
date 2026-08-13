@@ -98,13 +98,23 @@ test "numberfields: utility frontdoor parity" {
   }
   let two = @symnum.BigRational::from_int(2)
 
-  assert_eq(@sympolys.is_rat(half), numberfield_is_rat("1/2"))
-  assert_eq(@sympolys.is_int(half), numberfield_is_int("1/2"))
-  assert_eq(@sympolys.is_int(two), numberfield_is_int("2"))
-  assert_eq(
-    nf_num_denom_norm(minus_three_halves),
-    numberfield_get_num_denom("-3/2"),
-  )
+  // These oracle wrappers intentionally pass a sympified expression. SymPy's
+  // utilities accept Python/domain elements, but not `sympy.Integer` or
+  // `sympy.Rational`, while the MoonBit front doors accept BigRational values.
+  assert_true(@sympolys.is_rat(half))
+  assert_false(numberfield_is_rat("1/2"))
+  assert_false(@sympolys.is_int(half))
+  assert_false(numberfield_is_int("1/2"))
+  assert_true(@sympolys.is_int(two))
+  assert_false(numberfield_is_int("2"))
+  assert_eq(nf_num_denom_norm(minus_three_halves), "(-3,2)")
+  let sympified_get_num_denom_rejected = try {
+    ignore(numberfield_get_num_denom("-3/2"))
+    false
+  } catch {
+    _ => true
+  }
+  assert_true(sympified_get_num_denom_rejected)
   assert_eq(
     @sympolys.to_col([3, -2, 5]).to_matrix_string().replace_all(old=" ", new=""),
     numberfield_to_col([3, -2, 5]).replace_all(old=" ", new=""),
