@@ -17,9 +17,14 @@ priv enum DenseCallArg {
   DupCoeffs(Array[@symnum.BigRational])
   RawDupCoeffs(Array[@symnum.BigRational])
   DenseValue(DenseData)
+  RawDenseValue(DenseData)
   DupCollection(Array[Array[@symnum.BigRational]])
   DenseCollection(Array[DenseData])
   CallInt(Int)
+  CallIntList(Array[Int])
+  CallStr(String)
+  CallBool(Bool)
+  FromSympyExprs(Array[String])
   DomainObject
 }
 
@@ -111,17 +116,45 @@ fn DenseRecipe::dup_coeffs(
 fn DenseRecipe::dense_value(
   self : DenseRecipe,
   value : DenseData,
+  raw? : Bool = false,
 ) -> @recipe.ValueRef raise {
   match value {
-    Coef(coefficient) => self.domain_number(coefficient)
+    Coef(coefficient) =>
+      if raw {
+        self.raw_number(coefficient)
+      } else {
+        self.domain_number(coefficient)
+      }
     Poly(values) => {
       let items : Array[@recipe.RecipeArg] = []
       for item in values {
-        items.push(Ref(self.dense_value(item)))
+        items.push(Ref(self.dense_value(item, raw~)))
       }
       self.builder.list(items)
     }
   }
+}
+
+///|
+fn DenseRecipe::from_sympy_exprs(
+  self : DenseRecipe,
+  expressions : Array[String],
+) -> @recipe.ValueRef raise {
+  let sympify = self.builder.getattr(self.sympy, "sympify")
+  let from_sympy = self.builder.getattr(self.domain, "from_sympy")
+  let items : Array[@recipe.RecipeArg] = []
+  for source in expressions {
+    let expression = self.builder.require_non_none(
+      self.builder.call(sympify, [Str(source)]),
+      message="sympy-polys-dense-sympify-none",
+    )
+    let coefficient = self.builder.require_non_none(
+      self.builder.call(from_sympy, [Ref(expression)]),
+      message="sympy-polys-dense-from-sympy-none",
+    )
+    items.push(Ref(coefficient))
+  }
+  self.builder.list(items)
 }
 
 ///|
@@ -135,6 +168,7 @@ fn DenseRecipe::materialize(
     DupCoeffs(values) => Ref(self.dup_coeffs(values, false))
     RawDupCoeffs(values) => Ref(self.dup_coeffs(values, true))
     DenseValue(value) => Ref(self.dense_value(value))
+    RawDenseValue(value) => Ref(self.dense_value(value, raw=true))
     DupCollection(values) => {
       let items : Array[@recipe.RecipeArg] = []
       for value in values {
@@ -150,6 +184,16 @@ fn DenseRecipe::materialize(
       Ref(self.builder.list(items))
     }
     CallInt(value) => DecimalInt(Show::to_string(value))
+    CallIntList(values) => {
+      let items : Array[@recipe.RecipeArg] = []
+      for value in values {
+        items.push(DecimalInt(Show::to_string(value)))
+      }
+      Ref(self.builder.list(items))
+    }
+    CallStr(value) => Str(value)
+    CallBool(value) => Bool(value)
+    FromSympyExprs(values) => Ref(self.from_sympy_exprs(values))
     DomainObject => Ref(self.domain)
   }
 }
@@ -159,14 +203,19 @@ fn DenseRecipe::call(
   self : DenseRecipe,
   path : String,
   args : Array[DenseCallArg],
+  kwargs? : Map[String, DenseCallArg] = {},
 ) -> @recipe.ValueRef raise {
   let materialized : Array[@recipe.RecipeArg] = []
   for argument in args {
     materialized.push(self.materialize(argument))
   }
+  let materialized_kwargs : Map[String, @recipe.RecipeArg] = Map([])
+  for name, argument in kwargs {
+    materialized_kwargs[name] = self.materialize(argument)
+  }
   let callable = recipe_sympy_callable(self.builder, path)
   self.builder.require_non_none(
-    self.builder.call(callable, materialized),
+    self.builder.call(callable, materialized, kwargs=materialized_kwargs),
     message="sympy-call-none:" + path,
   )
 }
@@ -188,10 +237,11 @@ fn dense_recipe_call(
   path : String,
   args : Array[DenseCallArg],
   domain : String,
+  kwargs? : Map[String, DenseCallArg] = {},
   result_kind? : DenseResultKind = DenseResult,
 ) -> String raise {
   let recipe = DenseRecipe::new(domain)
-  let result = recipe.call(path, args)
+  let result = recipe.call(path, args, kwargs~)
   match result_kind {
     DenseResult => recipe.request_dense(result)
     ScalarResult => recipe.builder.request_str(result)
