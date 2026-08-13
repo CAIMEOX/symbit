@@ -6295,24 +6295,6 @@ fn py_list_from_rationals_domain(
 }
 
 ///|
-fn dense_data_to_pyobj_domain(
-  data : DenseData,
-  domain : String,
-) -> @py.PyObject raise {
-  match data {
-    Coef(c) => sympy_domain_elem(c, domain)
-    Poly(items) => {
-      let out : Array[@py.PyObject] = Array::new()
-      for it in items {
-        out.push(dense_data_to_pyobj_domain(it, domain))
-      }
-      let list = py_list_from_objects(out)
-      list.obj()
-    }
-  }
-}
-
-///|
 pub fn dup_routh_hurwitz(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "ZZ",
@@ -8615,12 +8597,27 @@ pub fn dmp_lift_exprs(
 }
 
 ///|
-fn sqf_dense_bool_call(name : String, args : Array[LegacyArg]) -> Bool raise {
-  let res = sympy_call_must("sympy.polys.sqfreetools.\{name}", args)
-  match res {
-    PyBool(v) => py_str_obj(v.obj()) == "True"
-    _ => py_str_enum(res) == "True"
-  }
+fn sqf_dense_call(
+  name : String,
+  args : Array[DenseCallArg],
+  domain : String,
+  result_kind? : DenseResultKind = DenseResult,
+) -> String raise {
+  dense_recipe_call(
+    "sympy.polys.sqfreetools.\{name}",
+    args,
+    domain,
+    result_kind~,
+  )
+}
+
+///|
+fn sqf_dense_bool_call(
+  name : String,
+  args : Array[DenseCallArg],
+  domain : String,
+) -> Bool raise {
+  dense_recipe_bool_call("sympy.polys.sqfreetools.\{name}", args, domain)
 }
 
 ///|
@@ -8628,19 +8625,16 @@ pub fn dup_sqf_p(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> Bool raise {
-  sqf_dense_bool_call("dup_sqf_p", [
-    PyObj(py_list_from_rationals_domain(f, domain)),
-    PyObj(sympy_domain_obj(domain)),
-  ])
+  sqf_dense_bool_call("dup_sqf_p", [DupCoeffs(f), DomainObject], domain)
 }
 
 ///|
 pub fn dmp_sqf_p(f : DenseData, u : Int, domain? : String = "ZZ") -> Bool raise {
-  sqf_dense_bool_call("dmp_sqf_p", [
-    PyObj(dense_data_to_pyobj_domain(f, domain)),
-    Int(u),
-    PyObj(sympy_domain_obj(domain)),
-  ])
+  sqf_dense_bool_call(
+    "dmp_sqf_p",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8648,11 +8642,7 @@ pub fn dup_sqf_part(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.sqfreetools.dup_sqf_part", [
-    PyObj(py_list_from_rationals_domain(f, domain)),
-    PyObj(sympy_domain_obj(domain)),
-  ])
-  remove_spaces(py_dense_str(res))
+  sqf_dense_call("dup_sqf_part", [DupCoeffs(f), DomainObject], domain)
 }
 
 ///|
@@ -8661,12 +8651,11 @@ pub fn dmp_sqf_part(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.sqfreetools.dmp_sqf_part", [
-    PyObj(dense_data_to_pyobj_domain(f, domain)),
-    Int(u),
-    PyObj(sympy_domain_obj(domain)),
-  ])
-  remove_spaces(py_dense_str(res))
+  sqf_dense_call(
+    "dmp_sqf_part",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8675,12 +8664,11 @@ pub fn dup_sqf_list(
   domain? : String = "ZZ",
   all? : Bool = false,
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.sqfreetools.dup_sqf_list", [
-    PyObj(py_list_from_rationals_domain(f, domain)),
-    PyObj(sympy_domain_obj(domain)),
-    PyObj(py_bool_obj(all)),
-  ])
-  remove_spaces(py_dense_str(res))
+  sqf_dense_call(
+    "dup_sqf_list",
+    [DupCoeffs(f), DomainObject, CallBool(all)],
+    domain,
+  )
 }
 
 ///|
@@ -8690,13 +8678,11 @@ pub fn dmp_sqf_list(
   domain? : String = "ZZ",
   all? : Bool = false,
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.sqfreetools.dmp_sqf_list", [
-    PyObj(dense_data_to_pyobj_domain(f, domain)),
-    Int(u),
-    PyObj(sympy_domain_obj(domain)),
-    PyObj(py_bool_obj(all)),
-  ])
-  remove_spaces(py_dense_str(res))
+  sqf_dense_call(
+    "dmp_sqf_list",
+    [DenseValue(f), CallInt(u), DomainObject, CallBool(all)],
+    domain,
+  )
 }
 
 ///|
@@ -8705,12 +8691,11 @@ pub fn dup_sqf_list_include(
   domain? : String = "ZZ",
   all? : Bool = false,
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.sqfreetools.dup_sqf_list_include", [
-    PyObj(py_list_from_rationals_domain(f, domain)),
-    PyObj(sympy_domain_obj(domain)),
-    PyObj(py_bool_obj(all)),
-  ])
-  remove_spaces(py_dense_str(res))
+  sqf_dense_call(
+    "dup_sqf_list_include",
+    [DupCoeffs(f), DomainObject, CallBool(all)],
+    domain,
+  )
 }
 
 ///|
@@ -8720,13 +8705,11 @@ pub fn dmp_sqf_list_include(
   domain? : String = "ZZ",
   all? : Bool = false,
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.sqfreetools.dmp_sqf_list_include", [
-    PyObj(dense_data_to_pyobj_domain(f, domain)),
-    Int(u),
-    PyObj(sympy_domain_obj(domain)),
-    PyObj(py_bool_obj(all)),
-  ])
-  remove_spaces(py_dense_str(res))
+  sqf_dense_call(
+    "dmp_sqf_list_include",
+    [DenseValue(f), CallInt(u), DomainObject, CallBool(all)],
+    domain,
+  )
 }
 
 ///|
@@ -8734,11 +8717,7 @@ pub fn dup_gff_list(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.sqfreetools.dup_gff_list", [
-    PyObj(py_list_from_rationals_domain(f, domain)),
-    PyObj(sympy_domain_obj(domain)),
-  ])
-  remove_spaces(py_dense_str(res))
+  sqf_dense_call("dup_gff_list", [DupCoeffs(f), DomainObject], domain)
 }
 
 ///|
@@ -8747,104 +8726,35 @@ pub fn dmp_gff_list(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.sqfreetools.dmp_gff_list", [
-    PyObj(dense_data_to_pyobj_domain(f, domain)),
-    Int(u),
-    PyObj(sympy_domain_obj(domain)),
-  ])
-  remove_spaces(py_dense_str(res))
+  sqf_dense_call(
+    "dmp_gff_list",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
-fn fact_dense_domain_elem_from_obj(
-  n : @symnum.BigRational,
-  domain_obj : @py.PyObject,
-) -> @py.PyObject raise {
-  let convert_enum = match py_get_attr(domain_obj, "convert") {
-    Some(v) => v
-    None => fail("fact-domain-convert-missing")
-  }
-  let convert = @py.PyCallable::create(objenum_to_obj(convert_enum)) catch {
-    _ => fail("fact-domain-convert-callable")
-  }
-  let num_obj = sympy_number_obj_oracle(n)
-  objenum_to_obj(py_call_one(convert, num_obj))
+fn fact_dense_call(
+  name : String,
+  args : Array[DenseCallArg],
+  domain : String,
+  result_kind? : DenseResultKind = DenseResult,
+) -> String raise {
+  dense_recipe_call(
+    "sympy.polys.factortools.\{name}",
+    args,
+    domain,
+    result_kind~,
+  )
 }
 
 ///|
-fn fact_dense_py_list_from_rationals(
-  coeffs : Array[@symnum.BigRational],
-  domain_obj : @py.PyObject,
-) -> @py.PyObject raise {
-  let items : Array[@py.PyObject] = Array::new()
-  for c in coeffs {
-    items.push(fact_dense_domain_elem_from_obj(c, domain_obj))
-  }
-  py_list_from_objects(items).obj()
-}
-
-///|
-fn fact_dense_py_dense_data(
-  data : DenseData,
-  domain_obj : @py.PyObject,
-) -> @py.PyObject raise {
-  match data {
-    Coef(c) => fact_dense_domain_elem_from_obj(c, domain_obj)
-    Poly(items) => {
-      let out : Array[@py.PyObject] = Array::new()
-      for it in items {
-        out.push(fact_dense_py_dense_data(it, domain_obj))
-      }
-      py_list_from_objects(out).obj()
-    }
-  }
-}
-
-///|
-fn fact_dense_py_factor_list(
-  factors : Array[Array[@symnum.BigRational]],
-  domain_obj : @py.PyObject,
-) -> @py.PyObject raise {
-  let out : Array[@py.PyObject] = Array::new()
-  for factor in factors {
-    out.push(fact_dense_py_list_from_rationals(factor, domain_obj))
-  }
-  py_list_from_objects(out).obj()
-}
-
-///|
-fn fact_dense_py_dmp_factor_list(
-  factors : Array[DenseData],
-  domain_obj : @py.PyObject,
-) -> @py.PyObject raise {
-  let out : Array[@py.PyObject] = Array::new()
-  for factor in factors {
-    out.push(fact_dense_py_dense_data(factor, domain_obj))
-  }
-  py_list_from_objects(out).obj()
-}
-
-///|
-fn fact_dense_py_dmp_factor_pairs(
-  factors : Array[(DenseData, Int)],
-  domain_obj : @py.PyObject,
-) -> @py.PyObject raise {
-  let out : Array[@py.PyObject] = Array::new()
-  for factor in factors {
-    let dense = fact_dense_py_dense_data(factor.0, domain_obj)
-    let pair = py_tuple_from_objects([dense, py_int_obj(factor.1)])
-    out.push(pair.obj())
-  }
-  py_list_from_objects(out).obj()
-}
-
-///|
-fn fact_dense_bool_call(name : String, args : Array[LegacyArg]) -> Bool raise {
-  let res = sympy_call_must("sympy.polys.factortools.\{name}", args)
-  match res {
-    PyBool(v) => py_str_obj(v.obj()) == "True"
-    _ => py_str_enum(res) == "True"
-  }
+fn fact_dense_bool_call(
+  name : String,
+  args : Array[DenseCallArg],
+  domain : String,
+) -> Bool raise {
+  dense_recipe_bool_call("sympy.polys.factortools.\{name}", args, domain)
 }
 
 ///|
@@ -8852,12 +8762,11 @@ pub fn dup_factor_list_include(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dup_factor_list_include", [
-    PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dup_factor_list_include",
+    [DupCoeffs(f), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8866,13 +8775,11 @@ pub fn dmp_factor_list(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dmp_factor_list", [
-    PyObj(fact_dense_py_dense_data(f, domain_obj)),
-    Int(u),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dmp_factor_list",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8881,13 +8788,11 @@ pub fn dmp_factor_list_include(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dmp_factor_list_include", [
-    PyObj(fact_dense_py_dense_data(f, domain_obj)),
-    Int(u),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dmp_factor_list_include",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8896,13 +8801,11 @@ pub fn dup_trial_division(
   factors : Array[Array[@symnum.BigRational]],
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dup_trial_division", [
-    PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
-    PyObj(fact_dense_py_factor_list(factors, domain_obj)),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dup_trial_division",
+    [DupCoeffs(f), DupCollection(factors), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8912,14 +8815,11 @@ pub fn dmp_trial_division(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dmp_trial_division", [
-    PyObj(fact_dense_py_dense_data(f, domain_obj)),
-    PyObj(fact_dense_py_dmp_factor_list(factors, domain_obj)),
-    Int(u),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dmp_trial_division",
+    [DenseValue(f), DenseCollection(factors), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8927,11 +8827,11 @@ pub fn dup_irreducible_p(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> Bool raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  fact_dense_bool_call("dup_irreducible_p", [
-    PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
-    PyObj(domain_obj),
-  ])
+  fact_dense_bool_call(
+    "dup_irreducible_p",
+    [DupCoeffs(f), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8940,25 +8840,22 @@ pub fn dmp_irreducible_p(
   u : Int,
   domain? : String = "ZZ",
 ) -> Bool raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  fact_dense_bool_call("dmp_irreducible_p", [
-    PyObj(fact_dense_py_dense_data(f, domain_obj)),
-    Int(u),
-    PyObj(domain_obj),
-  ])
+  fact_dense_bool_call(
+    "dmp_irreducible_p",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
 pub fn dup_gf_factor(f : Array[Int], p : Int) -> String raise {
-  let domain_obj = oracle_domain_from_spec("GF(\{p})")
-  let coeffs : Array[@symnum.BigRational] = f.map(n => {
-    @symnum.BigRational::from_int(n)
-  })
-  let res = sympy_call_must("sympy.polys.factortools.dup_gf_factor", [
-    PyObj(fact_dense_py_list_from_rationals(coeffs, domain_obj)),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  let domain = "GF(" + Show::to_string(p) + ")"
+  fact_dense_call(
+    "dup_gf_factor",
+    [DomainIntCoeffs(f), DomainObject],
+    domain,
+    result_kind=DenseReprResult,
+  )
 }
 
 ///|
@@ -8966,35 +8863,12 @@ pub fn dup_ext_factor_shape_exprs(
   f : Array[String],
   domain_spec? : String = "QQ<sqrt(2)>",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain_spec)
-  let from_sympy = resolve_method_callable(domain_obj, "from_sympy")
-  let coeffs : Array[@py.PyObject] = Array::new()
-  for expr in f {
-    let value = sympy_sympify_str(expr)
-    coeffs.push(objenum_to_obj(py_call_one(from_sympy, value)))
-  }
-  let res = sympy_call_must("sympy.polys.factortools.dup_ext_factor", [
-    PyObj(py_list_from_objects(coeffs).obj()),
-    PyObj(domain_obj),
-  ])
-  let tuple_items = py_list_to_pyobjects(res)
-  guard tuple_items.length() >= 2 else { fail("dup-ext-factor-shape") }
-  let coeff = remove_spaces(py_str_obj(tuple_items[0]))
-  let factor_pairs = py_list_to_pyobjects(
-    @py.PyObjectEnum::create(tuple_items[1]),
+  fact_dense_call(
+    "dup_ext_factor",
+    [FromSympyExprs(f), DomainObject],
+    domain_spec,
+    result_kind=ExtFactorShapeResult,
   )
-  let parts : Array[String] = Array::new()
-  for pair in factor_pairs {
-    let items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
-    if items.length() >= 2 {
-      let factor_coeffs = py_list_to_pyobjects(
-        @py.PyObjectEnum::create(items[0]),
-      )
-      let mult = py_obj_to_int(items[1])
-      parts.push("(\{factor_coeffs.length()},\{mult})")
-    }
-  }
-  "(\{coeff},[" + parts.join(",") + "])"
 }
 
 ///|
@@ -9002,12 +8876,7 @@ pub fn dup_qq_i_factor(
   f : Array[@symnum.BigRational],
   domain? : String = "QQ_I",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dup_qq_i_factor", [
-    PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call("dup_qq_i_factor", [DupCoeffs(f), DomainObject], domain)
 }
 
 ///|
@@ -9015,12 +8884,7 @@ pub fn dup_zz_i_factor(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ_I",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dup_zz_i_factor", [
-    PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call("dup_zz_i_factor", [DupCoeffs(f), DomainObject], domain)
 }
 
 ///|
@@ -9029,13 +8893,11 @@ pub fn dmp_qq_i_factor(
   u : Int,
   domain? : String = "QQ_I",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dmp_qq_i_factor", [
-    PyObj(fact_dense_py_dense_data(f, domain_obj)),
-    Int(u),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dmp_qq_i_factor",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9044,13 +8906,11 @@ pub fn dmp_zz_i_factor(
   u : Int,
   domain? : String = "ZZ_I",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dmp_zz_i_factor", [
-    PyObj(fact_dense_py_dense_data(f, domain_obj)),
-    Int(u),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dmp_zz_i_factor",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9058,12 +8918,7 @@ pub fn dup_zz_zassenhaus(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dup_zz_zassenhaus", [
-    PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call("dup_zz_zassenhaus", [DupCoeffs(f), DomainObject], domain)
 }
 
 ///|
@@ -9076,17 +8931,19 @@ pub fn dup_zz_hensel_step(
   t : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dup_zz_hensel_step", [
-    Int(m),
-    PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
-    PyObj(fact_dense_py_list_from_rationals(g, domain_obj)),
-    PyObj(fact_dense_py_list_from_rationals(h, domain_obj)),
-    PyObj(fact_dense_py_list_from_rationals(s, domain_obj)),
-    PyObj(fact_dense_py_list_from_rationals(t, domain_obj)),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dup_zz_hensel_step",
+    [
+      CallInt(m),
+      DupCoeffs(f),
+      DupCoeffs(g),
+      DupCoeffs(h),
+      DupCoeffs(s),
+      DupCoeffs(t),
+      DomainObject,
+    ],
+    domain,
+  )
 }
 
 ///|
@@ -9097,15 +8954,11 @@ pub fn dup_zz_hensel_lift(
   l : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dup_zz_hensel_lift", [
-    Int(p),
-    PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
-    PyObj(fact_dense_py_factor_list(f_list, domain_obj)),
-    Int(l),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dup_zz_hensel_lift",
+    [CallInt(p), DupCoeffs(f), DupCollection(f_list), CallInt(l), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9115,17 +8968,11 @@ pub fn dmp_zz_wang_non_divisors(
   ct : @symnum.BigRational,
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must(
-    "sympy.polys.factortools.dmp_zz_wang_non_divisors",
-    [
-      PyObj(fact_dense_py_list_from_rationals(values, domain_obj)),
-      PyObj(fact_dense_domain_elem_from_obj(cs, domain_obj)),
-      PyObj(fact_dense_domain_elem_from_obj(ct, domain_obj)),
-      PyObj(domain_obj),
-    ],
+  fact_dense_call(
+    "dmp_zz_wang_non_divisors",
+    [DupCoeffs(values), DomainNumber(cs), DomainNumber(ct), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9137,16 +8984,18 @@ pub fn dmp_zz_wang_test_points(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dmp_zz_wang_test_points", [
-    PyObj(fact_dense_py_dense_data(f, domain_obj)),
-    PyObj(fact_dense_py_dmp_factor_pairs(factors, domain_obj)),
-    PyObj(fact_dense_domain_elem_from_obj(ct, domain_obj)),
-    PyObj(fact_dense_py_list_from_rationals(eval_points, domain_obj)),
-    Int(u),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dmp_zz_wang_test_points",
+    [
+      DenseValue(f),
+      DenseFactorPairs(factors),
+      DomainNumber(ct),
+      DupCoeffs(eval_points),
+      CallInt(u),
+      DomainObject,
+    ],
+    domain,
+  )
 }
 
 ///|
@@ -9160,18 +9009,20 @@ pub fn dmp_zz_wang_lead_coeffs(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dmp_zz_wang_lead_coeffs", [
-    PyObj(fact_dense_py_dense_data(f, domain_obj)),
-    PyObj(fact_dense_py_dmp_factor_pairs(factors, domain_obj)),
-    PyObj(fact_dense_domain_elem_from_obj(cs, domain_obj)),
-    PyObj(fact_dense_py_list_from_rationals(values, domain_obj)),
-    PyObj(fact_dense_py_factor_list(univar_factors, domain_obj)),
-    PyObj(fact_dense_py_list_from_rationals(eval_points, domain_obj)),
-    Int(u),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dmp_zz_wang_lead_coeffs",
+    [
+      DenseValue(f),
+      DenseFactorPairs(factors),
+      DomainNumber(cs),
+      DupCoeffs(values),
+      DupCollection(univar_factors),
+      DupCoeffs(eval_points),
+      CallInt(u),
+      DomainObject,
+    ],
+    domain,
+  )
 }
 
 ///|
@@ -9184,20 +9035,19 @@ pub fn dmp_zz_wang_hensel_lifting(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must(
-    "sympy.polys.factortools.dmp_zz_wang_hensel_lifting",
+  fact_dense_call(
+    "dmp_zz_wang_hensel_lifting",
     [
-      PyObj(fact_dense_py_dense_data(f, domain_obj)),
-      PyObj(fact_dense_py_factor_list(factors, domain_obj)),
-      PyObj(fact_dense_py_dmp_factor_list(lead_coeffs, domain_obj)),
-      PyObj(fact_dense_py_list_from_rationals(eval_points, domain_obj)),
-      Int(p),
-      Int(u),
-      PyObj(domain_obj),
+      DenseValue(f),
+      DupCollection(factors),
+      DenseCollection(lead_coeffs),
+      DupCoeffs(eval_points),
+      CallInt(p),
+      CallInt(u),
+      DomainObject,
     ],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9206,13 +9056,11 @@ pub fn dmp_zz_wang(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dmp_zz_wang", [
-    PyObj(fact_dense_py_dense_data(f, domain_obj)),
-    Int(u),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dmp_zz_wang",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9222,14 +9070,11 @@ pub fn dup_zz_diophantine(
   p : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dup_zz_diophantine", [
-    PyObj(fact_dense_py_factor_list(factors, domain_obj)),
-    Int(m),
-    Int(p),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dup_zz_diophantine",
+    [DupCollection(factors), CallInt(m), CallInt(p), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9242,18 +9087,19 @@ pub fn dmp_zz_diophantine(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let points = fact_dense_py_list_from_rationals(eval_points, domain_obj)
-  let res = sympy_call_must("sympy.polys.factortools.dmp_zz_diophantine", [
-    PyObj(fact_dense_py_dmp_factor_list(factors, domain_obj)),
-    PyObj(fact_dense_py_dense_data(c, domain_obj)),
-    PyObj(points),
-    Int(d),
-    Int(p),
-    Int(u),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dmp_zz_diophantine",
+    [
+      DenseCollection(factors),
+      DenseValue(c),
+      DupCoeffs(eval_points),
+      CallInt(d),
+      CallInt(p),
+      CallInt(u),
+      DomainObject,
+    ],
+    domain,
+  )
 }
 
 ///|
@@ -9261,12 +9107,7 @@ pub fn dup_zz_factor_sqf(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dup_zz_factor_sqf", [
-    PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call("dup_zz_factor_sqf", [DupCoeffs(f), DomainObject], domain)
 }
 
 ///|
@@ -9274,12 +9115,7 @@ pub fn dup_zz_factor(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dup_zz_factor", [
-    PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call("dup_zz_factor", [DupCoeffs(f), DomainObject], domain)
 }
 
 ///|
@@ -9288,13 +9124,11 @@ pub fn dmp_zz_factor(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dmp_zz_factor", [
-    PyObj(fact_dense_py_dense_data(f, domain_obj)),
-    Int(u),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call(
+    "dmp_zz_factor",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9302,12 +9136,7 @@ pub fn dup_zz_mignotte_bound(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dup_zz_mignotte_bound", [
-    PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_sympy_enum_str(res))
+  fact_dense_call("dup_zz_mignotte_bound", [DupCoeffs(f), DomainObject], domain)
 }
 
 ///|
@@ -9316,13 +9145,11 @@ pub fn dmp_zz_mignotte_bound(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dmp_zz_mignotte_bound", [
-    PyObj(fact_dense_py_dense_data(f, domain_obj)),
-    Int(u),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_sympy_enum_str(res))
+  fact_dense_call(
+    "dmp_zz_mignotte_bound",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9330,22 +9157,16 @@ pub fn dup_zz_irreducible_p(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> Bool raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dup_zz_irreducible_p", [
-    PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
-    PyObj(domain_obj),
-  ])
-  py_sympy_enum_str(res).trim().to_owned() == "True"
+  fact_dense_bool_call(
+    "dup_zz_irreducible_p",
+    [DupCoeffs(f), DomainObject],
+    domain,
+  )
 }
 
 ///|
 pub fn dup_zz_cyclotomic_poly(n : Int, domain? : String = "ZZ") -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dup_zz_cyclotomic_poly", [
-    Int(n),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  fact_dense_call("dup_zz_cyclotomic_poly", [CallInt(n), DomainObject], domain)
 }
 
 ///|
@@ -9353,12 +9174,11 @@ pub fn dup_zz_cyclotomic_factor(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must(
-    "sympy.polys.factortools.dup_zz_cyclotomic_factor",
-    [PyObj(fact_dense_py_list_from_rationals(f, domain_obj)), PyObj(domain_obj)],
+  fact_dense_call(
+    "dup_zz_cyclotomic_factor",
+    [DupCoeffs(f), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -9367,13 +9187,11 @@ pub fn dup_cyclotomic_p(
   domain? : String = "ZZ",
   irreducible? : Bool = false,
 ) -> Bool raise {
-  let domain_obj = oracle_domain_from_spec(domain)
-  let res = sympy_call_must("sympy.polys.factortools.dup_cyclotomic_p", [
-    PyObj(fact_dense_py_list_from_rationals(f, domain_obj)),
-    PyObj(domain_obj),
-    PyObj(py_bool_obj(irreducible)),
-  ])
-  py_sympy_enum_str(res).trim().to_owned() == "True"
+  fact_dense_bool_call(
+    "dup_cyclotomic_p",
+    [DupCoeffs(f), DomainObject, CallBool(irreducible)],
+    domain,
+  )
 }
 
 ///|
@@ -9404,33 +9222,17 @@ pub fn python_gcdex(a : Int, b : Int) -> String raise {
 }
 
 ///|
-fn sqf_dense_alg_coeffs_obj(
-  f : Array[String],
-  domain_spec : String,
-) -> (@py.PyObject, @py.PyObject) raise {
-  let domain_obj = oracle_domain_from_spec(domain_spec)
-  let from_sympy = resolve_method_callable(domain_obj, "from_sympy")
-  let coeffs : Array[@py.PyObject] = Array::new()
-  for expr in f {
-    let value = sympy_sympify_str(expr)
-    coeffs.push(objenum_to_obj(py_call_one(from_sympy, value)))
-  }
-  (domain_obj, py_list_from_objects(coeffs).obj())
-}
-
-///|
 pub fn dmp_norm_exprs(
   f : Array[String],
   u : Int,
   domain_spec? : String = "QQ<sqrt(3)>",
 ) -> String raise {
-  let (domain_obj, coeffs_obj) = sqf_dense_alg_coeffs_obj(f, domain_spec)
-  let res = sympy_call_must("sympy.polys.sqfreetools.dmp_norm", [
-    PyObj(coeffs_obj),
-    Int(u),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  sqf_dense_call(
+    "dmp_norm",
+    [FromSympyExprs(f), CallInt(u), DomainObject],
+    domain_spec,
+    result_kind=AlgebraicDenseResult,
+  )
 }
 
 ///|
@@ -9438,12 +9240,12 @@ pub fn dup_sqf_norm_exprs(
   f : Array[String],
   domain_spec? : String = "QQ<sqrt(3)>",
 ) -> String raise {
-  let (domain_obj, coeffs_obj) = sqf_dense_alg_coeffs_obj(f, domain_spec)
-  let res = sympy_call_must("sympy.polys.sqfreetools.dup_sqf_norm", [
-    PyObj(coeffs_obj),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  sqf_dense_call(
+    "dup_sqf_norm",
+    [FromSympyExprs(f), DomainObject],
+    domain_spec,
+    result_kind=AlgebraicDenseResult,
+  )
 }
 
 ///|
@@ -9452,13 +9254,12 @@ pub fn dmp_sqf_norm_exprs(
   u : Int,
   domain_spec? : String = "QQ<sqrt(3)>",
 ) -> String raise {
-  let (domain_obj, coeffs_obj) = sqf_dense_alg_coeffs_obj(f, domain_spec)
-  let res = sympy_call_must("sympy.polys.sqfreetools.dmp_sqf_norm", [
-    PyObj(coeffs_obj),
-    Int(u),
-    PyObj(domain_obj),
-  ])
-  remove_spaces(py_dense_str(res))
+  sqf_dense_call(
+    "dmp_sqf_norm",
+    [FromSympyExprs(f), CallInt(u), DomainObject],
+    domain_spec,
+    result_kind=AlgebraicDenseResult,
+  )
 }
 
 ///|
