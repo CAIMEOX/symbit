@@ -19,3 +19,20 @@ test "polys domain captured calls preserve value error and none outcomes" {
   ])
   assert_eq(value_recipe.request_captured_str(value_result), "1")
 }
+
+///|
+test "polys domain conversion rendering falls back to the raw value" {
+  let recipe = DomainRecipe::new()
+  let scope = recipe.builder.exec(
+    recipe.scope,
+    (
+      #|class _SymbitBrokenToSympy:
+      #|    def to_sympy(self, value):
+      #|        raise ValueError("intentional to_sympy failure")
+      #|_symbit_broken_to_sympy = _SymbitBrokenToSympy()
+    ),
+  )
+  let domain = recipe.builder.getitem(scope, Str("_symbit_broken_to_sympy"))
+  let raw = recipe.builder.value(Str("raw-value"))
+  assert_eq(recipe.request_domain_str(domain, raw), "raw-value")
+}

@@ -5,6 +5,7 @@ fn domain_foundation_source() -> String {
     #|
     #|_symbit_domains = _symbit_importlib.import_module("sympy.polys.domains")
     #|_symbit_sentinel = object()
+    #|_symbit_none_sentinel = object()
     #|def _symbit_split_names(text):
     #|    raw = text.strip()
     #|    if not raw:
@@ -27,6 +28,9 @@ fn domain_foundation_source() -> String {
     #|
     #|def _symbit_literal_symbols(text):
     #|    return tuple(sympy.Symbol(name) for name in _symbit_split_names(text))
+    #|
+    #|def _symbit_domain_generators(text):
+    #|    return tuple(sympy.sympify(item) for item in _symbit_split_names(text))
     #|
     #|def _symbit_int_pow(base, exp):
     #|    result = 1
@@ -75,20 +79,76 @@ fn domain_foundation_source() -> String {
     #|        if marker in text and text.endswith(')'):
     #|            left = text.find(marker)
     #|            base = _symbit_domain_spec(text[:left])
-    #|            symbols = _symbit_literal_symbols(text[left + len(marker):-1])
-    #|            return getattr(base, method)(*symbols)
+    #|            generators = _symbit_domain_generators(text[left + len(marker):-1])
+    #|            return getattr(base, method)(*generators)
     #|    if text.endswith(']') and not text.endswith(']]'):
     #|        left = _symbit_matching_open(text, '[', ']')
     #|        base = _symbit_domain_spec(text[:left])
-    #|        return base.poly_ring(*_symbit_literal_symbols(text[left + 1:-1]))
+    #|        return base.poly_ring(*_symbit_domain_generators(text[left + 1:-1]))
     #|    if text.endswith(')'):
     #|        left = _symbit_matching_open(text, '(', ')')
     #|        base = _symbit_domain_spec(text[:left])
-    #|        return base.frac_field(*_symbit_literal_symbols(text[left + 1:-1]))
+    #|        return base.frac_field(*_symbit_domain_generators(text[left + 1:-1]))
     #|    return getattr(_symbit_domains, text)
     #|
     #|def _symbit_attr_is_true(value):
     #|    return str(value).strip() == "True"
+    #|
+    #|def _symbit_try_sympify(source):
+    #|    try:
+    #|        return sympy.sympify(source)
+    #|    except Exception:
+    #|        return _symbit_sentinel
+    #|
+    #|def _symbit_try_method(object_value, method_name, args, failure):
+    #|    if any(arg is _symbit_sentinel for arg in args):
+    #|        return _symbit_sentinel
+    #|    try:
+    #|        value = getattr(object_value, method_name)(*args)
+    #|    except Exception:
+    #|        return failure
+    #|    if value is None:
+    #|        return failure
+    #|    return value
+    #|
+    #|def _symbit_contains(object_value, expression):
+    #|    if expression is _symbit_sentinel:
+    #|        return False
+    #|    value = _symbit_try_method(
+    #|        object_value, "__contains__", (expression,), _symbit_sentinel
+    #|    )
+    #|    if value is _symbit_sentinel:
+    #|        return False
+    #|    return str(value).strip() == "True"
+    #|
+    #|def _symbit_optional_hook(object_value, method_name, element, base):
+    #|    if element is _symbit_sentinel:
+    #|        return _symbit_sentinel
+    #|    return _symbit_try_method(
+    #|        object_value,
+    #|        method_name,
+    #|        (element, base),
+    #|        _symbit_none_sentinel,
+    #|    )
+    #|
+    #|def _symbit_sum(object_value, elements):
+    #|    if any(element is _symbit_sentinel for element in elements):
+    #|        return _symbit_sentinel
+    #|    return _symbit_try_method(
+    #|        object_value, "sum", (elements,), _symbit_sentinel
+    #|    )
+    #|
+    #|def _symbit_render_domain_result(object_value, value):
+    #|    if value is _symbit_sentinel:
+    #|        return "ERROR"
+    #|    if value is _symbit_none_sentinel:
+    #|        return "NONE"
+    #|    rendered = _symbit_try_method(
+    #|        object_value, "to_sympy", (value,), _symbit_sentinel
+    #|    )
+    #|    if rendered is _symbit_sentinel:
+    #|        rendered = value
+    #|    return str(rendered)
     #|
     #|def _symbit_capture(callable_value, args, kwargs):
     #|    try:
@@ -111,6 +171,7 @@ priv struct DomainRecipe {
   builder : @recipe.Builder
   sympy : @recipe.ValueRef
   scope : @recipe.ValueRef
+  error_sentinel : @recipe.ValueRef
   capture : @recipe.ValueRef
   render_captured : @recipe.ValueRef
 }
@@ -120,9 +181,10 @@ fn DomainRecipe::new() -> DomainRecipe raise {
   let builder = @recipe.Builder::new()
   let sympy = builder.import_module("sympy")
   let scope = builder.exec(builder.sympy_scope(), domain_foundation_source())
+  let error_sentinel = builder.getitem(scope, Str("_symbit_sentinel"))
   let capture = builder.getitem(scope, Str("_symbit_capture"))
   let render_captured = builder.getitem(scope, Str("_symbit_render_captured"))
-  { builder, sympy, scope, capture, render_captured }
+  { builder, sympy, scope, error_sentinel, capture, render_captured }
 }
 
 ///|
@@ -165,6 +227,85 @@ fn DomainRecipe::sympify(
     self.builder.call(callable, [Str(source)]),
     message="sympy-polys-domain-sympify-none",
   )
+}
+
+///|
+fn DomainRecipe::try_sympify(
+  self : DomainRecipe,
+  source : String,
+) -> @recipe.ValueRef raise {
+  let helper = self.builder.getitem(self.scope, Str("_symbit_try_sympify"))
+  self.builder.call(helper, [Str(source)])
+}
+
+///|
+fn DomainRecipe::try_method(
+  self : DomainRecipe,
+  object : @recipe.ValueRef,
+  method_name : String,
+  args : Array[@recipe.RecipeArg],
+  failure : @recipe.ValueRef,
+) -> @recipe.ValueRef raise {
+  let helper = self.builder.getitem(self.scope, Str("_symbit_try_method"))
+  let arguments = self.builder.tuple(args)
+  self.builder.call(helper, [
+    Ref(object),
+    Str(method_name),
+    Ref(arguments),
+    Ref(failure),
+  ])
+}
+
+///|
+fn DomainRecipe::contains(
+  self : DomainRecipe,
+  domain : @recipe.ValueRef,
+  expression : @recipe.ValueRef,
+) -> @recipe.ValueRef raise {
+  let helper = self.builder.getitem(self.scope, Str("_symbit_contains"))
+  self.builder.call(helper, [Ref(domain), Ref(expression)])
+}
+
+///|
+fn DomainRecipe::optional_hook(
+  self : DomainRecipe,
+  domain : @recipe.ValueRef,
+  method_name : String,
+  element : @recipe.ValueRef,
+  base : @recipe.ValueRef,
+) -> @recipe.ValueRef raise {
+  let helper = self.builder.getitem(self.scope, Str("_symbit_optional_hook"))
+  self.builder.call(helper, [
+    Ref(domain),
+    Str(method_name),
+    Ref(element),
+    Ref(base),
+  ])
+}
+
+///|
+fn DomainRecipe::sum(
+  self : DomainRecipe,
+  domain : @recipe.ValueRef,
+  elements : Array[@recipe.RecipeArg],
+) -> @recipe.ValueRef raise {
+  let helper = self.builder.getitem(self.scope, Str("_symbit_sum"))
+  let values = self.builder.list(elements)
+  self.builder.call(helper, [Ref(domain), Ref(values)])
+}
+
+///|
+fn DomainRecipe::request_domain_str(
+  self : DomainRecipe,
+  domain : @recipe.ValueRef,
+  result : @recipe.ValueRef,
+) -> String raise {
+  let helper = self.builder.getitem(
+    self.scope,
+    Str("_symbit_render_domain_result"),
+  )
+  let rendered = self.builder.call(helper, [Ref(domain), Ref(result)])
+  self.builder.request_str(rendered)
 }
 
 ///|

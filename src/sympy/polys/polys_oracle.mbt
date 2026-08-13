@@ -739,14 +739,11 @@ pub fn domain_drop(spec : String, gens : Array[String]) -> String raise {
 
 ///|
 pub fn domain_contains_expr(spec : String, expr : String) -> Bool raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let expr_obj = sympy_sympify_str(expr)
-  let contains = resolve_method_callable(domain_obj, "__contains__")
-  match
-    py_call_object(contains, py_tuple_from_objects([expr_obj]), print_err=false) {
-    Some(res) => py_str_enum(res).trim().to_owned() == "True"
-    None => false
-  }
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let expression = recipe.try_sympify(expr)
+  let result = recipe.contains(domain, expression)
+  recipe.builder.request_bool(result)
 }
 
 ///|
@@ -777,17 +774,33 @@ fn oracle_domain_element_to_string(
 
 ///|
 pub fn domain_from_sympy_expr(spec : String, expr : String) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let expr_obj = sympy_sympify_str(expr)
-  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
-    Some(elem) => oracle_domain_element_to_string(domain_obj, elem)
-    None => "ERROR"
-  }
+  let recipe = DomainRecipe::new()
+  let result = domain_from_sympy_graph(recipe, spec, expr)
+  recipe.request_domain_str(result.0, result.1)
 }
 
 ///|
 pub fn domain_to_sympy_expr(spec : String, expr : String) -> String raise {
-  domain_from_sympy_expr(spec, expr)
+  let recipe = DomainRecipe::new()
+  let result = domain_from_sympy_graph(recipe, spec, expr)
+  recipe.request_domain_str(result.0, result.1)
+}
+
+///|
+fn domain_from_sympy_graph(
+  recipe : DomainRecipe,
+  spec : String,
+  expr : String,
+) -> (@recipe.ValueRef, @recipe.ValueRef) raise {
+  let domain = recipe.domain(spec)
+  let expression = recipe.try_sympify(expr)
+  let element = recipe.try_method(
+    domain,
+    "from_sympy",
+    [Ref(expression)],
+    recipe.error_sentinel,
+  )
+  (domain, element)
 }
 
 ///|
@@ -796,59 +809,56 @@ pub fn domain_convert_from_expr(
   expr : String,
   base_spec : String,
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let base_obj = oracle_domain_from_spec(base_spec)
-  let expr_obj = sympy_sympify_str(expr)
-  let convert = resolve_method_callable(domain_obj, "convert_from")
-  match oracle_domain_element_from_expr(base_obj, expr_obj) {
-    Some(elem) => {
-      let res = py_call_object(
-        convert,
-        py_tuple_from_objects([objenum_to_obj(elem), base_obj]),
-        print_err=false,
-      )
-      match res {
-        Some(obj) => oracle_domain_element_to_string(domain_obj, obj)
-        None => "ERROR"
-      }
-    }
-    None => "ERROR"
-  }
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let base = recipe.domain(base_spec)
+  let expression = recipe.try_sympify(expr)
+  let element = recipe.try_method(
+    base,
+    "from_sympy",
+    [Ref(expression)],
+    recipe.error_sentinel,
+  )
+  let converted = recipe.try_method(
+    domain,
+    "convert_from",
+    [Ref(element), Ref(base)],
+    recipe.error_sentinel,
+  )
+  recipe.request_domain_str(domain, converted)
 }
 
 ///|
 pub fn domain_convert_expr(spec : String, expr : String) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let expr_obj = sympy_sympify_str(expr)
-  let convert = resolve_method_callable(domain_obj, "convert")
-  match
-    py_call_object(convert, py_tuple_from_objects([expr_obj]), print_err=false) {
-    Some(obj) => oracle_domain_element_to_string(domain_obj, obj)
-    None => "ERROR"
-  }
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let expression = recipe.try_sympify(expr)
+  let converted = recipe.try_method(
+    domain,
+    "convert",
+    [Ref(expression)],
+    recipe.error_sentinel,
+  )
+  recipe.request_domain_str(domain, converted)
 }
 
 ///|
 pub fn domain_sum_expr(spec : String, exprs : Array[String]) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let call = resolve_method_callable(domain_obj, "sum")
-  let elems : Array[@py.PyObject] = Array::new()
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let elements : Array[@recipe.RecipeArg] = []
   for expr in exprs {
-    match oracle_domain_element_from_expr(domain_obj, sympy_sympify_str(expr)) {
-      Some(elem) => elems.push(objenum_to_obj(elem))
-      None => return "ERROR"
-    }
+    let expression = recipe.try_sympify(expr)
+    let element = recipe.try_method(
+      domain,
+      "from_sympy",
+      [Ref(expression)],
+      recipe.error_sentinel,
+    )
+    elements.push(Ref(element))
   }
-  let args_list = py_list_from_objects(elems)
-  match
-    py_call_object(
-      call,
-      py_tuple_from_objects([args_list.obj()]),
-      print_err=false,
-    ) {
-    Some(obj) => oracle_domain_element_to_string(domain_obj, obj)
-    None => "ERROR"
-  }
+  let result = recipe.sum(domain, elements)
+  recipe.request_domain_str(domain, result)
 }
 
 ///|
@@ -858,24 +868,18 @@ fn domain_try_method_from_base_expr(
   base_spec : String,
   method_name : String,
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let base_obj = oracle_domain_from_spec(base_spec)
-  let expr_obj = sympy_sympify_str(expr)
-  let call = resolve_method_callable(domain_obj, method_name)
-  match oracle_domain_element_from_expr(base_obj, expr_obj) {
-    Some(elem) => {
-      let res = py_call_object_allow_none(
-        call,
-        py_tuple_from_objects([objenum_to_obj(elem), base_obj]),
-        print_err=false,
-      )
-      match res {
-        Some(obj) => oracle_domain_element_to_string(domain_obj, obj)
-        None => "NONE"
-      }
-    }
-    None => "ERROR"
-  }
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let base = recipe.domain(base_spec)
+  let expression = recipe.try_sympify(expr)
+  let element = recipe.try_method(
+    base,
+    "from_sympy",
+    [Ref(expression)],
+    recipe.error_sentinel,
+  )
+  let result = recipe.optional_hook(domain, method_name, element, base)
+  recipe.request_domain_str(domain, result)
 }
 
 ///|
