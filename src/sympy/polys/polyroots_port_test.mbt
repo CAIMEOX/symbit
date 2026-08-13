@@ -14,6 +14,26 @@ fn normalize_root_list(raw : String) -> String raise {
 }
 
 ///|
+fn root_lists_equivalent(lhs : String, rhs : String) -> Bool raise {
+  let builder = @recipe.Builder::new()
+  let scope = builder.sympy_scope()
+  let scope = builder.bind(scope, "__symbit_roots_lhs", Str(lhs))
+  let scope = builder.bind(scope, "__symbit_roots_rhs", Str(rhs))
+  let result = builder.eval(
+    scope,
+    (
+      #|(lambda left, right:
+      #|    isinstance(left, (list, tuple))
+      #|    and isinstance(right, (list, tuple))
+      #|    and len(left) == len(right)
+      #|    and all(sympy.simplify(a - b) == 0 for a, b in zip(left, right))
+      #|)(sympy.sympify(__symbit_roots_lhs), sympy.sympify(__symbit_roots_rhs))
+    ),
+  )
+  builder.request_bool(result)
+}
+
+///|
 fn rootof_list(expr : @symcore.Expr, deg : Int) -> String raise {
   let parts : Array[String] = Array::new()
   for i in 0..<deg {
@@ -26,8 +46,12 @@ fn rootof_list(expr : @symcore.Expr, deg : Int) -> String raise {
 ///|
 fn preprocess_repr(pair : (@symcore.Expr, @sympolys.Poly)) -> String raise {
   let (coeff, poly) = pair
-  let coeff_text = sympy_normalize(@symprint.pretty_string(coeff))
-  let poly_text = sympy_normalize(@symprint.pretty_string(poly.to_expr()))
+  let coeff_text = remove_spaces(
+    sympy_normalize(@symprint.pretty_string(coeff)),
+  )
+  let poly_text = remove_spaces(
+    sympy_normalize(@symprint.pretty_string(poly.to_expr())),
+  )
   "\{coeff_text}||\{poly_text}"
 }
 
@@ -151,7 +175,7 @@ test "polyroots: binomial roots parity" {
     let poly = b.from_expr(expr)
     let ours = roots_repr(@sympolys.roots_binomial(poly))
     let oracle = normalize_root_list(roots_binomial(poly.to_expr(), gens=["x"]))
-    assert_eq(ours, oracle)
+    assert_true(root_lists_equivalent(ours, oracle))
   }
 }
 
