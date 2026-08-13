@@ -2622,35 +2622,16 @@ pub fn linsolve_sympy_dict_to_dm_summary(
   eqs_rhs : Array[String],
   syms : Array[String],
 ) -> String raise {
-  let py_rows : Array[@py.PyObject] = Array::new()
-  for row in eqs_coeffs {
-    let py_row = py_dict_new()
-    for sym, coeff in row {
-      py_dict_set_obj(py_row, sym, sympy_sympify_str(coeff))
-    }
-    py_rows.push(py_row.obj())
-  }
-  let py_rhs : Array[@py.PyObject] = Array::new()
-  for rhs in eqs_rhs {
-    py_rhs.push(sympy_sympify_str(rhs))
-  }
-  let py_syms : Array[@py.PyObject] = Array::new()
-  for sym in syms {
-    py_syms.push(py_string_obj(sym))
-  }
-  let sdm = sympy_call_must("sympy.polys.matrices.linsolve.sympy_dict_to_dm", [
-    PyObj(py_list_from_objects(py_rows).obj()),
-    PyObj(py_list_from_objects(py_rhs).obj()),
-    PyObj(py_list_from_objects(py_syms).obj()),
+  let recipe = LinSolveRecipe::new()
+  let rows = recipe.sympified_rows(eqs_coeffs)
+  let rhs = recipe.expressions(eqs_rhs)
+  let symbols = recipe.string_list(syms)
+  let matrix = recipe.call_linsolve("sympy_dict_to_dm", [
+    Ref(rows),
+    Ref(rhs),
+    Ref(symbols),
   ])
-  let sdm_obj = objenum_to_obj(sdm)
-  let domain = match py_get_attr(sdm_obj, "domain") {
-    Some(obj) => py_str_enum(obj)
-    None => fail("linsolve-sympy-dict-to-dm-domain")
-  }
-  let to_ddm = resolve_method_callable(sdm_obj, "to_ddm")
-  let dense = py_str_enum(py_call_noargs(to_ddm))
-  "\{dense}@\{domain}|sparse"
+  recipe.request_str(recipe.render(recipe.dense_renderer, matrix))
 }
 
 ///|
@@ -2660,35 +2641,19 @@ pub fn solvers_eqs_to_matrix_summary(
   syms : Array[String],
   domain_spec : String,
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(domain_spec)
-  let convert = resolve_method_callable(domain_obj, "convert")
-  let py_rows : Array[@py.PyObject] = Array::new()
-  for row in eqs_coeffs {
-    let py_row = py_dict_new()
-    for sym, coeff in row {
-      let converted = py_call_one(convert, sympy_sympify_str(coeff))
-      py_dict_set_obj(py_row, sym, objenum_to_obj(converted))
-    }
-    py_rows.push(py_row.obj())
-  }
-  let py_rhs : Array[@py.PyObject] = Array::new()
-  for rhs in eqs_rhs {
-    let converted = py_call_one(convert, sympy_sympify_str(rhs))
-    py_rhs.push(objenum_to_obj(converted))
-  }
-  let py_syms = sympy_symbols_from_names(syms)
-  let dm = sympy_call_must("sympy.polys.solvers.eqs_to_matrix", [
-    PyObj(py_list_from_objects(py_rows).obj()),
-    PyObj(py_list_from_objects(py_rhs).obj()),
-    PyObj(py_list_from_objects(py_syms).obj()),
-    PyObj(domain_obj),
+  let recipe = LinSolveRecipe::new()
+  let domain = recipe.domain_recipe.domain(domain_spec)
+  let convert = recipe.domain_recipe.builder.getattr(domain, "convert")
+  let (symbols, symbol_lookup) = recipe.symbols(syms)
+  let rows = recipe.converted_rows(eqs_coeffs, symbol_lookup, convert)
+  let rhs = recipe.converted_values(eqs_rhs, convert)
+  let matrix = recipe.call_solvers("eqs_to_matrix", [
+    Ref(rows),
+    Ref(rhs),
+    Ref(symbols),
+    Ref(domain),
   ])
-  let dm_obj = objenum_to_obj(dm)
-  let domain = match py_get_attr(dm_obj, "domain") {
-    Some(obj) => py_str_enum(obj)
-    None => fail("solvers-eqs-to-matrix-domain")
-  }
-  "\{oracle_domainmatrix_to_matrix_str(dm_obj)}@\{domain}"
+  recipe.request_str(recipe.render(recipe.matrix_renderer, matrix))
 }
 
 ///|
@@ -2696,45 +2661,14 @@ pub fn solvers_sympy_eqs_to_ring_summary(
   eqs : Array[String],
   syms : Array[String],
 ) -> String raise {
-  let py_eqs : Array[@py.PyObject] = Array::new()
-  for eq in eqs {
-    py_eqs.push(sympy_sympify_str(eq))
-  }
-  let py_syms = sympy_symbols_from_names(syms)
-  let res = sympy_call_must("sympy.polys.solvers.sympy_eqs_to_ring", [
-    PyObj(py_list_from_objects(py_eqs).obj()),
-    PyObj(py_list_from_objects(py_syms).obj()),
+  let recipe = LinSolveRecipe::new()
+  let equations = recipe.expressions(eqs)
+  let (symbols, _) = recipe.symbols(syms)
+  let result = recipe.call_solvers("sympy_eqs_to_ring", [
+    Ref(equations),
+    Ref(symbols),
   ])
-  let parts = py_list_to_pyobjects(res)
-  guard parts.length() >= 2 else { fail("solvers-sympy-eqs-to-ring") }
-  "\{py_str_obj(parts[0])}||\{py_str_obj(parts[1])}"
-}
-
-///|
-fn oracle_linsolve_dict_summary(
-  dict_obj : @py.PyObject,
-  syms : Array[String],
-) -> String raise {
-  let items_call = resolve_method_callable(dict_obj, "items")
-  let items_enum = py_call_noargs(items_call)
-  let builtins = ensure_builtins_module()
-  let list_ctor = resolve_callable(builtins, "list")
-  let items_list = py_call_one(list_ctor, objenum_to_obj(items_enum))
-  let coeff_map : Map[String, String] = Map([])
-  for pair in py_list_to_pyobjects(items_list) {
-    let pair_items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
-    if pair_items.length() >= 2 {
-      coeff_map[py_str_obj(pair_items[0])] = py_str_obj(pair_items[1])
-    }
-  }
-  let parts : Array[String] = Array::new()
-  for sym in syms {
-    match coeff_map.get(sym) {
-      Some(value) => parts.push("\{sym}:\{value}")
-      None => ()
-    }
-  }
-  parts.join(",")
+  recipe.request_str(recipe.render(recipe.ring_renderer, result))
 }
 
 ///|
@@ -2742,29 +2676,16 @@ pub fn linsolve_linear_eq_to_dict_summary(
   eqs : Array[String],
   syms : Array[String],
 ) -> String raise {
-  let py_eqs : Array[@py.PyObject] = Array::new()
-  for eq in eqs {
-    py_eqs.push(sympy_sympify_str(eq))
-  }
-  let py_syms = sympy_symbols_from_names(syms)
-  let res = sympy_call_must(
-    "sympy.polys.matrices.linsolve._linear_eq_to_dict",
-    [
-      PyObj(py_list_from_objects(py_eqs).obj()),
-      PyObj(py_list_from_objects(py_syms).obj()),
-    ],
+  let recipe = LinSolveRecipe::new()
+  let equations = recipe.expressions(eqs)
+  let (symbols, _) = recipe.symbols(syms)
+  let result = recipe.call_linsolve("_linear_eq_to_dict", [
+    Ref(equations),
+    Ref(symbols),
+  ])
+  recipe.request_str(
+    recipe.render(recipe.linear_dict_renderer, result, syms~, with_syms=true),
   )
-  let parts = py_list_to_pyobjects(res)
-  guard parts.length() >= 2 else { fail("linsolve-linear-eq-to-dict") }
-  let coeffs = py_list_to_pyobjects(@py.PyObjectEnum::create(parts[0]))
-  let ind = py_list_to_pyobjects(@py.PyObjectEnum::create(parts[1]))
-  let rows : Array[String] = Array::new()
-  for i in 0..<coeffs.length() {
-    rows.push(
-      "\{oracle_linsolve_dict_summary(coeffs[i], syms)}||\{py_str_obj(ind[i])}",
-    )
-  }
-  rows.join("|")
 }
 
 ///|
@@ -2772,46 +2693,17 @@ pub fn linsolve_internal_summary(
   eqs : Array[String],
   syms : Array[String],
 ) -> String raise {
-  let py_eqs : Array[@py.PyObject] = Array::new()
-  for eq in eqs {
-    py_eqs.push(sympy_sympify_str(eq))
-  }
-  let py_syms = sympy_symbols_from_names(syms)
-  let res = sympy_call("sympy.polys.matrices.linsolve._linsolve", [
-    PyObj(py_list_from_objects(py_eqs).obj()),
-    PyObj(py_list_from_objects(py_syms).obj()),
-  ])
-  let res_obj = match res {
-    Some(obj) => objenum_to_obj(obj)
-    None => return "None"
-  }
-  let parts : Array[String] = Array::new()
-  let dict_summary = oracle_linsolve_dict_summary(res_obj, syms)
-  if dict_summary == "" {
-    for sym in syms {
-      parts.push("\{sym}:0")
-    }
-    return parts.join("|")
-  }
-  let sol_map : Map[String, String] = Map([])
-  let items_call = resolve_method_callable(res_obj, "items")
-  let items_enum = py_call_noargs(items_call)
-  let builtins = ensure_builtins_module()
-  let list_ctor = resolve_callable(builtins, "list")
-  let items_list = py_call_one(list_ctor, objenum_to_obj(items_enum))
-  for pair in py_list_to_pyobjects(items_list) {
-    let pair_items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
-    if pair_items.length() >= 2 {
-      sol_map[py_str_obj(pair_items[0])] = py_str_obj(pair_items[1])
-    }
-  }
-  for sym in syms {
-    match sol_map.get(sym) {
-      Some(value) => parts.push("\{sym}:\{value}")
-      None => parts.push("\{sym}:0")
-    }
-  }
-  parts.join("|")
+  let recipe = LinSolveRecipe::new()
+  let equations = recipe.expressions(eqs)
+  let (symbols, _) = recipe.symbols(syms)
+  let result = recipe.call_linsolve(
+    "_linsolve",
+    [Ref(equations), Ref(symbols)],
+    allow_none=true,
+  )
+  recipe.request_str(
+    recipe.render(recipe.internal_renderer, result, syms~, with_syms=true),
+  )
 }
 
 ///|
@@ -2819,27 +2711,28 @@ pub fn solvers_solve_lin_sys_summary(
   eqs : Array[String],
   syms : Array[String],
 ) -> String raise {
-  let py_eqs : Array[@py.PyObject] = Array::new()
-  for eq in eqs {
-    py_eqs.push(sympy_sympify_str(eq))
-  }
-  let py_syms = sympy_symbols_from_names(syms)
-  let prepared = sympy_call_must("sympy.polys.solvers.sympy_eqs_to_ring", [
-    PyObj(py_list_from_objects(py_eqs).obj()),
-    PyObj(py_list_from_objects(py_syms).obj()),
+  let recipe = LinSolveRecipe::new()
+  let equations = recipe.expressions(eqs)
+  let (symbols, _) = recipe.symbols(syms)
+  let prepared = recipe.call_solvers("sympy_eqs_to_ring", [
+    Ref(equations),
+    Ref(symbols),
   ])
-  let parts = py_list_to_pyobjects(prepared)
-  guard parts.length() >= 2 else { fail("solvers-solve-lin-sys-prepared") }
-  let res = sympy_call(
-    "sympy.polys.solvers.solve_lin_sys",
-    [PyObj(parts[0]), PyObj(parts[1])],
-    kwargs={ "_raw": Bool(false) },
+  let pair = recipe.require_pair(prepared, "solvers-solve-lin-sys-prepared")
+  let ring_equations = recipe.domain_recipe.builder.getitem(
+    pair,
+    DecimalInt("0"),
   )
-  let res_obj = match res {
-    Some(obj) => objenum_to_obj(obj)
-    None => return "None"
-  }
-  oracle_linsolve_dict_summary(res_obj, syms)
+  let ring = recipe.domain_recipe.builder.getitem(pair, DecimalInt("1"))
+  let result = recipe.call_solvers(
+    "solve_lin_sys",
+    [Ref(ring_equations), Ref(ring)],
+    kwargs={ "_raw": Bool(false) },
+    allow_none=true,
+  )
+  recipe.request_str(
+    recipe.render(recipe.solve_renderer, result, syms~, with_syms=true),
+  )
 }
 
 ///|
