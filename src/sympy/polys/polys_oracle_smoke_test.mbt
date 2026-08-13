@@ -5,6 +5,43 @@ test "sympy oracle: sympy_call_string expand" {
 }
 
 ///|
+test "sympy oracle: sympy_call_string serializes every OracleArg shape" {
+  assert_eq(sympy_call_string("sympy.Tuple", [Null]), "(None,)")
+  assert_eq(sympy_call_string("sympy.sympify", [Bool(true)]), "True")
+  assert_eq(sympy_call_string("sympy.sympify", [StrList(["a", "b"])]), "[a, b]")
+  assert_eq(sympy_call_string("sympy.sympify", [IntList([3, 4])]), "[3, 4]")
+  assert_eq(
+    sympy_call_string("sympy.sympify", [
+      List([Null, Str("z"), Int(5), Bool(false)]),
+    ]),
+    "[None, z, 5, False]",
+  )
+  assert_eq(
+    sympy_call_string("sympy.sympify", [
+      Dict({ "outer": Dict({ "value": Int(2) }), "flag": Bool(false) }),
+    ]),
+    "{flag: False, outer: {value: 2}}",
+  )
+  assert_eq(
+    sympy_call_string("sympy.sympify", [Str("a + b")], kwargs={
+      "locals": Dict({ "a": Int(2), "b": Int(3) }),
+    }),
+    "5",
+  )
+}
+
+///|
+test "sympy oracle: sympy_call_string keeps implicit sympy path contract" {
+  assert_eq(sympy_call_string("expand", [Str("(x + 1)**2")]), "x**2 + 2*x + 1")
+  assert_eq(
+    sympy_call_string("polys.polytools.cancel", [Str("(x**2 - 1)/(x - 1)")]),
+    "x + 1",
+  )
+  // The legacy helper prints Poly through as_expr(), not Poly.__str__().
+  assert_eq(sympy_call_string("sympy.Poly", [Str("x**2 + 1")]), "x**2 + 1")
+}
+
+///|
 test "sympy oracle: resultant_str" {
   let x = @symcore.Expr::Symbol("x")
   let p = (x ^ @symcore.int(2)) + @symcore.int(1)
