@@ -1,0 +1,238 @@
+///|
+fn domain_foundation_source() -> String {
+  (
+    #|import importlib as _symbit_importlib
+    #|
+    #|_symbit_domains = _symbit_importlib.import_module("sympy.polys.domains")
+    #|_symbit_sentinel = object()
+    #|def _symbit_split_names(text):
+    #|    raw = text.strip()
+    #|    if not raw:
+    #|        return []
+    #|    return [name.strip() for name in raw.split(',')]
+    #|
+    #|def _symbit_matching_open(text, opening, closing):
+    #|    if not text.endswith(closing):
+    #|        raise ValueError("domain spec has an unmatched suffix")
+    #|    depth = 0
+    #|    for index in range(len(text) - 1, -1, -1):
+    #|        char = text[index]
+    #|        if char == closing:
+    #|            depth += 1
+    #|        elif char == opening:
+    #|            depth -= 1
+    #|            if depth == 0:
+    #|                return index
+    #|    raise ValueError("domain spec has an unmatched suffix")
+    #|
+    #|def _symbit_literal_symbols(text):
+    #|    return tuple(sympy.Symbol(name) for name in _symbit_split_names(text))
+    #|
+    #|def _symbit_int_pow(base, exp):
+    #|    result = 1
+    #|    current = base
+    #|    remaining = exp
+    #|    while remaining > 0:
+    #|        if remaining % 2 == 1:
+    #|            result *= current
+    #|        remaining //= 2
+    #|        if remaining > 0:
+    #|            current *= current
+    #|    return result
+    #|
+    #|def _symbit_domain_spec(spec):
+    #|    text = spec.strip()
+    #|    if not text:
+    #|        raise ValueError("empty domain spec")
+    #|    if text.startswith(("GF(", "FF(", "FiniteField(")) and text.endswith(")"):
+    #|        left = text.index('(')
+    #|        body = text[left + 1:-1].strip()
+    #|        if '**' in body:
+    #|            parts = [part.strip() for part in body.split('**')]
+    #|        elif ',' in body:
+    #|            parts = [part.strip() for part in body.split(',')]
+    #|        else:
+    #|            parts = [body]
+    #|        if len(parts) == 1:
+    #|            order = int(parts[0], 10)
+    #|        elif len(parts) == 2:
+    #|            order = _symbit_int_pow(int(parts[0], 10), int(parts[1], 10))
+    #|        else:
+    #|            raise ValueError("invalid finite-field domain spec")
+    #|        return _symbit_domains.GF(order)
+    #|    if '<' in text and text.endswith('>'):
+    #|        left = _symbit_matching_open(text, '<', '>')
+    #|        base = _symbit_domain_spec(text[:left])
+    #|        extensions = tuple(
+    #|            sympy.sympify(item)
+    #|            for item in _symbit_split_names(text[left + 1:-1])
+    #|        )
+    #|        return base.algebraic_field(*extensions)
+    #|    for marker, method in (
+    #|        ('.old_poly_ring(', 'old_poly_ring'),
+    #|        ('.old_frac_field(', 'old_frac_field'),
+    #|    ):
+    #|        if marker in text and text.endswith(')'):
+    #|            left = text.find(marker)
+    #|            base = _symbit_domain_spec(text[:left])
+    #|            symbols = _symbit_literal_symbols(text[left + len(marker):-1])
+    #|            return getattr(base, method)(*symbols)
+    #|    if text.endswith(']') and not text.endswith(']]'):
+    #|        left = _symbit_matching_open(text, '[', ']')
+    #|        base = _symbit_domain_spec(text[:left])
+    #|        return base.poly_ring(*_symbit_literal_symbols(text[left + 1:-1]))
+    #|    if text.endswith(')'):
+    #|        left = _symbit_matching_open(text, '(', ')')
+    #|        base = _symbit_domain_spec(text[:left])
+    #|        return base.frac_field(*_symbit_literal_symbols(text[left + 1:-1]))
+    #|    return getattr(_symbit_domains, text)
+    #|
+    #|def _symbit_attr_is_true(value):
+    #|    return str(value).strip() == "True"
+    #|
+    #|def _symbit_capture(callable_value, args, kwargs):
+    #|    try:
+    #|        value = callable_value(*args, **kwargs)
+    #|    except Exception:
+    #|        return _symbit_sentinel
+    #|    if value is None:
+    #|        return _symbit_sentinel
+    #|    return value
+    #|
+    #|def _symbit_render_captured(value):
+    #|    if value is _symbit_sentinel:
+    #|        return "ERROR"
+    #|    return str(value)
+  )
+}
+
+///|
+priv struct DomainRecipe {
+  builder : @recipe.Builder
+  sympy : @recipe.ValueRef
+  scope : @recipe.ValueRef
+  capture : @recipe.ValueRef
+  render_captured : @recipe.ValueRef
+}
+
+///|
+fn DomainRecipe::new() -> DomainRecipe raise {
+  let builder = @recipe.Builder::new()
+  let sympy = builder.import_module("sympy")
+  let scope = builder.exec(builder.sympy_scope(), domain_foundation_source())
+  let capture = builder.getitem(scope, Str("_symbit_capture"))
+  let render_captured = builder.getitem(scope, Str("_symbit_render_captured"))
+  { builder, sympy, scope, capture, render_captured }
+}
+
+///|
+fn DomainRecipe::domain(
+  self : DomainRecipe,
+  spec : String,
+) -> @recipe.ValueRef raise {
+  let parser = self.builder.getitem(self.scope, Str("_symbit_domain_spec"))
+  self.builder.call(parser, [Str(spec)])
+}
+
+///|
+fn DomainRecipe::symbol(
+  self : DomainRecipe,
+  name : String,
+) -> @recipe.ValueRef raise {
+  let symbol_fn = self.builder.getattr(self.sympy, "Symbol")
+  self.builder.call(symbol_fn, [Str(name)])
+}
+
+///|
+fn DomainRecipe::symbols(
+  self : DomainRecipe,
+  names : Array[String],
+) -> Array[@recipe.RecipeArg] raise {
+  let result : Array[@recipe.RecipeArg] = []
+  for name in names {
+    result.push(Ref(self.symbol(name)))
+  }
+  result
+}
+
+///|
+fn DomainRecipe::sympify(
+  self : DomainRecipe,
+  source : String,
+) -> @recipe.ValueRef raise {
+  let callable = self.builder.getattr(self.sympy, "sympify")
+  self.builder.require_non_none(
+    self.builder.call(callable, [Str(source)]),
+    message="sympy-polys-domain-sympify-none",
+  )
+}
+
+///|
+fn DomainRecipe::attr_is_true(
+  self : DomainRecipe,
+  value : @recipe.ValueRef,
+) -> @recipe.ValueRef raise {
+  let comparator = self.builder.getitem(self.scope, Str("_symbit_attr_is_true"))
+  self.builder.call(comparator, [Ref(value)])
+}
+
+///|
+fn recipe_kwargs_dict(
+  builder : @recipe.Builder,
+  kwargs : Map[String, @recipe.RecipeArg],
+) -> @recipe.ValueRef raise {
+  let items : Array[(@recipe.RecipeArg, @recipe.RecipeArg)] = []
+  for name, value in kwargs {
+    items.push((Str(name), value))
+  }
+  builder.dict(items)
+}
+
+///|
+fn DomainRecipe::method_call(
+  self : DomainRecipe,
+  object : @recipe.ValueRef,
+  method_name : String,
+  args : Array[@recipe.RecipeArg],
+  kwargs? : Map[String, @recipe.RecipeArg] = {},
+) -> @recipe.ValueRef raise {
+  let callable = self.builder.getattr(object, method_name)
+  self.builder.require_non_none(
+    self.builder.call(callable, args, kwargs~),
+    message="sympy-polys-domain-call-none:" + method_name,
+  )
+}
+
+///|
+fn DomainRecipe::captured_method_call(
+  self : DomainRecipe,
+  object : @recipe.ValueRef,
+  method_name : String,
+  args : Array[@recipe.RecipeArg],
+  kwargs? : Map[String, @recipe.RecipeArg] = {},
+) -> @recipe.ValueRef raise {
+  let callable = self.builder.getattr(object, method_name)
+  let arguments = self.builder.tuple(args)
+  let keyword_arguments = recipe_kwargs_dict(self.builder, kwargs)
+  self.builder.call(self.capture, [
+    Ref(callable),
+    Ref(arguments),
+    Ref(keyword_arguments),
+  ])
+}
+
+///|
+fn DomainRecipe::request_captured_str(
+  self : DomainRecipe,
+  result : @recipe.ValueRef,
+) -> String raise {
+  let rendered = self.builder.call(self.render_captured, [Ref(result)])
+  self.builder.request_str(rendered)
+}
+
+///|
+fn parse_domain_int(value : String) -> Int raise {
+  @string.parse_int(value) catch {
+    _ => fail("sympy-polys-domain-int:" + value)
+  }
+}

@@ -457,25 +457,25 @@ pub fn analyze_gens_nested(gens : Array[Array[String]]) -> Array[String] raise {
 
 ///|
 pub fn domain_repr(spec : String) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  py_str_obj(domain_obj)
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  recipe.builder.request_str(domain)
 }
 
 ///|
 pub fn domain_characteristic(spec : String) -> Int raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let char_call = resolve_method_callable(domain_obj, "characteristic")
-  let char_enum = py_call_noargs(char_call)
-  py_obj_to_int(objenum_to_obj(char_enum))
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let result = recipe.method_call(domain, "characteristic", [])
+  parse_domain_int(recipe.builder.request_int(result))
 }
 
 ///|
 fn domain_attr_bool(spec : String, attr : String) -> Bool raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  match py_get_attr(domain_obj, attr) {
-    Some(value) => py_str_enum(value).trim().to_owned() == "True"
-    None => fail("domain-attr:\{attr}")
-  }
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let value = recipe.builder.getattr(domain, attr)
+  recipe.builder.request_bool(recipe.attr_is_true(value))
 }
 
 ///|
@@ -485,11 +485,11 @@ pub fn domain_attr_bool_query(spec : String, attr : String) -> Bool raise {
 
 ///|
 pub fn domain_attr_bool_or_false(spec : String, attr : String) -> Bool raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  match py_get_attr(domain_obj, attr) {
-    Some(value) => py_str_enum(value).trim().to_owned() == "True"
-    None => false
-  }
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let fallback = recipe.builder.value(Bool(false))
+  let value = recipe.builder.getattr_or(domain, attr, fallback)
+  recipe.builder.request_bool(recipe.attr_is_true(value))
 }
 
 ///|
@@ -514,68 +514,59 @@ pub fn domain_is_finite_field(spec : String) -> Bool raise {
 
 ///|
 pub fn domain_get_field(spec : String) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let get_field = resolve_method_callable(domain_obj, "get_field")
-  let res = py_call_noargs(get_field)
-  py_str_enum(res)
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let result = recipe.method_call(domain, "get_field", [])
+  recipe.builder.request_str(result)
 }
 
 ///|
 pub fn domain_get_exact(spec : String) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let get_exact = resolve_method_callable(domain_obj, "get_exact")
-  let res = py_call_noargs(get_exact)
-  py_str_enum(res)
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let result = recipe.method_call(domain, "get_exact", [])
+  recipe.builder.request_str(result)
 }
 
 ///|
 pub fn domain_get_ring(spec : String) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let get_ring = resolve_method_callable(domain_obj, "get_ring")
-  let no_args = py_tuple_from_objects([])
-  match py_call_object(get_ring, no_args, print_err=false) {
-    Some(res) => py_str_enum(res)
-    None => "ERROR"
-  }
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let result = recipe.captured_method_call(domain, "get_ring", [])
+  recipe.request_captured_str(result)
 }
 
 ///|
 pub fn domain_unify(lhs_spec : String, rhs_spec : String) -> String raise {
-  let lhs = oracle_domain_from_spec(lhs_spec)
-  let rhs = oracle_domain_from_spec(rhs_spec)
-  let unify = resolve_method_callable(lhs, "unify")
-  let unified = py_call_one(unify, rhs)
-  py_str_enum(unified)
+  let recipe = DomainRecipe::new()
+  let lhs = recipe.domain(lhs_spec)
+  let rhs = recipe.domain(rhs_spec)
+  let result = recipe.method_call(lhs, "unify", [Ref(rhs)])
+  recipe.builder.request_str(result)
 }
 
 ///|
 pub fn domain_poly_ring(spec : String, gens : Array[String]) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let call = resolve_method_callable(domain_obj, "poly_ring")
-  match
-    py_call_object(
-      call,
-      py_tuple_from_objects(sympy_exprs_from_texts(gens)),
-      print_err=false,
-    ) {
-    Some(res) => py_str_enum(res)
-    None => "ERROR"
-  }
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let result = recipe.captured_method_call(
+    domain,
+    "poly_ring",
+    recipe.symbols(gens),
+  )
+  recipe.request_captured_str(result)
 }
 
 ///|
 pub fn domain_frac_field(spec : String, gens : Array[String]) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let call = resolve_method_callable(domain_obj, "frac_field")
-  match
-    py_call_object(
-      call,
-      py_tuple_from_objects(sympy_exprs_from_texts(gens)),
-      print_err=false,
-    ) {
-    Some(res) => py_str_enum(res)
-    None => "ERROR"
-  }
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let result = recipe.captured_method_call(
+    domain,
+    "frac_field",
+    recipe.symbols(gens),
+  )
+  recipe.request_captured_str(result)
 }
 
 ///|
@@ -583,17 +574,14 @@ pub fn domain_old_poly_ring(
   spec : String,
   gens : Array[String],
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let call = resolve_method_callable(domain_obj, "old_poly_ring")
-  match
-    py_call_object(
-      call,
-      py_tuple_from_objects(sympy_exprs_from_texts(gens)),
-      print_err=false,
-    ) {
-    Some(res) => py_str_enum(res)
-    None => "ERROR"
-  }
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let result = recipe.captured_method_call(
+    domain,
+    "old_poly_ring",
+    recipe.symbols(gens),
+  )
+  recipe.request_captured_str(result)
 }
 
 ///|
@@ -601,28 +589,23 @@ pub fn domain_old_frac_field(
   spec : String,
   gens : Array[String],
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let call = resolve_method_callable(domain_obj, "old_frac_field")
-  match
-    py_call_object(
-      call,
-      py_tuple_from_objects(sympy_exprs_from_texts(gens)),
-      print_err=false,
-    ) {
-    Some(res) => py_str_enum(res)
-    None => "ERROR"
-  }
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let result = recipe.captured_method_call(
+    domain,
+    "old_frac_field",
+    recipe.symbols(gens),
+  )
+  recipe.request_captured_str(result)
 }
 
 ///|
 pub fn domain_set_domain(spec : String, ground_spec : String) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let ground = oracle_domain_from_spec(ground_spec)
-  let call = resolve_method_callable(domain_obj, "set_domain")
-  match py_call_object(call, py_tuple_from_objects([ground]), print_err=false) {
-    Some(res) => py_str_enum(res)
-    None => "ERROR"
-  }
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let ground = recipe.domain(ground_spec)
+  let result = recipe.captured_method_call(domain, "set_domain", [Ref(ground)])
+  recipe.request_captured_str(result)
 }
 
 ///|
@@ -631,19 +614,15 @@ pub fn domain_unify_with_symbols(
   rhs_spec : String,
   symbols : Array[String],
 ) -> String raise {
-  let lhs = oracle_domain_from_spec(lhs_spec)
-  let rhs = oracle_domain_from_spec(rhs_spec)
-  let unify = resolve_method_callable(lhs, "unify_with_symbols")
-  let symbol_tuple = py_tuple_from_objects(sympy_symbols_from_names(symbols))
-  match
-    py_call_object(
-      unify,
-      py_tuple_from_objects([rhs, symbol_tuple.obj()]),
-      print_err=false,
-    ) {
-    Some(res) => py_str_enum(res)
-    None => "ERROR"
-  }
+  let recipe = DomainRecipe::new()
+  let lhs = recipe.domain(lhs_spec)
+  let rhs = recipe.domain(rhs_spec)
+  let symbol_tuple = recipe.builder.tuple(recipe.symbols(symbols))
+  let result = recipe.captured_method_call(lhs, "unify_with_symbols", [
+    Ref(rhs),
+    Ref(symbol_tuple),
+  ])
+  recipe.request_captured_str(result)
 }
 
 ///|
@@ -651,13 +630,11 @@ pub fn domain_unify_composite(
   lhs_spec : String,
   rhs_spec : String,
 ) -> String raise {
-  let lhs = oracle_domain_from_spec(lhs_spec)
-  let rhs = oracle_domain_from_spec(rhs_spec)
-  let unify = resolve_method_callable(lhs, "unify_composite")
-  match py_call_object(unify, py_tuple_from_objects([rhs]), print_err=false) {
-    Some(res) => py_str_enum(res)
-    None => "ERROR"
-  }
+  let recipe = DomainRecipe::new()
+  let lhs = recipe.domain(lhs_spec)
+  let rhs = recipe.domain(rhs_spec)
+  let result = recipe.captured_method_call(lhs, "unify_composite", [Ref(rhs)])
+  recipe.request_captured_str(result)
 }
 
 ///|
@@ -665,16 +642,14 @@ pub fn domain_algebraic_field(
   spec : String,
   extension : Array[String],
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let call = resolve_method_callable(domain_obj, "algebraic_field")
-  let args : Array[@py.PyObject] = Array::new()
-  for expr in extension {
-    args.push(sympy_sympify_str(expr))
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let args : Array[@recipe.RecipeArg] = []
+  for expression in extension {
+    args.push(Ref(recipe.sympify(expression)))
   }
-  match py_call_object(call, py_tuple_from_objects(args), print_err=false) {
-    Some(res) => py_str_enum(res)
-    None => "ERROR"
-  }
+  let result = recipe.captured_method_call(domain, "algebraic_field", args)
+  recipe.request_captured_str(result)
 }
 
 ///|
@@ -685,20 +660,30 @@ pub fn domain_alg_field_from_poly(
   extension_name? : String? = None,
   root_index? : Int = -1,
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let poly_obj = sympy_poly_from_expr(poly_expr, [gen])
-  let call = resolve_method_callable(domain_obj, "alg_field_from_poly")
-  let kwargs = py_dict_new()
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let expression = recipe.sympify(poly_expr)
+  let generator = recipe.symbol(gen)
+  let poly_constructor = recipe.builder.getattr(recipe.sympy, "Poly")
+  let poly = recipe.builder.require_non_none(
+    recipe.builder.call(poly_constructor, [Ref(expression), Ref(generator)]),
+    message="sympy-polys-domain-poly-none",
+  )
+  let kwargs : Map[String, @recipe.RecipeArg] = Map([])
   match extension_name {
-    Some(name) if name != "" =>
-      py_dict_set_obj(kwargs, "alias", py_string_obj(name))
+    Some(name) if name != "" => kwargs["alias"] = Str(name)
     _ => ()
   }
   if root_index != -1 {
-    py_dict_set_obj(kwargs, "root_index", py_int_obj(root_index))
+    kwargs["root_index"] = DecimalInt(Show::to_string(root_index))
   }
-  let res = py_call_with_args(call, [poly_obj], kwargs)
-  py_str_enum(res)
+  let result = recipe.method_call(
+    domain,
+    "alg_field_from_poly",
+    [Ref(poly)],
+    kwargs~,
+  )
+  recipe.builder.request_str(result)
 }
 
 ///|
@@ -710,51 +695,46 @@ pub fn domain_cyclotomic_field(
   gen? : String? = None,
   root_index? : Int = -1,
 ) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let call = resolve_method_callable(domain_obj, "cyclotomic_field")
-  let kwargs = py_dict_new()
-  py_dict_set_obj(kwargs, "ss", py_bool_obj(ss))
-  py_dict_set_obj(kwargs, "alias", py_string_obj(extension_name))
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let kwargs : Map[String, @recipe.RecipeArg] = {
+    "ss": Bool(ss),
+    "alias": Str(extension_name),
+  }
   match gen {
-    Some(name) if name != "" =>
-      py_dict_set_obj(kwargs, "gen", sympy_symbol_obj(name))
+    Some(name) if name != "" => kwargs["gen"] = Ref(recipe.symbol(name))
     _ => ()
   }
   if root_index != -1 {
-    py_dict_set_obj(kwargs, "root_index", py_int_obj(root_index))
+    kwargs["root_index"] = DecimalInt(Show::to_string(root_index))
   }
-  let res = py_call_with_args(call, [py_int_obj(n)], kwargs)
-  py_str_enum(res)
+  let result = recipe.method_call(
+    domain,
+    "cyclotomic_field",
+    [DecimalInt(Show::to_string(n))],
+    kwargs~,
+  )
+  recipe.builder.request_str(result)
 }
 
 ///|
 pub fn domain_inject(spec : String, gens : Array[String]) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let call = resolve_method_callable(domain_obj, "inject")
-  match
-    py_call_object(
-      call,
-      py_tuple_from_objects(sympy_symbols_from_names(gens)),
-      print_err=false,
-    ) {
-    Some(res) => py_str_enum(res)
-    None => "ERROR"
-  }
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let result = recipe.captured_method_call(
+    domain,
+    "inject",
+    recipe.symbols(gens),
+  )
+  recipe.request_captured_str(result)
 }
 
 ///|
 pub fn domain_drop(spec : String, gens : Array[String]) -> String raise {
-  let domain_obj = oracle_domain_from_spec(spec)
-  let call = resolve_method_callable(domain_obj, "drop")
-  match
-    py_call_object(
-      call,
-      py_tuple_from_objects(sympy_symbols_from_names(gens)),
-      print_err=false,
-    ) {
-    Some(res) => py_str_enum(res)
-    None => "ERROR"
-  }
+  let recipe = DomainRecipe::new()
+  let domain = recipe.domain(spec)
+  let result = recipe.captured_method_call(domain, "drop", recipe.symbols(gens))
+  recipe.request_captured_str(result)
 }
 
 ///|
