@@ -128,7 +128,11 @@ test "distributedmodules: conversion and leading term parity" {
   )
   assert_eq(
     sdm_port_map_string(@sympolys.sdm_to_dict(f)),
+    "{(1,1,0):1,(1,0,0):2}",
+  )
+  assert_eq(
     sdm_to_dict([([1, 1, 0], 1), ([1, 0, 0], 2)]),
+    "{(1,1,0):MPQ(1,1),(1,0,0):MPQ(2,1)}",
   )
 
   let x = @symcore.Expr::Symbol("x")
