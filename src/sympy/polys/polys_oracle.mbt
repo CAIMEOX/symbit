@@ -80,114 +80,6 @@ pub fn canonical_cmp(s : String) -> String {
 }
 
 ///|
-pub fn sympify_pythonrational(num : Int, den : Int) -> String raise {
-  let rational = sympy_call_must(
-    "sympy.polys.domains.pythonrational.PythonRational",
-    [Int(num), Int(den)],
-  )
-  let res = sympy_call_must(
-    "sympy.polys.domains.pythonrational.sympify_pythonrational",
-    [PyObj(objenum_to_obj(rational))],
-  )
-  py_str_enum(res)
-}
-
-///|
-fn oracle_ring_element_from_expr(
-  ring_obj : @py.PyObject,
-  expr : @symcore.Expr,
-) -> @py.PyObject raise {
-  let from_expr = resolve_method_callable(ring_obj, "from_expr")
-  objenum_to_obj(py_call_one(from_expr, expr_to_sympy(expr)))
-}
-
-///|
-pub fn modgcd_univariate(
-  f : @symcore.Expr,
-  g : @symcore.Expr,
-  gen? : String = "x",
-) -> String raise {
-  oracle_modgcd("sympy.polys.modulargcd.modgcd_univariate", f, g, gen)
-}
-
-///|
-pub fn modgcd_bivariate(
-  f : @symcore.Expr,
-  g : @symcore.Expr,
-  gens? : String = "x,y",
-) -> String raise {
-  oracle_modgcd("sympy.polys.modulargcd.modgcd_bivariate", f, g, gens)
-}
-
-///|
-pub fn modgcd_multivariate(
-  f : @symcore.Expr,
-  g : @symcore.Expr,
-  gens? : String = "x,y,z",
-) -> String raise {
-  oracle_modgcd("sympy.polys.modulargcd.modgcd_multivariate", f, g, gens)
-}
-
-///|
-pub fn func_field_modgcd_sqrt2(
-  f : @symcore.Expr,
-  g : @symcore.Expr,
-  gens? : String = "x",
-) -> String raise {
-  let ring_tuple = sympy_call_must("sympy.polys.rings.ring", [
-    Str(gens),
-    PyObj(oracle_domain_from_spec("QQ<sqrt(2)>")),
-  ])
-  let ring_items = py_list_to_pyobjects(ring_tuple)
-  guard ring_items.length() >= 1 else { fail("ring-result-shape") }
-  let ring_obj = ring_items[0]
-  let f_obj = oracle_ring_element_from_expr(ring_obj, f)
-  let g_obj = oracle_ring_element_from_expr(ring_obj, g)
-  let res = sympy_call_must("sympy.polys.modulargcd.func_field_modgcd", [
-    PyObj(f_obj),
-    PyObj(g_obj),
-  ])
-  let parts = py_list_to_pyobjects(res)
-  guard parts.length() == 3 else { fail("func-field-modgcd-result-shape") }
-  let h = oracle_poly_element_as_expr(parts[0])
-  let cff = oracle_poly_element_as_expr(parts[1])
-  let cfg = oracle_poly_element_as_expr(parts[2])
-  "(\{h},\{cff},\{cfg})"
-}
-
-///|
-fn oracle_poly_element_as_expr(poly : @py.PyObject) -> String raise {
-  let as_expr = resolve_method_callable(poly, "as_expr")
-  let expr = py_call_noargs(as_expr)
-  remove_spaces(sympy_normalize(py_str_enum(expr)))
-}
-
-///|
-fn oracle_modgcd(
-  path : String,
-  f : @symcore.Expr,
-  g : @symcore.Expr,
-  gens : String,
-) -> String raise {
-  let ring_tuple = sympy_call_must("sympy.polys.rings.ring", [
-    Str(gens),
-    PyObj(oracle_domain_from_spec("ZZ")),
-  ])
-  let ring_items = py_list_to_pyobjects(ring_tuple)
-  guard ring_items.length() >= 1 else { fail("ring-result-shape") }
-  let ring_obj = ring_items[0]
-  let f_obj = oracle_ring_element_from_expr(ring_obj, f)
-  let g_obj = oracle_ring_element_from_expr(ring_obj, g)
-  let res = sympy_call_must(path, [PyObj(f_obj), PyObj(g_obj)])
-  let parts = py_list_to_pyobjects(res)
-  guard parts.length() == 3 else { fail("modgcd-result-shape") }
-  let h = remove_spaces(sympy_normalize(py_str_obj(parts[0])))
-  let cff = remove_spaces(sympy_normalize(py_str_obj(parts[1])))
-  let cfg = remove_spaces(sympy_normalize(py_str_obj(parts[2])))
-  "(\{h},\{cff},\{cfg})"
-}
-
-///|
 pub fn domain_repr(spec : String) -> String raise {
   let recipe = DomainRecipe::new()
   let domain = recipe.domain(spec)
@@ -7431,85 +7323,6 @@ pub fn term_div_zz(
 }
 
 ///|
-pub fn cyclotomic_poly(n : Int, x? : String = "x") -> String raise {
-  let res = sympy_call_must("sympy.polys.specialpolys.cyclotomic_poly", [
-    Int(n),
-    PyObj(sympy_symbol_obj(x)),
-  ])
-  py_sympy_enum_str(res)
-}
-
-///|
-pub fn swinnerton_dyer_poly(n : Int, x? : String = "x") -> String raise {
-  let res = sympy_call_must("sympy.polys.specialpolys.swinnerton_dyer_poly", [
-    Int(n),
-    PyObj(sympy_symbol_obj(x)),
-  ])
-  py_sympy_enum_str(res)
-}
-
-///|
-pub fn symmetric_poly(n : Int, gens : Array[String]) -> String raise {
-  let args : Array[LegacyArg] = [Int(n)]
-  for gen in gens {
-    args.push(PyObj(sympy_symbol_obj(gen)))
-  }
-  let res = sympy_call_must("sympy.polys.specialpolys.symmetric_poly", args)
-  py_sympy_enum_str(res)
-}
-
-///|
-pub fn interpolating_poly(n : Int, x? : String = "x") -> String raise {
-  let res = sympy_call_must("sympy.polys.specialpolys.interpolating_poly", [
-    Int(n),
-    PyObj(sympy_symbol_obj(x)),
-  ])
-  py_sympy_enum_str(res)
-}
-
-///|
-pub fn interpolating_poly_values(
-  n : Int,
-  x : String,
-  xs : Array[Int],
-  ys : Array[Int],
-) -> String raise {
-  let res = sympy_call_must("sympy.polys.specialpolys.interpolating_poly", [
-    Int(n),
-    PyObj(sympy_symbol_obj(x)),
-    PyObj(py_list_from_ints(xs)),
-    PyObj(py_list_from_ints(ys)),
-  ])
-  py_sympy_enum_str(res)
-}
-
-///|
-fn fateman_poly_tuple(path : String, n : Int) -> Array[String] raise {
-  let res = sympy_call_must(path, [Int(n)])
-  let items = py_list_to_pyobjects(res)
-  let out : Array[String] = []
-  for item in items {
-    out.push(py_sympy_expr_str(item))
-  }
-  out
-}
-
-///|
-pub fn fateman_poly_F_1(n : Int) -> Array[String] raise {
-  fateman_poly_tuple("sympy.polys.specialpolys.fateman_poly_F_1", n)
-}
-
-///|
-pub fn fateman_poly_F_2(n : Int) -> Array[String] raise {
-  fateman_poly_tuple("sympy.polys.specialpolys.fateman_poly_F_2", n)
-}
-
-///|
-pub fn fateman_poly_F_3(n : Int) -> Array[String] raise {
-  fateman_poly_tuple("sympy.polys.specialpolys.fateman_poly_F_3", n)
-}
-
-///|
 fn dmp_fateman_poly_tuple(
   function_name : String,
   n : Int,
@@ -7536,33 +7349,6 @@ pub fn dmp_fateman_poly_F_2(n : Int, domain? : String = "ZZ") -> String raise {
 ///|
 pub fn dmp_fateman_poly_F_3(n : Int, domain? : String = "ZZ") -> String raise {
   dmp_fateman_poly_tuple("dmp_fateman_poly_F_3", n, domain)
-}
-
-///|
-fn special_poly_tuple(path : String) -> Array[String] raise {
-  let res = sympy_call_must(path, [])
-  let items = py_list_to_pyobjects(res)
-  let out : Array[String] = []
-  for item in items {
-    out.push(py_sympy_expr_str(item))
-  }
-  out
-}
-
-///|
-pub fn f_polys() -> Array[String] raise {
-  special_poly_tuple("sympy.polys.specialpolys.f_polys")
-}
-
-///|
-pub fn w_polys() -> Array[String] raise {
-  special_poly_tuple("sympy.polys.specialpolys.w_polys")
-}
-
-///|
-fn named_unary_poly(path : String, n : Int, x : String) -> String raise {
-  let res = sympy_call_must(path, [Int(n), PyObj(sympy_symbol_obj(x))])
-  py_sympy_enum_str(res)
 }
 
 ///|
@@ -7671,75 +7457,6 @@ pub fn dup_spherical_bessel_fn_minus(
 }
 
 ///|
-pub fn chebyshevt_poly(n : Int, x? : String = "x") -> String raise {
-  named_unary_poly("sympy.polys.orthopolys.chebyshevt_poly", n, x)
-}
-
-///|
-pub fn chebyshevu_poly(n : Int, x? : String = "x") -> String raise {
-  named_unary_poly("sympy.polys.orthopolys.chebyshevu_poly", n, x)
-}
-
-///|
-pub fn hermite_poly(n : Int, x? : String = "x") -> String raise {
-  named_unary_poly("sympy.polys.orthopolys.hermite_poly", n, x)
-}
-
-///|
-pub fn hermite_prob_poly(n : Int, x? : String = "x") -> String raise {
-  named_unary_poly("sympy.polys.orthopolys.hermite_prob_poly", n, x)
-}
-
-///|
-pub fn legendre_poly(n : Int, x? : String = "x") -> String raise {
-  named_unary_poly("sympy.polys.orthopolys.legendre_poly", n, x)
-}
-
-///|
-pub fn laguerre_poly(n : Int, x? : String = "x") -> String raise {
-  named_unary_poly("sympy.polys.orthopolys.laguerre_poly", n, x)
-}
-
-///|
-pub fn gegenbauer_poly(
-  n : Int,
-  a : @symnum.BigRational,
-  x? : String = "x",
-) -> String raise {
-  let res = sympy_call_must("sympy.polys.orthopolys.gegenbauer_poly", [
-    Int(n),
-    PyObj(sympy_number_obj_oracle(a)),
-    PyObj(sympy_symbol_obj(x)),
-  ])
-  py_sympy_enum_str(res)
-}
-
-///|
-pub fn spherical_bessel_fn(n : Int, x? : String = "x") -> String raise {
-  let res = sympy_call_must("sympy.polys.orthopolys.spherical_bessel_fn", [
-    Int(n),
-    PyObj(sympy_symbol_obj(x)),
-  ])
-  py_sympy_enum_str(res)
-}
-
-///|
-pub fn jacobi_poly(
-  n : Int,
-  a : Int,
-  b : Int,
-  x? : String = "x",
-) -> String raise {
-  let res = sympy_call_must("sympy.polys.orthopolys.jacobi_poly", [
-    Int(n),
-    Int(a),
-    Int(b),
-    PyObj(sympy_symbol_obj(x)),
-  ])
-  py_sympy_enum_str(res)
-}
-
-///|
 pub fn dup_bernoulli(n : Int, domain? : String = "QQ") -> String raise {
   orth_dup_unary("appellseqs", "dup_bernoulli", n, domain)
 }
@@ -7762,31 +7479,6 @@ pub fn dup_euler(n : Int, domain? : String = "QQ") -> String raise {
 ///|
 pub fn dup_andre(n : Int, domain? : String = "ZZ") -> String raise {
   orth_dup_unary("appellseqs", "dup_andre", n, domain)
-}
-
-///|
-pub fn bernoulli_poly(n : Int, x? : String = "x") -> String raise {
-  named_unary_poly("sympy.polys.appellseqs.bernoulli_poly", n, x)
-}
-
-///|
-pub fn bernoulli_c_poly(n : Int, x? : String = "x") -> String raise {
-  named_unary_poly("sympy.polys.appellseqs.bernoulli_c_poly", n, x)
-}
-
-///|
-pub fn genocchi_poly(n : Int, x? : String = "x") -> String raise {
-  named_unary_poly("sympy.polys.appellseqs.genocchi_poly", n, x)
-}
-
-///|
-pub fn euler_poly(n : Int, x? : String = "x") -> String raise {
-  named_unary_poly("sympy.polys.appellseqs.euler_poly", n, x)
-}
-
-///|
-pub fn andre_poly(n : Int, x? : String = "x") -> String raise {
-  named_unary_poly("sympy.polys.appellseqs.andre_poly", n, x)
 }
 
 ///|
