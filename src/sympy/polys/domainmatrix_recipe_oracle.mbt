@@ -19,6 +19,68 @@ fn domainmatrix_structural_source() -> String {
     #|        + "||"
     #|        + _symbit_domainmatrix_summary(result[1])
     #|    )
+    #|
+    #|def _symbit_domainmatrix_text(value):
+    #|    if value is None:
+    #|        raise ValueError("domainmatrix-none")
+    #|    return str(value)
+    #|
+    #|def _symbit_domainmatrix_tuple(result, minimum, message):
+    #|    if not isinstance(result, (list, tuple)) or len(result) < minimum:
+    #|        raise ValueError(message)
+    #|    return result
+    #|
+    #|def _symbit_domainmatrix_pivots(pivots):
+    #|    if not isinstance(pivots, (list, tuple)):
+    #|        raise ValueError("domainmatrix-pivots")
+    #|    return "[" + ",".join(str(int(str(pivot))) for pivot in pivots) + "]"
+    #|
+    #|def _symbit_domainmatrix_rref_text(result):
+    #|    matrix, pivots = _symbit_domainmatrix_tuple(
+    #|        result, 2, "domainmatrix-rref-tuple"
+    #|    )[:2]
+    #|    return (
+    #|        _symbit_domainmatrix_matrix_text(matrix)
+    #|        + "||" + _symbit_domainmatrix_pivots(pivots)
+    #|    )
+    #|
+    #|def _symbit_domainmatrix_rref_den_text(result):
+    #|    matrix, denominator, pivots = _symbit_domainmatrix_tuple(
+    #|        result, 3, "domainmatrix-rref-den-tuple"
+    #|    )[:3]
+    #|    return (
+    #|        _symbit_domainmatrix_matrix_text(matrix)
+    #|        + "||" + str(denominator)
+    #|        + "||" + _symbit_domainmatrix_pivots(pivots)
+    #|    )
+    #|
+    #|def _symbit_domainmatrix_lu_text(result):
+    #|    lower, upper, swaps = _symbit_domainmatrix_tuple(
+    #|        result, 3, "domainmatrix-lu-tuple"
+    #|    )[:3]
+    #|    return (
+    #|        _symbit_domainmatrix_matrix_text(lower)
+    #|        + "||" + _symbit_domainmatrix_matrix_text(upper)
+    #|        + "||" + str(swaps)
+    #|    )
+    #|
+    #|def _symbit_domainmatrix_qr_text(result):
+    #|    orthogonal, upper = _symbit_domainmatrix_tuple(
+    #|        result, 2, "domainmatrix-qr-tuple"
+    #|    )[:2]
+    #|    return (
+    #|        _symbit_domainmatrix_matrix_text(orthogonal)
+    #|        + "||" + _symbit_domainmatrix_matrix_text(upper)
+    #|    )
+    #|
+    #|def _symbit_domainmatrix_fflu_text(result):
+    #|    permutation, lower, diagonal, upper = _symbit_domainmatrix_tuple(
+    #|        result, 4, "domainmatrix-fflu-tuple"
+    #|    )[:4]
+    #|    return "||".join(
+    #|        _symbit_domainmatrix_matrix_text(matrix)
+    #|        for matrix in (permutation, lower, diagonal, upper)
+    #|    )
   )
 }
 
@@ -29,6 +91,12 @@ priv struct DomainMatrixRecipe {
   matrix_renderer : @recipe.ValueRef
   summary_renderer : @recipe.ValueRef
   unify_renderer : @recipe.ValueRef
+  text_renderer : @recipe.ValueRef
+  rref_renderer : @recipe.ValueRef
+  rref_den_renderer : @recipe.ValueRef
+  lu_renderer : @recipe.ValueRef
+  qr_renderer : @recipe.ValueRef
+  fflu_renderer : @recipe.ValueRef
 }
 
 ///|
@@ -54,12 +122,42 @@ fn DomainMatrixRecipe::new() -> DomainMatrixRecipe raise {
     scope,
     Str("_symbit_domainmatrix_unify_text"),
   )
+  let text_renderer = domain_recipe.builder.getitem(
+    scope,
+    Str("_symbit_domainmatrix_text"),
+  )
+  let rref_renderer = domain_recipe.builder.getitem(
+    scope,
+    Str("_symbit_domainmatrix_rref_text"),
+  )
+  let rref_den_renderer = domain_recipe.builder.getitem(
+    scope,
+    Str("_symbit_domainmatrix_rref_den_text"),
+  )
+  let lu_renderer = domain_recipe.builder.getitem(
+    scope,
+    Str("_symbit_domainmatrix_lu_text"),
+  )
+  let qr_renderer = domain_recipe.builder.getitem(
+    scope,
+    Str("_symbit_domainmatrix_qr_text"),
+  )
+  let fflu_renderer = domain_recipe.builder.getitem(
+    scope,
+    Str("_symbit_domainmatrix_fflu_text"),
+  )
   {
     domain_recipe,
     domainmatrix_class,
     matrix_renderer,
     summary_renderer,
     unify_renderer,
+    text_renderer,
+    rref_renderer,
+    rref_den_renderer,
+    lu_renderer,
+    qr_renderer,
+    fflu_renderer,
   }
 }
 
@@ -224,7 +322,11 @@ fn DomainMatrixRecipe::call_method(
   kwargs? : Map[String, @recipe.RecipeArg] = {},
 ) -> @recipe.ValueRef raise {
   let callable = self.domain_recipe.builder.getattr(object, name)
-  self.domain_recipe.builder.call(callable, args, kwargs~)
+  let result = self.domain_recipe.builder.call(callable, args, kwargs~)
+  self.domain_recipe.builder.require_non_none(
+    result,
+    message="domainmatrix-method-none:" + name,
+  )
 }
 
 ///|
@@ -259,6 +361,54 @@ fn DomainMatrixRecipe::render_unify(
   result : @recipe.ValueRef,
 ) -> @recipe.ValueRef raise {
   self.domain_recipe.builder.call(self.unify_renderer, [Ref(result)])
+}
+
+///|
+fn DomainMatrixRecipe::render_text(
+  self : DomainMatrixRecipe,
+  result : @recipe.ValueRef,
+) -> @recipe.ValueRef raise {
+  self.domain_recipe.builder.call(self.text_renderer, [Ref(result)])
+}
+
+///|
+fn DomainMatrixRecipe::render_rref(
+  self : DomainMatrixRecipe,
+  result : @recipe.ValueRef,
+) -> @recipe.ValueRef raise {
+  self.domain_recipe.builder.call(self.rref_renderer, [Ref(result)])
+}
+
+///|
+fn DomainMatrixRecipe::render_rref_den(
+  self : DomainMatrixRecipe,
+  result : @recipe.ValueRef,
+) -> @recipe.ValueRef raise {
+  self.domain_recipe.builder.call(self.rref_den_renderer, [Ref(result)])
+}
+
+///|
+fn DomainMatrixRecipe::render_lu(
+  self : DomainMatrixRecipe,
+  result : @recipe.ValueRef,
+) -> @recipe.ValueRef raise {
+  self.domain_recipe.builder.call(self.lu_renderer, [Ref(result)])
+}
+
+///|
+fn DomainMatrixRecipe::render_qr(
+  self : DomainMatrixRecipe,
+  result : @recipe.ValueRef,
+) -> @recipe.ValueRef raise {
+  self.domain_recipe.builder.call(self.qr_renderer, [Ref(result)])
+}
+
+///|
+fn DomainMatrixRecipe::render_fflu(
+  self : DomainMatrixRecipe,
+  result : @recipe.ValueRef,
+) -> @recipe.ValueRef raise {
+  self.domain_recipe.builder.call(self.fflu_renderer, [Ref(result)])
 }
 
 ///|
