@@ -8322,45 +8322,27 @@ pub fn dmp_sqf_norm_exprs(
 
 ///|
 pub fn gf_strip(f : Array[Int]) -> String raise {
-  let res = sympy_call_must("sympy.polys.galoistools.gf_strip", [IntList(f)])
-  remove_spaces(py_dense_str(res))
+  galois_recipe_string_call("gf_strip", [CallIntList(f)])
 }
 
 ///|
 pub fn gf_trunc(f : Array[Int], p : Int) -> String raise {
-  let res = sympy_call_must("sympy.polys.galoistools.gf_trunc", [
-    IntList(f),
-    Int(p),
-  ])
-  remove_spaces(py_dense_str(res))
+  galois_recipe_string_call("gf_trunc", [CallIntList(f), CallInt(p)])
 }
 
 ///|
-fn gf_int_dict_obj(values : Map[Int, Int]) -> @py.PyObject raise {
-  let dict = py_dict_new()
-  let setitem = resolve_method_callable(dict.obj(), "__setitem__")
-  for key, value in values {
-    let tup = py_tuple_from_objects([py_int_obj(key), py_int_obj(value)])
-    let _ = py_call_object_allow_none(setitem, tup, print_err=true)
-  }
-  dict.obj()
-}
-
-///|
-fn gf_zz_call(name : String, args : Array[LegacyArg]) -> String raise {
-  let res = sympy_call_must("sympy.polys.galoistools.\{name}", args)
-  remove_spaces(py_dense_str(res))
+fn gf_zz_call(name : String, args : Array[DenseCallArg]) -> String raise {
+  galois_recipe_string_call(name, args)
 }
 
 ///|
 fn gf_zz_unary(name : String, f : Array[Int], p : Int) -> String raise {
-  gf_zz_call(name, [IntList(f), Int(p), PyObj(sympy_domain_obj("ZZ"))])
+  gf_zz_call(name, [CallIntList(f), CallInt(p), DomainObject])
 }
 
 ///|
 pub fn gf_int(a : Int, p : Int) -> Int raise {
-  let res = sympy_call_must("sympy.polys.galoistools.gf_int", [Int(a), Int(p)])
-  py_obj_to_int(objenum_to_obj(res))
+  galois_recipe_int_call("gf_int", [CallInt(a), CallInt(p)])
 }
 
 ///|
@@ -8370,11 +8352,7 @@ pub fn gf_normal(f : Array[Int], p : Int) -> String raise {
 
 ///|
 pub fn gf_from_dict(values : Map[Int, Int], p : Int) -> String raise {
-  gf_zz_call("gf_from_dict", [
-    PyObj(gf_int_dict_obj(values)),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
-  ])
+  gf_zz_call("gf_from_dict", [CallIntDict(values), CallInt(p), DomainObject])
 }
 
 ///|
@@ -8383,21 +8361,16 @@ pub fn gf_to_dict(
   p : Int,
   symmetric? : Bool = true,
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.galoistools.gf_to_dict", [
-    IntList(f),
-    Int(p),
-    Bool(symmetric),
-  ])
-  py_str_enum(res)
+  galois_recipe_string_call(
+    "gf_to_dict",
+    [CallIntList(f), CallInt(p), CallBool(symmetric)],
+    raw=true,
+  )
 }
 
 ///|
 pub fn gf_from_int_poly(f : Array[Int], p : Int) -> String raise {
-  let res = sympy_call_must("sympy.polys.galoistools.gf_from_int_poly", [
-    IntList(f),
-    Int(p),
-  ])
-  remove_spaces(py_dense_str(res))
+  galois_recipe_string_call("gf_from_int_poly", [CallIntList(f), CallInt(p)])
 }
 
 ///|
@@ -8406,12 +8379,11 @@ pub fn gf_to_int_poly(
   p : Int,
   symmetric? : Bool = true,
 ) -> String raise {
-  let res = sympy_call_must("sympy.polys.galoistools.gf_to_int_poly", [
-    IntList(f),
-    Int(p),
-    Bool(symmetric),
+  galois_recipe_string_call("gf_to_int_poly", [
+    CallIntList(f),
+    CallInt(p),
+    CallBool(symmetric),
   ])
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -8422,74 +8394,71 @@ pub fn gf_neg(f : Array[Int], p : Int) -> String raise {
 ///|
 pub fn gf_add_ground(f : Array[Int], a : Int, p : Int) -> String raise {
   gf_zz_call("gf_add_ground", [
-    IntList(f),
-    Int(a),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    CallIntList(f),
+    CallInt(a),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
 ///|
 pub fn gf_sub_ground(f : Array[Int], a : Int, p : Int) -> String raise {
   gf_zz_call("gf_sub_ground", [
-    IntList(f),
-    Int(a),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    CallIntList(f),
+    CallInt(a),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
 ///|
 pub fn gf_mul_ground(f : Array[Int], a : Int, p : Int) -> String raise {
   gf_zz_call("gf_mul_ground", [
-    IntList(f),
-    Int(a),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    CallIntList(f),
+    CallInt(a),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
 ///|
 pub fn gf_quo_ground(f : Array[Int], a : Int, p : Int) -> String raise {
   gf_zz_call("gf_quo_ground", [
-    IntList(f),
-    Int(a),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    CallIntList(f),
+    CallInt(a),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
 ///|
 pub fn gf_add(f : Array[Int], g : Array[Int], p : Int) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(IntList(f))
-  args.push(IntList(g))
-  args.push(Int(p))
-  args.push(PyObj(sympy_domain_obj("ZZ")))
-  let res = sympy_call_must("sympy.polys.galoistools.gf_add", args)
-  remove_spaces(py_dense_str(res))
+  gf_zz_call("gf_add", [
+    CallIntList(f),
+    CallIntList(g),
+    CallInt(p),
+    DomainObject,
+  ])
 }
 
 ///|
 pub fn gf_sub(f : Array[Int], g : Array[Int], p : Int) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(IntList(f))
-  args.push(IntList(g))
-  args.push(Int(p))
-  args.push(PyObj(sympy_domain_obj("ZZ")))
-  let res = sympy_call_must("sympy.polys.galoistools.gf_sub", args)
-  remove_spaces(py_dense_str(res))
+  gf_zz_call("gf_sub", [
+    CallIntList(f),
+    CallIntList(g),
+    CallInt(p),
+    DomainObject,
+  ])
 }
 
 ///|
 pub fn gf_mul(f : Array[Int], g : Array[Int], p : Int) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(IntList(f))
-  args.push(IntList(g))
-  args.push(Int(p))
-  args.push(PyObj(sympy_domain_obj("ZZ")))
-  let res = sympy_call_must("sympy.polys.galoistools.gf_mul", args)
-  remove_spaces(py_dense_str(res))
+  gf_zz_call("gf_mul", [
+    CallIntList(f),
+    CallIntList(g),
+    CallInt(p),
+    DomainObject,
+  ])
 }
 
 ///|
@@ -8505,11 +8474,11 @@ pub fn gf_add_mul(
   p : Int,
 ) -> String raise {
   gf_zz_call("gf_add_mul", [
-    IntList(f),
-    IntList(g),
-    IntList(h),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    CallIntList(f),
+    CallIntList(g),
+    CallIntList(h),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
@@ -8521,51 +8490,17 @@ pub fn gf_sub_mul(
   p : Int,
 ) -> String raise {
   gf_zz_call("gf_sub_mul", [
-    IntList(f),
-    IntList(g),
-    IntList(h),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    CallIntList(f),
+    CallIntList(g),
+    CallIntList(h),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
 ///|
-fn gf_factor_powers_obj(factors : Array[(Array[Int], Int)]) -> @py.PyObject {
-  let items : Array[@py.PyObject] = []
-  for factor in factors {
-    let coeffs : Array[@py.PyObject] = []
-    for coeff in factor.0 {
-      coeffs.push(py_int_obj(coeff))
-    }
-    let pair = py_tuple_from_objects([
-      py_list_from_objects(coeffs).obj(),
-      py_int_obj(factor.1),
-    ])
-    items.push(pair.obj())
-  }
-  py_list_from_objects(items).obj()
-}
-
-///|
-fn gf_int_matrix_obj(matrix : Array[Array[Int]]) -> @py.PyObject {
-  let rows : Array[@py.PyObject] = []
-  for row in matrix {
-    let items : Array[@py.PyObject] = []
-    for coeff in row {
-      items.push(py_int_obj(coeff))
-    }
-    rows.push(py_list_from_objects(items).obj())
-  }
-  py_list_from_objects(rows).obj()
-}
-
-///|
-fn gf_bool_call(name : String, args : Array[LegacyArg]) -> Bool raise {
-  let res = sympy_call_must("sympy.polys.galoistools.\{name}", args)
-  match res {
-    PyBool(v) => py_str_obj(v.obj()) == "True"
-    _ => py_str_enum(res) == "True"
-  }
+fn gf_bool_call(name : String, args : Array[DenseCallArg]) -> Bool raise {
+  galois_recipe_bool_call(name, args)
 }
 
 ///|
@@ -8574,59 +8509,46 @@ pub fn gf_expand(
   p : Int,
   lc? : Int = 1,
 ) -> String raise {
-  let factor_obj = gf_factor_powers_obj(factors)
-  let input_obj = if lc == 1 {
-    factor_obj
-  } else {
-    py_tuple_from_objects([py_int_obj(lc), factor_obj]).obj()
-  }
   gf_zz_call("gf_expand", [
-    PyObj(input_obj),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    FactorPowersWithLeadingCoefficient(factors, lc),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
 ///|
 pub fn gf_div(f : Array[Int], g : Array[Int], p : Int) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(IntList(f))
-  args.push(IntList(g))
-  args.push(Int(p))
-  args.push(PyObj(sympy_domain_obj("ZZ")))
-  let res = sympy_call_must("sympy.polys.galoistools.gf_div", args)
-  remove_spaces(py_dense_str(res))
+  gf_zz_call("gf_div", [
+    CallIntList(f),
+    CallIntList(g),
+    CallInt(p),
+    DomainObject,
+  ])
 }
 
 ///|
 pub fn gf_exquo(f : Array[Int], g : Array[Int], p : Int) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(IntList(f))
-  args.push(IntList(g))
-  args.push(Int(p))
-  args.push(PyObj(sympy_domain_obj("ZZ")))
-  let res = sympy_call_must("sympy.polys.galoistools.gf_exquo", args)
-  remove_spaces(py_dense_str(res))
+  gf_zz_call("gf_exquo", [
+    CallIntList(f),
+    CallIntList(g),
+    CallInt(p),
+    DomainObject,
+  ])
 }
 
 ///|
 pub fn gf_lshift(f : Array[Int], n : Int) -> String raise {
-  gf_zz_call("gf_lshift", [IntList(f), Int(n), PyObj(sympy_domain_obj("ZZ"))])
+  gf_zz_call("gf_lshift", [CallIntList(f), CallInt(n), DomainObject])
 }
 
 ///|
 pub fn gf_rshift(f : Array[Int], n : Int) -> String raise {
-  gf_zz_call("gf_rshift", [IntList(f), Int(n), PyObj(sympy_domain_obj("ZZ"))])
+  gf_zz_call("gf_rshift", [CallIntList(f), CallInt(n), DomainObject])
 }
 
 ///|
 pub fn gf_pow(f : Array[Int], n : Int, p : Int) -> String raise {
-  gf_zz_call("gf_pow", [
-    IntList(f),
-    Int(n),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
-  ])
+  gf_zz_call("gf_pow", [CallIntList(f), CallInt(n), CallInt(p), DomainObject])
 }
 
 ///|
@@ -8637,11 +8559,11 @@ pub fn gf_pow_mod(
   p : Int,
 ) -> String raise {
   gf_zz_call("gf_pow_mod", [
-    IntList(f),
-    Int(n),
-    IntList(g),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    CallIntList(f),
+    CallInt(n),
+    CallIntList(g),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
@@ -8652,13 +8574,12 @@ pub fn gf_diff(f : Array[Int], p : Int) -> String raise {
 
 ///|
 pub fn gf_eval(f : Array[Int], a : Int, p : Int) -> Int raise {
-  let res = sympy_call_must("sympy.polys.galoistools.gf_eval", [
-    IntList(f),
-    Int(a),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+  galois_recipe_int_call("gf_eval", [
+    CallIntList(f),
+    CallInt(a),
+    CallInt(p),
+    DomainObject,
   ])
-  py_obj_to_int(objenum_to_obj(res))
 }
 
 ///|
@@ -8668,22 +8589,21 @@ pub fn gf_multi_eval(
   p : Int,
 ) -> String raise {
   gf_zz_call("gf_multi_eval", [
-    IntList(f),
-    IntList(values),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    CallIntList(f),
+    CallIntList(values),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
 ///|
 pub fn gf_compose(f : Array[Int], g : Array[Int], p : Int) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(IntList(f))
-  args.push(IntList(g))
-  args.push(Int(p))
-  args.push(PyObj(sympy_domain_obj("ZZ")))
-  let res = sympy_call_must("sympy.polys.galoistools.gf_compose", args)
-  remove_spaces(py_dense_str(res))
+  gf_zz_call("gf_compose", [
+    CallIntList(f),
+    CallIntList(g),
+    CallInt(p),
+    DomainObject,
+  ])
 }
 
 ///|
@@ -8694,20 +8614,20 @@ pub fn gf_compose_mod(
   p : Int,
 ) -> String raise {
   gf_zz_call("gf_compose_mod", [
-    IntList(g),
-    IntList(h),
-    IntList(f),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    CallIntList(g),
+    CallIntList(h),
+    CallIntList(f),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
 ///|
 pub fn gf_frobenius_monomial_base(g : Array[Int], p : Int) -> String raise {
   gf_zz_call("gf_frobenius_monomial_base", [
-    IntList(g),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    CallIntList(g),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
@@ -8719,56 +8639,52 @@ pub fn gf_frobenius_map(
   p : Int,
 ) -> String raise {
   gf_zz_call("gf_frobenius_map", [
-    IntList(f),
-    IntList(g),
-    PyObj(gf_int_matrix_obj(b)),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    CallIntList(f),
+    CallIntList(g),
+    CallIntMatrix(b),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
 ///|
 pub fn gf_gcd(f : Array[Int], g : Array[Int], p : Int) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(IntList(f))
-  args.push(IntList(g))
-  args.push(Int(p))
-  args.push(PyObj(sympy_domain_obj("ZZ")))
-  let res = sympy_call_must("sympy.polys.galoistools.gf_gcd", args)
-  remove_spaces(py_dense_str(res))
+  gf_zz_call("gf_gcd", [
+    CallIntList(f),
+    CallIntList(g),
+    CallInt(p),
+    DomainObject,
+  ])
 }
 
 ///|
 pub fn gf_lcm(f : Array[Int], g : Array[Int], p : Int) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(IntList(f))
-  args.push(IntList(g))
-  args.push(Int(p))
-  args.push(PyObj(sympy_domain_obj("ZZ")))
-  let res = sympy_call_must("sympy.polys.galoistools.gf_lcm", args)
-  remove_spaces(py_dense_str(res))
+  gf_zz_call("gf_lcm", [
+    CallIntList(f),
+    CallIntList(g),
+    CallInt(p),
+    DomainObject,
+  ])
 }
 
 ///|
 pub fn gf_cofactors(f : Array[Int], g : Array[Int], p : Int) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(IntList(f))
-  args.push(IntList(g))
-  args.push(Int(p))
-  args.push(PyObj(sympy_domain_obj("ZZ")))
-  let res = sympy_call_must("sympy.polys.galoistools.gf_cofactors", args)
-  remove_spaces(py_dense_str(res))
+  gf_zz_call("gf_cofactors", [
+    CallIntList(f),
+    CallIntList(g),
+    CallInt(p),
+    DomainObject,
+  ])
 }
 
 ///|
 pub fn gf_gcdex(f : Array[Int], g : Array[Int], p : Int) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(IntList(f))
-  args.push(IntList(g))
-  args.push(Int(p))
-  args.push(PyObj(sympy_domain_obj("ZZ")))
-  let res = sympy_call_must("sympy.polys.galoistools.gf_gcdex", args)
-  remove_spaces(py_dense_str(res))
+  gf_zz_call("gf_gcdex", [
+    CallIntList(f),
+    CallIntList(g),
+    CallInt(p),
+    DomainObject,
+  ])
 }
 
 ///|
@@ -8781,46 +8697,34 @@ pub fn gf_trace_map(
   p : Int,
 ) -> String raise {
   gf_zz_call("gf_trace_map", [
-    IntList(a),
-    IntList(b),
-    IntList(c),
-    Int(n),
-    IntList(f),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    CallIntList(a),
+    CallIntList(b),
+    CallIntList(c),
+    CallInt(n),
+    CallIntList(f),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
 ///|
 pub fn gf_irred_p_ben_or(f : Array[Int], p : Int) -> Bool raise {
-  gf_bool_call("gf_irred_p_ben_or", [
-    IntList(f),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
-  ])
+  gf_bool_call("gf_irred_p_ben_or", [CallIntList(f), CallInt(p), DomainObject])
 }
 
 ///|
 pub fn gf_irred_p_rabin(f : Array[Int], p : Int) -> Bool raise {
-  gf_bool_call("gf_irred_p_rabin", [
-    IntList(f),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
-  ])
+  gf_bool_call("gf_irred_p_rabin", [CallIntList(f), CallInt(p), DomainObject])
 }
 
 ///|
 pub fn gf_irreducible_p(f : Array[Int], p : Int) -> Bool raise {
-  gf_bool_call("gf_irreducible_p", [
-    IntList(f),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
-  ])
+  gf_bool_call("gf_irreducible_p", [CallIntList(f), CallInt(p), DomainObject])
 }
 
 ///|
 pub fn gf_sqf_p(f : Array[Int], p : Int) -> Bool raise {
-  gf_bool_call("gf_sqf_p", [IntList(f), Int(p), PyObj(sympy_domain_obj("ZZ"))])
+  gf_bool_call("gf_sqf_p", [CallIntList(f), CallInt(p), DomainObject])
 }
 
 ///|
@@ -8840,12 +8744,7 @@ pub fn gf_Qmatrix(f : Array[Int], p : Int) -> String raise {
 
 ///|
 pub fn gf_Qbasis(q : Array[Array[Int]], p : Int) -> String raise {
-  let res = sympy_call_must("sympy.polys.galoistools.gf_Qbasis", [
-    PyObj(gf_int_matrix_obj(q)),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
-  ])
-  remove_spaces(py_dense_str(res))
+  gf_zz_call("gf_Qbasis", [CallIntMatrix(q), CallInt(p), DomainObject])
 }
 
 ///|
@@ -8861,10 +8760,10 @@ pub fn gf_ddf_zassenhaus(f : Array[Int], p : Int) -> String raise {
 ///|
 pub fn gf_edf_zassenhaus(f : Array[Int], n : Int, p : Int) -> String raise {
   gf_zz_call("gf_edf_zassenhaus", [
-    IntList(f),
-    Int(n),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    CallIntList(f),
+    CallInt(n),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
@@ -8876,10 +8775,10 @@ pub fn gf_ddf_shoup(f : Array[Int], p : Int) -> String raise {
 ///|
 pub fn gf_edf_shoup(f : Array[Int], n : Int, p : Int) -> String raise {
   gf_zz_call("gf_edf_shoup", [
-    IntList(f),
-    Int(n),
-    Int(p),
-    PyObj(sympy_domain_obj("ZZ")),
+    CallIntList(f),
+    CallInt(n),
+    CallInt(p),
+    DomainObject,
   ])
 }
 
@@ -8905,21 +8804,16 @@ pub fn gf_factor(f : Array[Int], p : Int) -> String raise {
 
 ///|
 pub fn gf_crt(u : Array[Int], m : Array[Int]) -> Int raise {
-  let res = sympy_call_must("sympy.polys.galoistools.gf_crt", [
-    IntList(u),
-    IntList(m),
-    PyObj(sympy_domain_obj("ZZ")),
+  galois_recipe_int_call("gf_crt", [
+    CallIntList(u),
+    CallIntList(m),
+    DomainObject,
   ])
-  py_obj_to_int(objenum_to_obj(res))
 }
 
 ///|
 pub fn gf_crt1(m : Array[Int]) -> String raise {
-  let res = sympy_call_must("sympy.polys.galoistools.gf_crt1", [
-    IntList(m),
-    PyObj(sympy_domain_obj("ZZ")),
-  ])
-  remove_spaces(py_dense_str(res))
+  gf_zz_call("gf_crt1", [CallIntList(m), DomainObject])
 }
 
 ///|
@@ -8930,24 +8824,19 @@ pub fn gf_crt2(
   e : Array[Int],
   s : Array[Int],
 ) -> Int raise {
-  let res = sympy_call_must("sympy.polys.galoistools.gf_crt2", [
-    IntList(u),
-    IntList(m),
-    Int(p),
-    IntList(e),
-    IntList(s),
-    PyObj(sympy_domain_obj("ZZ")),
+  galois_recipe_int_call("gf_crt2", [
+    CallIntList(u),
+    CallIntList(m),
+    CallInt(p),
+    CallIntList(e),
+    CallIntList(s),
+    DomainObject,
   ])
-  py_obj_to_int(objenum_to_obj(res))
 }
 
 ///|
 pub fn gf_value(f : Array[Int], a : Int) -> Int raise {
-  let res = sympy_call_must("sympy.polys.galoistools.gf_value", [
-    IntList(f),
-    Int(a),
-  ])
-  py_obj_to_int(objenum_to_obj(res))
+  galois_recipe_int_call("gf_value", [CallIntList(f), CallInt(a)])
 }
 
 ///|
@@ -8972,11 +8861,7 @@ pub fn csolve_prime(f : Array[Int], p : Int, e? : Int = 1) -> String raise {
 
 ///|
 pub fn gf_csolve(f : Array[Int], n : Int) -> String raise {
-  let res = sympy_call_must("sympy.polys.galoistools.gf_csolve", [
-    IntList(f),
-    Int(n),
-  ])
-  remove_spaces(py_dense_str(res))
+  galois_recipe_string_call("gf_csolve", [CallIntList(f), CallInt(n)])
 }
 
 ///|

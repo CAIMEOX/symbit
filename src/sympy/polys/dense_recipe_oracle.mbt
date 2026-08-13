@@ -55,6 +55,9 @@ priv enum DenseCallArg {
   DenseCollection(Array[DenseData])
   DenseFactorPairs(Array[(DenseData, Int)])
   DomainIntCoeffs(Array[Int])
+  CallIntDict(Map[Int, Int])
+  CallIntMatrix(Array[Array[Int]])
+  FactorPowersWithLeadingCoefficient(Array[(Array[Int], Int)], Int)
   CallInt(Int)
   CallIntList(Array[Int])
   CallStr(String)
@@ -261,6 +264,51 @@ fn DenseRecipe::materialize(
         )
       }
       Ref(self.builder.list(items))
+    }
+    CallIntDict(values) => {
+      let items : Array[(@recipe.RecipeArg, @recipe.RecipeArg)] = []
+      for key, value in values {
+        items.push(
+          (DecimalInt(Show::to_string(key)), DecimalInt(Show::to_string(value))),
+        )
+      }
+      Ref(self.builder.dict(items))
+    }
+    CallIntMatrix(values) => {
+      let rows : Array[@recipe.RecipeArg] = []
+      for row in values {
+        let items : Array[@recipe.RecipeArg] = []
+        for value in row {
+          items.push(DecimalInt(Show::to_string(value)))
+        }
+        rows.push(Ref(self.builder.list(items)))
+      }
+      Ref(self.builder.list(rows))
+    }
+    FactorPowersWithLeadingCoefficient(values, leading_coefficient) => {
+      let items : Array[@recipe.RecipeArg] = []
+      for value in values {
+        let coefficients : Array[@recipe.RecipeArg] = []
+        for coefficient in value.0 {
+          coefficients.push(DecimalInt(Show::to_string(coefficient)))
+        }
+        let pair = self.builder.tuple([
+          Ref(self.builder.list(coefficients)),
+          DecimalInt(Show::to_string(value.1)),
+        ])
+        items.push(Ref(pair))
+      }
+      let factors = self.builder.list(items)
+      if leading_coefficient == 1 {
+        Ref(factors)
+      } else {
+        Ref(
+          self.builder.tuple([
+            DecimalInt(Show::to_string(leading_coefficient)),
+            Ref(factors),
+          ]),
+        )
+      }
     }
     CallInt(value) => DecimalInt(Show::to_string(value))
     CallIntList(values) => {
