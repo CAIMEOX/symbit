@@ -1887,15 +1887,6 @@ pub fn domainmatrix_lll_transform(a : Array[Array[Int]]) -> String raise {
 }
 
 ///|
-pub fn matrix_hnf_code(rows : Array[Array[Int]]) -> String raise {
-  let mat = oracle_matrix_from_ints(rows)
-  let hnf = sympy_call_must("sympy.matrices.normalforms.hermite_normal_form", [
-    PyObj(mat),
-  ])
-  matrix_obj_to_int_code(objenum_to_obj(hnf))
-}
-
-///|
 pub fn domainmatrix_invariant_factors(
   rows : Array[Array[Int]],
   domain_spec : String,
@@ -2039,20 +2030,6 @@ pub fn domainmatrix_unify_summary(
   }
   let result = recipe.call_method(left, "unify", [Ref(right)], kwargs~)
   recipe.request_str(recipe.render_unify(result))
-}
-
-///|
-pub fn domainscalar_from_expr(expr : String) -> String raise {
-  let args = py_list_from_objects([sympy_sympify_str(expr)]).obj()
-  let res = sympy_call_must("sympy.polys.constructor.construct_domain", [
-    PyObj(args),
-  ])
-  let tup = py_list_to_pyobjects(res)
-  guard tup.length() >= 2 else { fail("domainscalar-construct-domain") }
-  let domain = py_str_obj(tup[0])
-  let items = py_list_to_pyobjects(@py.PyObjectEnum::create(tup[1]))
-  guard items.length() >= 1 else { fail("domainscalar-construct-items") }
-  "\{py_str_obj(items[0])}@\{domain}"
 }
 
 ///|
@@ -2517,80 +2494,6 @@ fn split_names(text : String) -> Array[String] {
 }
 
 ///|
-pub fn sort_factors(factors : Array[Array[Int]]) -> String raise {
-  let items : Array[@py.PyObject] = Array::new()
-  for f in factors {
-    let inner : Array[@py.PyObject] = Array::new()
-    for v in f {
-      inner.push(py_int_obj(v))
-    }
-    let inner_list = py_list_from_objects(inner)
-    items.push(inner_list.obj())
-  }
-  let args : Array[LegacyArg] = [PyObj(py_list_from_objects(items).obj())]
-  let kwargs : Map[String, LegacyArg] = { "multiple": Bool(false) }
-  let res = sympy_call_must(
-    "sympy.polys.polyutils._sort_factors",
-    args,
-    kwargs~,
-  )
-  let lists = py_list_to_pyobjects(res)
-  let parts : Array[String] = Array::new()
-  for item in lists {
-    let seq_items = py_list_to_pyobjects(@py.PyObjectEnum::create(item))
-    let seq : Array[String] = Array::new()
-    for v in seq_items {
-      seq.push(py_obj_to_int(v).to_string())
-    }
-    let joined = seq.join(",")
-    parts.push("[\{joined}]")
-  }
-  let joined = parts.join(",")
-  "[\{joined}]"
-}
-
-///|
-pub fn sort_factors_multiple(
-  factors : Array[(Array[Int], Int)],
-) -> String raise {
-  let items : Array[@py.PyObject] = Array::new()
-  for f in factors {
-    let inner : Array[@py.PyObject] = Array::new()
-    for v in f.0 {
-      inner.push(py_int_obj(v))
-    }
-    let inner_list = py_list_from_objects(inner)
-    let pair = py_tuple_from_objects([inner_list.obj(), py_int_obj(f.1)])
-    items.push(pair.obj())
-  }
-  let args : Array[LegacyArg] = [PyObj(py_list_from_objects(items).obj())]
-  let kwargs : Map[String, LegacyArg] = { "multiple": Bool(true) }
-  let res = sympy_call_must(
-    "sympy.polys.polyutils._sort_factors",
-    args,
-    kwargs~,
-  )
-  let pairs = py_list_to_pyobjects(res)
-  let parts : Array[String] = Array::new()
-  for pair in pairs {
-    let items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
-    if items.length() >= 2 {
-      let seq_items = py_list_to_pyobjects(@py.PyObjectEnum::create(items[0]))
-      let seq : Array[String] = Array::new()
-      for item in seq_items {
-        seq.push(py_obj_to_int(item).to_string())
-      }
-      let seq_joined = seq.join(",")
-      let list_str = "[\{seq_joined}]"
-      let exp = py_obj_to_int(items[1])
-      parts.push("(\{list_str},\{exp})")
-    }
-  }
-  let joined = parts.join(",")
-  "[\{joined}]"
-}
-
-///|
 let sympy_cache : Ref[@py.PyModule?] = { val: None }
 
 ///|
@@ -2914,74 +2817,6 @@ fn nf_anp_oracle_coeffs_obj(
 fn nf_anp_oracle_coeffs_text(value : @py.PyObjectEnum) -> String raise {
   let items = py_list_to_pyobjects(value)
   "[" + items.map(item => py_str_obj(item)).join(", ") + "]"
-}
-
-///|
-pub fn init_normal_ANP(
-  rep : Array[Int],
-  mod : Array[Int],
-  domain? : String = "QQ",
-) -> String raise {
-  let res = sympy_call_must("sympy.polys.polyclasses.init_normal_ANP", [
-    PyObj(nf_anp_oracle_coeffs_obj(rep, domain)),
-    PyObj(nf_anp_oracle_coeffs_obj(mod, domain)),
-    PyObj(sympy_domain_obj(domain)),
-  ])
-  let res_obj = objenum_to_obj(res)
-  let rep_attr = match py_get_attr(res_obj, "rep") {
-    Some(v) => v
-    None => fail("init_normal_ANP-rep")
-  }
-  let mod_attr = match py_get_attr(res_obj, "mod") {
-    Some(v) => v
-    None => fail("init_normal_ANP-mod")
-  }
-  let dom_attr = match py_get_attr(res_obj, "dom") {
-    Some(v) => v
-    None => fail("init_normal_ANP-dom")
-  }
-  "ANP(\{nf_anp_oracle_coeffs_text(rep_attr)}, \{nf_anp_oracle_coeffs_text(mod_attr)}, \{py_str_enum(dom_attr)})"
-}
-
-///|
-pub fn sympy_sort_factor_repr(repr_str : String) -> String raise {
-  let parsed = sympy_sympify_str(repr_str)
-  let parsed_enum = @py.PyObjectEnum::create(parsed)
-  let items = py_list_to_pyobjects(parsed_enum)
-  guard items.length() >= 2 else { fail("sort_factor_repr tuple") }
-  let content_obj = items[0]
-  let factors_enum = @py.PyObjectEnum::create(items[1])
-  let factors = py_list_to_pyobjects(factors_enum)
-  let entries : Array[(String, Int, String)] = Array::new()
-  for pair in factors {
-    let pair_enum = @py.PyObjectEnum::create(pair)
-    let pair_items = py_list_to_pyobjects(pair_enum)
-    if pair_items.length() >= 2 {
-      let factor_obj = pair_items[0]
-      let exp_obj = pair_items[1]
-      let factor_str = py_str_obj(factor_obj)
-      let exp_val = match @py.PyObjectEnum::create(exp_obj) {
-        PyInteger(v) => v.to_int64().to_int()
-        _ => @string.parse_int(py_str_obj(exp_obj))
-      }
-      entries.push((factor_str, exp_val, factor_str))
-    }
-  }
-  entries.sort_by((a, b) => {
-    let cmp = a.0.compare(b.0)
-    if cmp != 0 {
-      cmp
-    } else {
-      a.1 - b.1
-    }
-  })
-  let parts : Array[String] = Array::new()
-  for entry in entries {
-    parts.push("(\{entry.2}, \{entry.1})")
-  }
-  let factors_str = parts.join(",")
-  let content_str = py_str_obj(content_obj)
-  "(\{content_str}, [\{factors_str}])"
 }
 
 ///|
@@ -7479,20 +7314,6 @@ pub fn dup_euler(n : Int, domain? : String = "QQ") -> String raise {
 ///|
 pub fn dup_andre(n : Int, domain? : String = "ZZ") -> String raise {
   orth_dup_unary("appellseqs", "dup_andre", n, domain)
-}
-
-///|
-pub fn construct_domain_domain(exprs : Array[@symcore.Expr]) -> String raise {
-  let py_exprs : Array[@py.PyObject] = []
-  for expr in exprs {
-    py_exprs.push(expr_to_sympy(expr))
-  }
-  let res = sympy_call_must("sympy.polys.constructor.construct_domain", [
-    PyObj(py_list_from_objects(py_exprs).obj()),
-  ])
-  let parts = py_list_to_pyobjects(res)
-  guard parts.length() >= 1 else { fail("construct-domain-result-shape") }
-  py_str_obj(parts[0])
 }
 
 ///|
