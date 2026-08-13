@@ -8015,13 +8015,11 @@ pub fn dup_routh_hurwitz(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootconditions.dup_routh_hurwitz", args,
+  dense_recipe_call(
+    "sympy.polys.rootconditions.dup_routh_hurwitz",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -8029,13 +8027,11 @@ pub fn dup_schur_conditions(
   coeffs : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(coeffs, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must(
-    "sympy.polys.rootconditions.dup_schur_conditions", args,
+  dense_recipe_call(
+    "sympy.polys.rootconditions.dup_schur_conditions",
+    [DupCoeffs(coeffs), DomainObject],
+    domain,
   )
-  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -8045,13 +8041,11 @@ pub fn dup_add_term(
   k : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(sympy_domain_elem(c, domain)))
-  args.push(Int(k))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_add_term", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_add_term",
+    [DupCoeffs(f), DomainNumber(c), CallInt(k), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8061,13 +8055,11 @@ pub fn dup_sub_term(
   k : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(sympy_domain_elem(c, domain)))
-  args.push(Int(k))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_sub_term", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_sub_term",
+    [DupCoeffs(f), DomainNumber(c), CallInt(k), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8077,13 +8069,11 @@ pub fn dup_mul_term(
   k : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(sympy_domain_elem(c, domain)))
-  args.push(Int(k))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_mul_term", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_mul_term",
+    [DupCoeffs(f), DomainNumber(c), CallInt(k), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8092,12 +8082,11 @@ pub fn dup_add_ground(
   c : @symnum.BigRational,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(sympy_domain_elem(c, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_add_ground", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_add_ground",
+    [DupCoeffs(f), DomainNumber(c), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8106,12 +8095,11 @@ pub fn dup_sub_ground(
   c : @symnum.BigRational,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(sympy_domain_elem(c, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_sub_ground", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_sub_ground",
+    [DupCoeffs(f), DomainNumber(c), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8120,12 +8108,11 @@ pub fn dup_mul_ground(
   c : @symnum.BigRational,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(sympy_domain_elem(c, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_mul_ground", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_mul_ground",
+    [DupCoeffs(f), DomainNumber(c), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8134,12 +8121,11 @@ pub fn dup_quo_ground(
   c : @symnum.BigRational,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(sympy_domain_elem(c, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_quo_ground", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_quo_ground",
+    [DupCoeffs(f), DomainNumber(c), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8148,12 +8134,11 @@ pub fn dup_exquo_ground(
   c : @symnum.BigRational,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(sympy_number_obj_oracle(c)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_exquo_ground", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_exquo_ground",
+    [DupCoeffs(f), RawNumber(c), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8162,12 +8147,11 @@ pub fn dup_lshift(
   n : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(Int(n))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_lshift", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_lshift",
+    [DupCoeffs(f), CallInt(n), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8176,12 +8160,11 @@ pub fn dup_rshift(
   n : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(Int(n))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_rshift", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_rshift",
+    [DupCoeffs(f), CallInt(n), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8189,11 +8172,11 @@ pub fn dup_neg(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_neg", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_neg",
+    [DupCoeffs(f), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8201,11 +8184,11 @@ pub fn dup_abs(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals(f)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_abs", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_abs",
+    [RawDupCoeffs(f), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8214,12 +8197,11 @@ pub fn dup_add(
   g : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(py_list_from_rationals_domain(g, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_add", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_add",
+    [DupCoeffs(f), DupCoeffs(g), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8228,12 +8210,11 @@ pub fn dup_sub(
   g : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(py_list_from_rationals_domain(g, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_sub", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_sub",
+    [DupCoeffs(f), DupCoeffs(g), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8242,12 +8223,11 @@ pub fn dup_mul(
   g : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(py_list_from_rationals_domain(g, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_mul", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_mul",
+    [DupCoeffs(f), DupCoeffs(g), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8255,11 +8235,11 @@ pub fn dup_sqr(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_sqr", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_sqr",
+    [DupCoeffs(f), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8268,12 +8248,11 @@ pub fn dup_pow(
   n : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(Int(n))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_pow", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_pow",
+    [DupCoeffs(f), CallInt(n), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8283,13 +8262,11 @@ pub fn dup_series_mul(
   n : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(py_list_from_rationals_domain(g, domain)))
-  args.push(Int(n))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_series_mul", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_series_mul",
+    [DupCoeffs(f), DupCoeffs(g), CallInt(n), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8298,12 +8275,11 @@ pub fn dup_series_sqr(
   n : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(Int(n))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_series_sqr", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_series_sqr",
+    [DupCoeffs(f), CallInt(n), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8313,13 +8289,11 @@ pub fn dup_series_pow(
   prec : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(Int(n))
-  args.push(Int(prec))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_series_pow", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_series_pow",
+    [DupCoeffs(f), CallInt(n), CallInt(prec), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8328,12 +8302,11 @@ pub fn dup_rr_div(
   g : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(py_list_from_rationals_domain(g, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_rr_div", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_rr_div",
+    [DupCoeffs(f), DupCoeffs(g), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8342,12 +8315,11 @@ pub fn dup_ff_div(
   g : Array[@symnum.BigRational],
   domain? : String = "QQ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(py_list_from_rationals_domain(g, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_ff_div", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_ff_div",
+    [DupCoeffs(f), DupCoeffs(g), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8356,12 +8328,11 @@ pub fn dup_div(
   g : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(py_list_from_rationals_domain(g, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_div", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_div",
+    [DupCoeffs(f), DupCoeffs(g), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8370,12 +8341,11 @@ pub fn dup_rem(
   g : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(py_list_from_rationals_domain(g, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_rem", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_rem",
+    [DupCoeffs(f), DupCoeffs(g), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8384,12 +8354,11 @@ pub fn dup_quo(
   g : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(py_list_from_rationals_domain(g, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_quo", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_quo",
+    [DupCoeffs(f), DupCoeffs(g), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8398,12 +8367,11 @@ pub fn dup_exquo(
   g : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(py_list_from_rationals_domain(g, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_exquo", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_exquo",
+    [DupCoeffs(f), DupCoeffs(g), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8412,12 +8380,11 @@ pub fn dup_pexquo(
   g : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(py_list_from_rationals_domain(g, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_pexquo", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_pexquo",
+    [DupCoeffs(f), DupCoeffs(g), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8930,14 +8897,11 @@ pub fn dmp_add_term(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(c, domain)))
-  args.push(Int(k))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_add_term", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_add_term",
+    [DenseValue(f), DenseValue(c), CallInt(k), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8948,14 +8912,11 @@ pub fn dmp_sub_term(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(c, domain)))
-  args.push(Int(k))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_sub_term", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_sub_term",
+    [DenseValue(f), DenseValue(c), CallInt(k), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8966,14 +8927,11 @@ pub fn dmp_mul_term(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(c, domain)))
-  args.push(Int(k))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_mul_term", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_mul_term",
+    [DenseValue(f), DenseValue(c), CallInt(k), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8983,13 +8941,11 @@ pub fn dmp_add_ground(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(sympy_domain_elem(c, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_add_ground", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_add_ground",
+    [DenseValue(f), DomainNumber(c), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -8999,13 +8955,11 @@ pub fn dmp_sub_ground(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(sympy_domain_elem(c, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_sub_ground", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_sub_ground",
+    [DenseValue(f), DomainNumber(c), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9015,13 +8969,11 @@ pub fn dmp_mul_ground(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(sympy_domain_elem(c, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_mul_ground", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_mul_ground",
+    [DenseValue(f), DomainNumber(c), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9031,13 +8983,11 @@ pub fn dmp_quo_ground(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(sympy_domain_elem(c, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_quo_ground", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_quo_ground",
+    [DenseValue(f), DomainNumber(c), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9047,33 +8997,29 @@ pub fn dmp_exquo_ground(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(sympy_domain_elem(c, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_exquo_ground", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_exquo_ground",
+    [DenseValue(f), DomainNumber(c), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
 pub fn dmp_abs(f : DenseData, u : Int, domain? : String = "ZZ") -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_abs", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_abs",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
 pub fn dmp_neg(f : DenseData, u : Int, domain? : String = "ZZ") -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_neg", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_neg",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9083,13 +9029,11 @@ pub fn dmp_add(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_add", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_add",
+    [DenseValue(f), DenseValue(g), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9099,13 +9043,11 @@ pub fn dmp_sub(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_sub", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_sub",
+    [DenseValue(f), DenseValue(g), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9115,23 +9057,20 @@ pub fn dmp_mul(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_mul", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_mul",
+    [DenseValue(f), DenseValue(g), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
 pub fn dmp_sqr(f : DenseData, u : Int, domain? : String = "ZZ") -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_sqr", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_sqr",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9141,13 +9080,11 @@ pub fn dmp_pow(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(Int(n))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_pow", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_pow",
+    [DenseValue(f), CallInt(n), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9158,14 +9095,11 @@ pub fn dmp_add_mul(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(h, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_add_mul", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_add_mul",
+    [DenseValue(f), DenseValue(g), DenseValue(h), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9176,14 +9110,11 @@ pub fn dmp_sub_mul(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(h, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_sub_mul", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_sub_mul",
+    [DenseValue(f), DenseValue(g), DenseValue(h), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9193,13 +9124,11 @@ pub fn dmp_pdiv(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_pdiv", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_pdiv",
+    [DenseValue(f), DenseValue(g), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9209,13 +9138,11 @@ pub fn dmp_prem(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_prem", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_prem",
+    [DenseValue(f), DenseValue(g), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9225,13 +9152,11 @@ pub fn dmp_pquo(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_pquo", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_pquo",
+    [DenseValue(f), DenseValue(g), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9241,13 +9166,11 @@ pub fn dmp_pexquo(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_pexquo", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_pexquo",
+    [DenseValue(f), DenseValue(g), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9257,13 +9180,11 @@ pub fn dmp_rr_div(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_rr_div", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_rr_div",
+    [DenseValue(f), DenseValue(g), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9273,13 +9194,11 @@ pub fn dmp_ff_div(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_ff_div", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_ff_div",
+    [DenseValue(f), DenseValue(g), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9289,13 +9208,11 @@ pub fn dmp_div(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_div", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_div",
+    [DenseValue(f), DenseValue(g), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9305,13 +9222,11 @@ pub fn dmp_rem(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_rem", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_rem",
+    [DenseValue(f), DenseValue(g), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9321,13 +9236,11 @@ pub fn dmp_quo(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_quo", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_quo",
+    [DenseValue(f), DenseValue(g), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9337,13 +9250,11 @@ pub fn dmp_exquo(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(PyObj(dense_data_to_pyobj_domain(g, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_exquo", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_exquo",
+    [DenseValue(f), DenseValue(g), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9351,11 +9262,12 @@ pub fn dup_max_norm(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_max_norm", args)
-  py_sympy_enum_str(res)
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_max_norm",
+    [DupCoeffs(f), DomainObject],
+    domain,
+    result_kind=ScalarResult,
+  )
 }
 
 ///|
@@ -9364,12 +9276,12 @@ pub fn dmp_max_norm(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_max_norm", args)
-  py_sympy_enum_str(res)
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_max_norm",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+    result_kind=ScalarResult,
+  )
 }
 
 ///|
@@ -9377,11 +9289,12 @@ pub fn dup_l1_norm(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_l1_norm", args)
-  py_sympy_enum_str(res)
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_l1_norm",
+    [DupCoeffs(f), DomainObject],
+    domain,
+    result_kind=ScalarResult,
+  )
 }
 
 ///|
@@ -9390,12 +9303,12 @@ pub fn dmp_l1_norm(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_l1_norm", args)
-  py_sympy_enum_str(res)
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_l1_norm",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+    result_kind=ScalarResult,
+  )
 }
 
 ///|
@@ -9403,11 +9316,12 @@ pub fn dup_l2_norm_squared(
   f : Array[@symnum.BigRational],
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(py_list_from_rationals_domain(f, domain)))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_l2_norm_squared", args)
-  py_sympy_enum_str(res)
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_l2_norm_squared",
+    [DupCoeffs(f), DomainObject],
+    domain,
+    result_kind=ScalarResult,
+  )
 }
 
 ///|
@@ -9416,12 +9330,12 @@ pub fn dmp_l2_norm_squared(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(dense_data_to_pyobj_domain(f, domain)))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_l2_norm_squared", args)
-  py_sympy_enum_str(res)
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_l2_norm_squared",
+    [DenseValue(f), CallInt(u), DomainObject],
+    domain,
+    result_kind=ScalarResult,
+  )
 }
 
 ///|
@@ -9429,16 +9343,11 @@ pub fn dup_expand(
   polys : Array[Array[@symnum.BigRational]],
   domain? : String = "ZZ",
 ) -> String raise {
-  let outer : Array[@py.PyObject] = Array::new()
-  for f in polys {
-    outer.push(py_list_from_rationals_domain(f, domain))
-  }
-  let list = py_list_from_objects(outer)
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(list.obj()))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dup_expand", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dup_expand",
+    [DupCollection(polys), DomainObject],
+    domain,
+  )
 }
 
 ///|
@@ -9447,17 +9356,11 @@ pub fn dmp_expand(
   u : Int,
   domain? : String = "ZZ",
 ) -> String raise {
-  let outer : Array[@py.PyObject] = Array::new()
-  for f in polys {
-    outer.push(dense_data_to_pyobj_domain(f, domain))
-  }
-  let list = py_list_from_objects(outer)
-  let args : Array[LegacyArg] = Array::new()
-  args.push(PyObj(list.obj()))
-  args.push(Int(u))
-  args.push(PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.densearith.dmp_expand", args)
-  remove_spaces(py_dense_str(res))
+  dense_recipe_call(
+    "sympy.polys.densearith.dmp_expand",
+    [DenseCollection(polys), CallInt(u), DomainObject],
+    domain,
+  )
 }
 
 ///|
