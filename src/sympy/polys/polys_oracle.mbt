@@ -1624,11 +1624,12 @@ pub fn domainmatrix_add(
   b : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm_a = oracle_domainmatrix_from_ints(a, domain_spec)
-  let dm_b = oracle_domainmatrix_from_ints(b, domain_spec)
-  let add = resolve_method_callable(dm_a, "__add__")
-  let res = py_call_one(add, dm_b)
-  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let left = recipe.domainmatrix(a, domain)
+  let right = recipe.domainmatrix(b, domain)
+  let result = recipe.call_method(left, "__add__", [Ref(right)])
+  recipe.request_str(recipe.render_matrix(result))
 }
 
 ///|
@@ -1637,11 +1638,12 @@ pub fn domainmatrix_mul(
   scalar : Int,
   domain_spec : String,
 ) -> String raise {
-  let dm_a = oracle_domainmatrix_from_ints(a, domain_spec)
-  let mul = resolve_method_callable(dm_a, "mul")
-  let scalar_obj = oracle_domain_element_from_int(scalar, domain_spec)
-  let res = py_call_one(mul, scalar_obj)
-  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let scalar_value = recipe.domain_int(domain, scalar)
+  let result = recipe.call_method(matrix, "mul", [Ref(scalar_value)])
+  recipe.request_str(recipe.render_matrix(result))
 }
 
 ///|
@@ -1651,15 +1653,12 @@ pub fn domainmatrix_truediv_summary(
   scalar_expr : String,
   fmt? : String = "dense",
 ) -> String raise {
-  let dm_a = oracle_domainmatrix_from_ints_fmt(a, domain_spec, fmt)
-  let div = resolve_method_callable(dm_a, "__truediv__")
-  let scalar = try @string.parse_int(scalar_expr.trim()) catch {
-    _ => sympy_sympify_str(scalar_expr)
-  } noraise {
-    value => py_int_obj(value)
-  }
-  let res = py_call_one(div, scalar)
-  oracle_domainmatrix_summary(objenum_to_obj(res))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain, fmt~)
+  let scalar = recipe.scalar_expr(scalar_expr)
+  let result = recipe.call_method(matrix, "__truediv__", [Ref(scalar)])
+  recipe.request_str(recipe.render_summary(result))
 }
 
 ///|
@@ -1668,11 +1667,12 @@ pub fn domainmatrix_matmul(
   b : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm_a = oracle_domainmatrix_from_ints(a, domain_spec)
-  let dm_b = oracle_domainmatrix_from_ints(b, domain_spec)
-  let matmul = resolve_method_callable(dm_a, "matmul")
-  let res = py_call_one(matmul, dm_b)
-  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let left = recipe.domainmatrix(a, domain)
+  let right = recipe.domainmatrix(b, domain)
+  let result = recipe.call_method(left, "matmul", [Ref(right)])
+  recipe.request_str(recipe.render_matrix(result))
 }
 
 ///|
@@ -1739,11 +1739,12 @@ pub fn domainmatrix_convert_to(
   from_domain_spec : String,
   to_domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, from_domain_spec)
-  let convert = resolve_method_callable(dm, "convert_to")
-  let target = oracle_domain_from_spec(to_domain_spec)
-  let res = py_call_one(convert, target)
-  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+  let recipe = DomainMatrixRecipe::new()
+  let source_domain = recipe.domain(from_domain_spec)
+  let target_domain = recipe.domain(to_domain_spec)
+  let matrix = recipe.domainmatrix(a, source_domain)
+  let result = recipe.call_method(matrix, "convert_to", [Ref(target_domain)])
+  recipe.request_str(recipe.render_matrix(result))
 }
 
 ///|
@@ -1753,11 +1754,12 @@ pub fn domainmatrix_convert_to_summary(
   to_domain_spec : String,
   fmt? : String = "dense",
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints_fmt(a, from_domain_spec, fmt)
-  let convert = resolve_method_callable(dm, "convert_to")
-  let target = oracle_domain_from_spec(to_domain_spec)
-  let res = py_call_one(convert, target)
-  oracle_domainmatrix_summary(objenum_to_obj(res))
+  let recipe = DomainMatrixRecipe::new()
+  let source_domain = recipe.domain(from_domain_spec)
+  let target_domain = recipe.domain(to_domain_spec)
+  let matrix = recipe.domainmatrix(a, source_domain, fmt~)
+  let result = recipe.call_method(matrix, "convert_to", [Ref(target_domain)])
+  recipe.request_str(recipe.render_summary(result))
 }
 
 ///|
@@ -1765,10 +1767,11 @@ pub fn domainmatrix_to_field(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let to_field = resolve_method_callable(dm, "to_field")
-  let res = py_call_noargs(to_field)
-  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "to_field", [])
+  recipe.request_str(recipe.render_matrix(result))
 }
 
 ///|
@@ -1776,9 +1779,11 @@ pub fn domainmatrix_diagonal(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let diagonal = resolve_method_callable(dm, "diagonal")
-  py_str_enum(py_call_noargs(diagonal))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "diagonal", [])
+  recipe.request_str(result)
 }
 
 ///|
@@ -1786,9 +1791,11 @@ pub fn domainmatrix_to_list_flat(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let flat = resolve_method_callable(dm, "to_list_flat")
-  py_str_enum(py_call_noargs(flat))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "to_list_flat", [])
+  recipe.request_str(result)
 }
 
 ///|
@@ -1796,25 +1803,19 @@ pub fn domainmatrix_from_list_flat(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let domain_obj = oracle_domain_from_spec(domain_spec)
-  let elements : Array[@py.PyObject] = Array::new()
-  let convert = resolve_method_callable(domain_obj, "convert")
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
   let rows = a.length()
   let cols = if rows == 0 { 0 } else { a[0].length() }
-  for row in a {
-    for v in row {
-      elements.push(objenum_to_obj(py_call_one(convert, py_int_obj(v))))
-    }
-  }
-  let shape = py_tuple_from_objects([py_int_obj(rows), py_int_obj(cols)]).obj()
-  let ctor = resolve_method_callable(dm, "from_list_flat")
-  let res = py_call_with_args(
-    ctor,
-    [py_list_from_objects(elements).obj(), shape, domain_obj],
-    py_dict_new(),
-  )
-  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+  let flat = recipe.flat_domain_ints(a, domain)
+  let shape = recipe.shape(rows, cols)
+  let result = recipe.call_method(matrix, "from_list_flat", [
+    Ref(flat),
+    Ref(shape),
+    Ref(domain),
+  ])
+  recipe.request_str(recipe.render_matrix(result))
 }
 
 ///|
@@ -1822,9 +1823,11 @@ pub fn domainmatrix_to_flat_nz(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let flat_nz = resolve_method_callable(dm, "to_flat_nz")
-  py_str_enum(py_call_noargs(flat_nz))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "to_flat_nz", [])
+  recipe.request_str(result)
 }
 
 ///|
@@ -1832,9 +1835,11 @@ pub fn domainmatrix_to_dod(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let to_dod = resolve_method_callable(dm, "to_dod")
-  py_str_enum(py_call_noargs(to_dod))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "to_dod", [])
+  recipe.request_str(result)
 }
 
 ///|
@@ -1842,20 +1847,24 @@ pub fn domainmatrix_from_dod_roundtrip(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let to_dod = resolve_method_callable(dm, "to_dod")
-  let dod = objenum_to_obj(py_call_noargs(to_dod))
-  let shape = py_tuple_from_objects([
-    py_int_obj(a.length()),
-    py_int_obj(if a.is_empty() { 0 } else { a[0].length() }),
-  ]).obj()
-  let ctor = resolve_method_callable(dm, "from_dod")
-  let res = py_call_with_args(
-    ctor,
-    [dod, shape, oracle_domain_from_spec(domain_spec)],
-    py_dict_new(),
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let dod = recipe.call_method(matrix, "to_dod", [])
+  let shape = recipe.shape(
+    a.length(),
+    if a.is_empty() {
+      0
+    } else {
+      a[0].length()
+    },
   )
-  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+  let result = recipe.call_method(matrix, "from_dod", [
+    Ref(dod),
+    Ref(shape),
+    Ref(domain),
+  ])
+  recipe.request_str(recipe.render_matrix(result))
 }
 
 ///|
@@ -1863,9 +1872,11 @@ pub fn domainmatrix_to_dok(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let to_dok = resolve_method_callable(dm, "to_dok")
-  py_str_enum(py_call_noargs(to_dok))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "to_dok", [])
+  recipe.request_str(result)
 }
 
 ///|
@@ -1873,20 +1884,24 @@ pub fn domainmatrix_from_dok_roundtrip(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let to_dok = resolve_method_callable(dm, "to_dok")
-  let dok = objenum_to_obj(py_call_noargs(to_dok))
-  let shape = py_tuple_from_objects([
-    py_int_obj(a.length()),
-    py_int_obj(if a.is_empty() { 0 } else { a[0].length() }),
-  ]).obj()
-  let ctor = resolve_method_callable(dm, "from_dok")
-  let res = py_call_with_args(
-    ctor,
-    [dok, shape, oracle_domain_from_spec(domain_spec)],
-    py_dict_new(),
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let dok = recipe.call_method(matrix, "to_dok", [])
+  let shape = recipe.shape(
+    a.length(),
+    if a.is_empty() {
+      0
+    } else {
+      a[0].length()
+    },
   )
-  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+  let result = recipe.call_method(matrix, "from_dok", [
+    Ref(dok),
+    Ref(shape),
+    Ref(domain),
+  ])
+  recipe.request_str(recipe.render_matrix(result))
 }
 
 ///|
@@ -1894,9 +1909,11 @@ pub fn domainmatrix_nnz(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> Int raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let nnz = resolve_method_callable(dm, "nnz")
-  py_obj_to_int(objenum_to_obj(py_call_noargs(nnz)))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "nnz", [])
+  recipe.request_int(result)
 }
 
 ///|
@@ -1905,10 +1922,13 @@ pub fn domainmatrix_pow(
   domain_spec : String,
   n : Int,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let pow = resolve_method_callable(dm, "pow")
-  let res = py_call_one(pow, py_int_obj(n))
-  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "pow", [
+    DecimalInt(Show::to_string(n)),
+  ])
+  recipe.request_str(recipe.render_matrix(result))
 }
 
 ///|
@@ -2008,26 +2028,11 @@ pub fn domainmatrix_scc(
   a : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let scc = resolve_method_callable(dm, "scc")
-  py_str_enum(py_call_noargs(scc))
-}
-
-///|
-fn oracle_domainmatrix_summary(dm_obj : @py.PyObject) -> String raise {
-  let domain = match py_get_attr(dm_obj, "domain") {
-    Some(obj) => py_str_enum(obj)
-    None => fail("domainmatrix-summary-domain")
-  }
-  let fmt = match py_get_attr(dm_obj, "rep") {
-    Some(rep) =>
-      match py_get_attr(objenum_to_obj(rep), "fmt") {
-        Some(fmt_obj) => py_str_enum(fmt_obj)
-        None => fail("domainmatrix-summary-fmt")
-      }
-    None => fail("domainmatrix-summary-rep")
-  }
-  "\{oracle_domainmatrix_to_matrix_str(dm_obj)}@\{domain}|\{fmt}"
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(matrix, "scc", [])
+  recipe.request_str(result)
 }
 
 ///|
@@ -2037,45 +2042,20 @@ pub fn domainmatrix_from_list_sympy_expr(
   gaussian? : Bool = false,
   modulus? : Int? = None,
 ) -> String raise {
-  let row_count = rows.length()
-  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
-  let py_rows : Array[@py.PyObject] = Array::new()
-  for row in rows {
-    if row.length() != col_count {
-      fail("domainmatrix-from-list-sympy-ragged")
-    }
-    let py_row : Array[@py.PyObject] = Array::new()
-    for value in row {
-      py_row.push(sympy_sympify_str(value))
-    }
-    py_rows.push(py_list_from_objects(py_row).obj())
-  }
-  let dummy = oracle_domainmatrix_from_ints([[0]], "ZZ")
-  let klass = match py_get_attr(dummy, "__class__") {
-    Some(obj) => objenum_to_obj(obj)
-    None => fail("domainmatrix-class")
-  }
-  let kwargs = py_dict_new()
-  if field {
-    py_dict_set_obj(kwargs, "field", py_bool_obj(true))
-  }
-  if gaussian {
-    py_dict_set_obj(kwargs, "gaussian", py_bool_obj(true))
-  }
-  match modulus {
-    Some(p) => py_dict_set_obj(kwargs, "modulus", py_int_obj(p))
-    None => ()
-  }
-  let dm = py_call_with_args(
-    resolve_method_callable(klass, "from_list_sympy"),
-    [
-      py_int_obj(row_count),
-      py_int_obj(col_count),
-      py_list_from_objects(py_rows).obj(),
-    ],
-    kwargs,
+  let recipe = DomainMatrixRecipe::new()
+  let (data, row_count, column_count) = recipe.expr_rows(
+    rows, "domainmatrix-from-list-sympy-ragged",
   )
-  oracle_domainmatrix_summary(objenum_to_obj(dm))
+  let result = recipe.call_class_method(
+    "from_list_sympy",
+    [
+      DecimalInt(Show::to_string(row_count)),
+      DecimalInt(Show::to_string(column_count)),
+      Ref(data),
+    ],
+    kwargs=structural_domain_options(field, gaussian, modulus),
+  )
+  recipe.request_str(recipe.render_summary(result))
 }
 
 ///|
@@ -2086,45 +2066,12 @@ pub fn domainmatrix_from_matrix_expr(
   gaussian? : Bool = false,
   modulus? : Int? = None,
 ) -> String raise {
-  let py_rows : Array[@py.PyObject] = Array::new()
-  let row_count = rows.length()
-  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
-  for row in rows {
-    if row.length() != col_count {
-      fail("domainmatrix-from-matrix-ragged")
-    }
-    let py_row : Array[@py.PyObject] = Array::new()
-    for value in row {
-      py_row.push(sympy_sympify_str(value))
-    }
-    py_rows.push(py_list_from_objects(py_row).obj())
-  }
-  let mat = sympy_call_must("sympy.Matrix", [
-    PyObj(py_list_from_objects(py_rows).obj()),
-  ])
-  let dummy = oracle_domainmatrix_from_ints([[0]], "ZZ")
-  let klass = match py_get_attr(dummy, "__class__") {
-    Some(obj) => objenum_to_obj(obj)
-    None => fail("domainmatrix-class")
-  }
-  let kwargs = py_dict_new()
-  py_dict_set_obj(kwargs, "fmt", py_string_obj(fmt))
-  if field {
-    py_dict_set_obj(kwargs, "field", py_bool_obj(true))
-  }
-  if gaussian {
-    py_dict_set_obj(kwargs, "gaussian", py_bool_obj(true))
-  }
-  match modulus {
-    Some(p) => py_dict_set_obj(kwargs, "modulus", py_int_obj(p))
-    None => ()
-  }
-  let dm = py_call_with_args(
-    resolve_method_callable(klass, "from_Matrix"),
-    [objenum_to_obj(mat)],
-    kwargs,
-  )
-  oracle_domainmatrix_summary(objenum_to_obj(dm))
+  let recipe = DomainMatrixRecipe::new()
+  let matrix = recipe.matrix_from_exprs(rows)
+  let kwargs = structural_domain_options(field, gaussian, modulus)
+  kwargs["fmt"] = Str(fmt)
+  let result = recipe.call_class_method("from_Matrix", [Ref(matrix)], kwargs~)
+  recipe.request_str(recipe.render_summary(result))
 }
 
 ///|
@@ -2135,21 +2082,16 @@ pub fn domainmatrix_choose_domain(
   gaussian? : Bool = false,
   modulus? : Int? = None,
 ) -> String raise {
-  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
-  let choose_domain = resolve_method_callable(dm, "choose_domain")
-  let kwargs = py_dict_new()
-  if field {
-    py_dict_set_obj(kwargs, "field", py_bool_obj(true))
-  }
-  if gaussian {
-    py_dict_set_obj(kwargs, "gaussian", py_bool_obj(true))
-  }
-  match modulus {
-    Some(p) => py_dict_set_obj(kwargs, "modulus", py_int_obj(p))
-    None => ()
-  }
-  let res = py_call_with_args(choose_domain, [], kwargs)
-  oracle_domainmatrix_summary(objenum_to_obj(res))
+  let recipe = DomainMatrixRecipe::new()
+  let domain = recipe.domain(domain_spec)
+  let matrix = recipe.domainmatrix(a, domain)
+  let result = recipe.call_method(
+    matrix,
+    "choose_domain",
+    [],
+    kwargs=structural_domain_options(field, gaussian, modulus),
+  )
+  recipe.request_str(recipe.render_summary(result))
 }
 
 ///|
@@ -2762,11 +2704,13 @@ pub fn domainmatrix_hstack_summary(
   b_domain_spec : String,
   b_fmt : String,
 ) -> String raise {
-  let dm_a = oracle_domainmatrix_from_ints_fmt(a_rows, a_domain_spec, a_fmt)
-  let dm_b = oracle_domainmatrix_from_ints_fmt(b_rows, b_domain_spec, b_fmt)
-  let hstack = resolve_method_callable(dm_a, "hstack")
-  let result = py_call_one(hstack, dm_b)
-  oracle_domainmatrix_summary(objenum_to_obj(result))
+  let recipe = DomainMatrixRecipe::new()
+  let a_domain = recipe.domain(a_domain_spec)
+  let b_domain = recipe.domain(b_domain_spec)
+  let left = recipe.domainmatrix(a_rows, a_domain, fmt=a_fmt)
+  let right = recipe.domainmatrix(b_rows, b_domain, fmt=b_fmt)
+  let result = recipe.call_method(left, "hstack", [Ref(right)])
+  recipe.request_str(recipe.render_summary(result))
 }
 
 ///|
@@ -2778,11 +2722,13 @@ pub fn domainmatrix_vstack_summary(
   b_domain_spec : String,
   b_fmt : String,
 ) -> String raise {
-  let dm_a = oracle_domainmatrix_from_ints_fmt(a_rows, a_domain_spec, a_fmt)
-  let dm_b = oracle_domainmatrix_from_ints_fmt(b_rows, b_domain_spec, b_fmt)
-  let vstack = resolve_method_callable(dm_a, "vstack")
-  let result = py_call_one(vstack, dm_b)
-  oracle_domainmatrix_summary(objenum_to_obj(result))
+  let recipe = DomainMatrixRecipe::new()
+  let a_domain = recipe.domain(a_domain_spec)
+  let b_domain = recipe.domain(b_domain_spec)
+  let left = recipe.domainmatrix(a_rows, a_domain, fmt=a_fmt)
+  let right = recipe.domainmatrix(b_rows, b_domain, fmt=b_fmt)
+  let result = recipe.call_method(left, "vstack", [Ref(right)])
+  recipe.request_str(recipe.render_summary(result))
 }
 
 ///|
@@ -2795,21 +2741,17 @@ pub fn domainmatrix_unify_summary(
   b_fmt : String,
   fmt? : String = "",
 ) -> String raise {
-  let dm_a = oracle_domainmatrix_from_ints_fmt(a_rows, a_domain_spec, a_fmt)
-  let dm_b = oracle_domainmatrix_from_ints_fmt(b_rows, b_domain_spec, b_fmt)
-  let unify = resolve_method_callable(dm_a, "unify")
-  let result = if fmt != "" {
-    let kwargs = py_dict_new()
-    py_dict_set_obj(kwargs, "fmt", py_string_obj(fmt))
-    py_call_with_args(unify, [dm_b], kwargs)
-  } else {
-    py_call_one(unify, dm_b)
+  let recipe = DomainMatrixRecipe::new()
+  let a_domain = recipe.domain(a_domain_spec)
+  let b_domain = recipe.domain(b_domain_spec)
+  let left = recipe.domainmatrix(a_rows, a_domain, fmt=a_fmt)
+  let right = recipe.domainmatrix(b_rows, b_domain, fmt=b_fmt)
+  let kwargs : Map[String, @recipe.RecipeArg] = Map([])
+  if fmt != "" {
+    kwargs["fmt"] = Str(fmt)
   }
-  let parts = py_list_to_pyobjects(result)
-  guard parts.length() >= 2 else { fail("domainmatrix-unify") }
-  let lhs = oracle_domainmatrix_summary(parts[0])
-  let rhs = oracle_domainmatrix_summary(parts[1])
-  "\{lhs}||\{rhs}"
+  let result = recipe.call_method(left, "unify", [Ref(right)], kwargs~)
+  recipe.request_str(recipe.render_unify(result))
 }
 
 ///|
@@ -3212,23 +3154,6 @@ fn oracle_domainmatrix_from_ints(
 }
 
 ///|
-fn oracle_domainmatrix_from_ints_fmt(
-  rows : Array[Array[Int]],
-  domain_spec : String,
-  fmt : String,
-) -> @py.PyObject raise {
-  let dm = oracle_domainmatrix_from_ints(rows, domain_spec)
-  match fmt {
-    "dense" => dm
-    "sparse" => {
-      let to_sparse = resolve_method_callable(dm, "to_sparse")
-      objenum_to_obj(py_call_noargs(to_sparse))
-    }
-    _ => fail("domainmatrix-fmt")
-  }
-}
-
-///|
 fn oracle_sdm_from_ints(
   rows : Array[Array[Int]],
   domain_spec : String,
@@ -3499,16 +3424,6 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
     Some(obj) => objenum_to_obj(obj)
     None => fail("domain-spec-unknown:\{text}")
   }
-}
-
-///|
-fn oracle_domain_element_from_int(
-  value : Int,
-  domain_spec : String,
-) -> @py.PyObject raise {
-  let domain_obj = oracle_domain_from_spec(domain_spec)
-  let convert = resolve_method_callable(domain_obj, "convert")
-  objenum_to_obj(py_call_one(convert, py_int_obj(value)))
 }
 
 ///|
